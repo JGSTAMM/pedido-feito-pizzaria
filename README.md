@@ -1,59 +1,70 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+<div align="center">
+  <img src="public/build/assets/logo-sr-sra-lucchese.png" alt="Logo Sr. & Sra. Lucchese" width="200"/>
+  <h1>Sr. & Sra. Lucchese - Pizzaria Gourmet</h1>
+  <p><strong>Um Sistema PDV de Alta Performance Feito no "Calor do Salão"</strong></p>
+  
+  <p>
+    <a href="#sobre-o-projeto">Sobre</a> •
+    <a href="#features-complexas">Features Híbridas</a> •
+    <a href="#stack-tecnológica">Tecnologias</a> •
+    <a href="#sobre-o-desenvolvedor">O Desenvolvedor</a>
+  </p>
+</div>
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+---
 
-## About Laravel
+## 🍕 Sobre o Projeto
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+**"Pedido Feito 2.0 - Edição Lucchese"** não é um PDV de gaveta ou um projeto genérico de portfólio. É um sistema de gestão ponta-a-ponta desenhado para aguentar o *tranco e a velocidade* de uma operação de restaurante real, especificamente moldado para a alta gastronomia da pizzaria **Sr. & Sra. Lucchese**.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+A maior dor do mercado de softwares para restaurantes é que eles são construídos por engenheiros que nunca serviram uma mesa na sexta-feira à noite. Este projeto, por outro lado, une arquitetura de software de ponta com o fluxo verdadeiro, caótico e implacável do salão de um restaurante cheio.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+---
 
-## Learning Laravel
+## 🚀 Features Complexas Reais (Battle-Tested)
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+Diferente de sistemas comuns de CRUD, o **Sr. & Sra. Lucchese** resolve dores matemáticas e operacionais em tempo real:
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### 1. Precificação Inteligente de Pizzas (Motor Híbrido)
+Restaurantes sofrem ao precificar pizzas "meio a meio", frequentemente dependendo do maior valor ou de cálculos manuais lentos. Nosso motor backend de pedidos calcula dinamicamente com base em **taxa fixa interligada**. 
+Se uma pizza de dois sabores possui proporções díspares e extras atrelados a apenas uma de suas metades, o sistema isola o custo do sabor mais caro, aplica as deduções de custo fracionado e atualiza a Web App do Garçom e o Display da Cozinha instantaneamente via API.
 
-## Laravel Sponsors
+### 2. Blindagem Financeira de Caixa (Box Lock)
+O momento do fechamento de caixa é onde acontecem 90% das perdas fiscais de um restaurante. Implementamos uma arquitetura de segurança nível servidor no `CashRegisterController` que torna o sistema **à prova de desculpas**:
+- **Trava Paralisante:** É matematicamente impossível para o gerente ou operador fechar o caixa no sistema se existirem comandas esquecidas (Pedidos pendentes, em preparo, concluídos, porém sem a flag de pagamento final atestada no Banco de Dados). Não existem "pedidos fantasmas". O PDV se recusa a fechar sem a correta conciliação.
+- **Auditoria Histórica Intocável:** Com apenas dois toques no Date Picker do Web Panel da matriz, donos puxam o relatório retroativo.
+- **Flash Summary Instantâneo:** Resumo em Dashboard com cores indicativas (Verde/Vermelho) apontando discrepâncias (Quebras de Caixa) calculando a diferença automática entre (Abertura + Vendas Físicas - Troco) vs (Dinheiro real da Gaveta).
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+---
 
-### Premium Partners
+## 💻 Stack Tecnológica
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+Sistema dividido em 3 camadas assíncronas projetadas para resiliência:
 
-## Contributing
+- **Painel Administrativo & Gestão de Loja:** 
+  - `PHP 8.3` | `Laravel 11` | `React 18`
+  - Renderização via **Inertia.js** (Zero page refresh SPA)
+  - Layout e Interface desenhados do *Zero* em Vanilla CSS com classes focadas em performance visual.
+- **App Nuvem do Garçom & Gestão Móvel:** 
+  - `Flutter 3.` | `Dart` 
+  - Consumo via APIs JSON nativas autenticadas por Sanctum.
+- **Storage & Cloud Database:**
+  - Banco de Dados Relacional otimizado para leituras pesadas (`MySQL/MariaDB`).
+  - Event-Driven Architecture para fila de impressoras de comanda IP.
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+---
 
-## Code of Conduct
+## 👨‍🍳 Sobre o Desenvolvedor
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### **João Gabriel (Fundador - Pixirica Produções)**
+O projeto transborda arquitetura de ponta e fluidez de tela, e isso não é por acaso. João Gabriel não é apenas um desenvolvedor; ele possui **13 anos de vivência ininterrupta atuando em salões e sistemas de pizzaria reais**.
 
-## Security Vulnerabilities
+Essa combinação única de **Engenharia de Software Moderna + Background de 13 Anos Operando Pizzarias de Alto Movimento** provou ser um diferencial de ouro. João sabe exatamente onde a interface precisa de um botão gigante para um garçom suado clicar com pressa, por que um *Toast* verde precisa saltar na tela após o sucesso num sábado à noite ensurdecedor, e domina intelectualmente os gargalos lógicos de fluxo de mesa, cozinha e quebra de caixa.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+**Pixirica Produções** traduz a poeira e o estresse da realidade do restaurante numa experiência digital lisa, estável e lucrativa.
 
-## License
+---
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+<div align="center">
+  <p>Software com Alma • Desenvolvido por Pixirica Produções © 2026</p>
+</div>
