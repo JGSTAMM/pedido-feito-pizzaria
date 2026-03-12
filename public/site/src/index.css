@@ -1,0 +1,23 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  overflow-x: hidden;
+  background-color: #0A0A0B;
+}
+
+.font-inter { font-family: 'Inter', sans-serif; }
+.font-outfit { font-family: 'Outfit', sans-serif; }
+
+/* Custom Utilities if Tailwind isn't fully set up in this one-shot */
+.backdrop-blur-md { backdrop-filter: blur(12px); }
+.backdrop-blur-lg { backdrop-filter: blur(24px); }
+.backdrop-blur-xl { backdrop-filter: blur(40px); }

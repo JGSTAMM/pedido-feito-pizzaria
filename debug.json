@@ -1,0 +1,11 @@
+{
+    "login_web_59ba36addc2b2f9401580f014c7f58ea4e30989d": "019cd361-6943-7284-8f33-c090c0cce0f5",
+    "_token": "rYGhu0dhEIhGexdCOOmfVB9biiodWvkTls7UfFfa",
+    "success": "Pedido #019cd3a4-8423-701d-9019-4791e6a1f235 finalizado com sucesso! Total: R$ 40,00",
+    "_flash": {
+        "new": [
+            "success"
+        ],
+        "old": []
+    }
+}

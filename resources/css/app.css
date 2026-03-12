@@ -1,0 +1,93 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.jsx';
+@source '../**/*.js';
+
+/* ── Stitch Design System: Electric Violet ── */
+@theme {
+    /* Primary */
+    --color-primary: #8B5CF6;
+    --color-primary-dark: #7C3AED;
+
+    /* Backgrounds */
+    --color-background-light: #f5f5f8;
+    --color-background-dark: #0A0A0B;
+
+    /* Surfaces (glass) */
+    --color-surface: rgba(255, 255, 255, 0.05);
+    --color-surface-hover: rgba(255, 255, 255, 0.08);
+
+    /* Borders */
+    --color-border-subtle: rgba(255, 255, 255, 0.08);
+
+    /* Accents */
+    --color-emerald-soft: #10B981;
+    --color-text-muted: rgba(255, 255, 255, 0.6);
+
+    /* Typography */
+    --font-sans: 'Work Sans', ui-sans-serif, system-ui, sans-serif;
+    --font-display: 'Work Sans', ui-sans-serif, system-ui, sans-serif;
+
+    /* Border Radius */
+    --radius: 0.5rem;
+    --radius-lg: 1rem;
+    --radius-xl: 1.5rem;
+    --radius-2xl: 2rem;
+}
+
+/* ── Custom Scrollbar (Dark Mode) ── */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: #0A0A0B;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #2D2D3A;
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #8B5CF6;
+}
+
+/* ── Global Body ── */
+body {
+    font-family: 'Work Sans', sans-serif;
+}
+
+/* ── Drawer Animation ── */
+@keyframes slide-in-right {
+    from { transform: translateX(100%); }
+    to   { transform: translateX(0); }
+}
+
+.animate-slide-in-right {
+    animation: slide-in-right 0.3s ease-out;
+}
+
+/* ── Mobile Drawer Animation ── */
+@keyframes slide-up {
+    from { transform: translateY(100%); opacity: 0.8; }
+    to   { transform: translateY(0); opacity: 1; }
+}
+
+.animate-slide-up {
+    animation: slide-up 0.3s ease-out;
+}
+
+/* ── Modal Scale-in Animation ── */
+@keyframes scale-in {
+    from { transform: scale(0.95); opacity: 0; }
+    to   { transform: scale(1); opacity: 1; }
+}
+
+.animate-scale-in {
+    animation: scale-in 0.2s ease-out;
+}

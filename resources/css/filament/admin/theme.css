@@ -1,0 +1,47 @@
+@import "tailwindcss";
+@import '../../../../vendor/filament/filament/resources/css/base.css';
+@import url('https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;500;600;700&display=swap');
+
+/* Tailwind v4 class-based dark mode support */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Scan Filament plugins and custom views */
+@source "../../../../vendor/filament/**/*.blade.php";
+@source "../../../../vendor/filament/**/*.php";
+@source "../../../../app/Filament/**/*.php";
+@source "../../../views/filament/**/*.blade.php";
+
+/* Map Filament CSS variables back to Tailwind v4 colors */
+@theme {
+    --color-primary-50: rgb(var(--primary-50));
+    --color-primary-100: rgb(var(--primary-100));
+    --color-primary-200: rgb(var(--primary-200));
+    --color-primary-300: rgb(var(--primary-300));
+    --color-primary-400: rgb(var(--primary-400));
+    --color-primary-500: rgb(var(--primary-500));
+    --color-primary-600: rgb(var(--primary-600));
+    --color-primary-700: rgb(var(--primary-700));
+    --color-primary-800: rgb(var(--primary-800));
+    --color-primary-900: rgb(var(--primary-900));
+    --color-primary-950: rgb(var(--primary-950));
+
+    --color-gray-50: rgb(var(--gray-50));
+    --color-gray-100: rgb(var(--gray-100));
+    --color-gray-200: rgb(var(--gray-200));
+    --color-gray-300: rgb(var(--gray-300));
+    --color-gray-400: rgb(var(--gray-400));
+    --color-gray-500: rgb(var(--gray-500));
+    --color-gray-600: rgb(var(--gray-600));
+    --color-gray-700: rgb(var(--gray-700));
+    --color-gray-800: rgb(var(--gray-800));
+    --color-gray-900: rgb(var(--gray-900));
+    --color-gray-950: rgb(var(--gray-950));
+
+    --color-danger-50: rgb(var(--danger-50));
+    --color-danger-500: rgb(var(--danger-500));
+    --color-danger-600: rgb(var(--danger-600));
+
+    --color-success-50: rgb(var(--success-50));
+    --color-success-500: rgb(var(--success-500));
+    --color-success-600: rgb(var(--success-600));
+}

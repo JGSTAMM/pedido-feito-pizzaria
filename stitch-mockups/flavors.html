@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Lucchese Pizza - Sabores</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;500;600;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#895af6",
+                        "background-light": "#f6f5f8",
+                        "background-dark": "#0A0A0B",
+                    },
+                    fontFamily: {
+                        "display": ["Work Sans", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "1rem",
+                        "xl": "1.5rem",
+                        "2xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .active-glow {
+            box-shadow: 0 0 20px rgba(137, 90, 246, 0.3);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="bg-background-dark text-slate-100 font-display selection:bg-primary/30">
+<div class="flex h-screen overflow-hidden">
+<!-- Sidebar -->
+<aside class="w-[230px] flex-shrink-0 border-r border-white/5 flex flex-col bg-background-dark">
+<div class="p-6 flex items-center gap-3">
+<div class="size-10 rounded-xl bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-white shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined !text-2xl">local_pizza</span>
+</div>
+<div>
+<h1 class="text-white text-base font-bold leading-tight">Lucchese</h1>
+<p class="text-slate-500 text-xs font-medium">Admin System</p>
+</div>
+</div>
+<nav class="flex-1 px-4 space-y-1 mt-4 overflow-y-auto custom-scrollbar">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all" href="#">
+<span class="material-symbols-outlined">grid_view</span>
+<span class="text-sm font-medium">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all" href="#">
+<span class="material-symbols-outlined">shopping_bag</span>
+<span class="text-sm font-medium">Pedidos</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-primary text-white active-glow transition-all" href="#">
+<span class="material-symbols-outlined">restaurant</span>
+<span class="text-sm font-medium">Sabores</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all" href="#">
+<span class="material-symbols-outlined">menu_book</span>
+<span class="text-sm font-medium">Cardápio</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="text-sm font-medium">Clientes</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-all" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-sm font-medium">Configurações</span>
+</a>
+</nav>
+<div class="p-4 mt-auto">
+<div class="glass-panel rounded-2xl p-4 flex items-center gap-3">
+<div class="size-8 rounded-full bg-slate-800 flex items-center justify-center overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Avatar of the system administrator chef" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAMHeR7IJiZOfQ9rnCZ_ztoNqbyf_-OhHct8wxDVVF_t-E7TPNE1ObWJp4xfTa18B38QB2Rm7YHBa-WfehP1Gddq2Ev_yFTwiMuKPJnTD9tv3PS7jxZcobxuRUdE2aOYC9vqD2cv_hhyxT2eFJPRBCbFSD6e2tCRPKwLE1UX9_213TpePE7tdN7cHvgX7eaxj0lkcJjLZDA-MifytueKF6ivg-YhQ0UezZPsbkEKofdwbw1BA8vNAYFH7-MSa6pZ2u1vRzYG2mMdg"/>
+</div>
+<div class="flex-1 overflow-hidden">
+<p class="text-xs font-bold text-white truncate">Luigi Lucchese</p>
+<p class="text-[10px] text-slate-500 truncate">Gerente Geral</p>
+</div>
+<button class="text-slate-500 hover:text-white">
+<span class="material-symbols-outlined !text-lg">logout</span>
+</button>
+</div>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex-1 overflow-y-auto bg-[#0A0A0B] relative">
+<!-- Background Accent -->
+<div class="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/5 blur-[120px] rounded-full -z-10 pointer-events-none"></div>
+<div class="max-w-7xl mx-auto p-8">
+<!-- Header -->
+<header class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+<div>
+<h2 class="text-white text-3xl font-black tracking-tight mb-1">Sabores de Pizzas</h2>
+<p class="text-slate-500 text-sm">Gerencie o catálogo de sabores e ingredientes disponíveis.</p>
+</div>
+<div class="flex items-center gap-3">
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-primary transition-colors">search</span>
+<input class="w-72 h-12 pl-12 pr-4 rounded-xl border-white/10 bg-white/[0.03] text-sm text-slate-200 focus:ring-primary focus:border-primary placeholder:text-slate-600 transition-all" placeholder="Pesquisar sabores ou ingredientes..." type="text"/>
+</div>
+<button class="h-12 px-6 rounded-xl bg-gradient-to-r from-primary to-[#7c3aed] text-white text-sm font-bold flex items-center gap-2 hover:shadow-lg hover:shadow-primary/20 transition-all active:scale-95">
+<span class="material-symbols-outlined !text-xl">add_circle</span>
+<span>Novo Sabor</span>
+</button>
+</div>
+</header>
+<!-- Flavors Table Container -->
+<div class="glass-panel rounded-2xl overflow-hidden shadow-2xl border-white/5">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-white/[0.02] border-b border-white/5">
+<th class="px-6 py-5 text-xs font-bold text-slate-400 uppercase tracking-wider">Nome do Sabor</th>
+<th class="px-6 py-5 text-xs font-bold text-slate-400 uppercase tracking-wider">Ingredientes</th>
+<th class="px-6 py-5 text-xs font-bold text-slate-400 uppercase tracking-wider">Preço Adicional</th>
+<th class="px-6 py-5 text-xs font-bold text-slate-400 uppercase tracking-wider">Status</th>
+<th class="px-6 py-5 text-xs font-bold text-slate-400 uppercase tracking-wider text-right">Ações</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-white/5">
+<!-- Row 1 -->
+<tr class="hover:bg-white/[0.02] transition-colors group">
+<td class="px-6 py-5">
+<div class="flex items-center gap-3">
+<div class="size-12 rounded-lg bg-slate-800 overflow-hidden flex-shrink-0">
+<img class="w-full h-full object-cover" data-alt="Close up of a pepperoni pizza slice" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAKbihVB8kxm_scA5XOaQggs8wj8Ur6LVrfzxG9SLbSMIAhO5pWd_DzEk361AyWNyqW3Xk_gVaEjuR2YVzIQTQbuS2-98x4Et5_szcQ12UYPHnItr06fippp-ty6LO9n4bgp8lZbTtHuMvhYkRLHMv2acrANdA3wW4AP1tRld3A8FxlYX3ugW8noVv5a7EnncsUiZGSa7lXWUlnSyNlrEYGiIDHoF4tOHpBTuFbEeNzgKWb55ujDrBKlHXHHqSSIGJPvE8S4DMNWQ"/>
+</div>
+<span class="text-white font-bold text-sm">Calabresa Especial</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<div class="flex flex-wrap gap-1.5 max-w-xs">
+<span class="px-2 py-0.5 rounded-md bg-white/5 border border-white/5 text-[10px] text-slate-400">Molho Tomate</span>
+<span class="px-2 py-0.5 rounded-md bg-white/5 border border-white/5 text-[10px] text-slate-400">Mussarela</span>
+<span class="px-2 py-0.5 rounded-md bg-white/5 border border-white/5 text-[10px] text-slate-400">Calabresa</span>
+<span class="px-2 py-0.5 rounded-md bg-white/5 border border-white/5 text-[10px] text-slate-400">Cebola Roxa</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="text-[#10B981] font-semibold text-sm">+ R$ 5,00</span>
+</td>
+<td class="px-6 py-5">
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-800 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+<span class="ml-3 text-xs font-medium text-slate-500 peer-checked:text-primary">Disponível</span>
+</label>
+</td>
+<td class="px-6 py-5 text-right">
+<div class="flex items-center justify-end gap-2 opacity-40 group-hover:opacity-100 transition-opacity">
+<button class="p-2 rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all">
+<span class="material-symbols-outlined !text-lg">edit</span>
+</button>
+<button class="p-2 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all">
+<span class="material-symbols-outlined !text-lg">delete</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-white/[0.02] transition-colors group">
+<td class="px-6 py-5">
+<div class="flex items-center gap-3">
+<div class="size-12 rounded-lg bg-slate-800 overflow-hidden flex-shrink-0">
+<img class="w-full h-full object-cover" data-alt="Pizza with chicken and catupiry cheese" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAyBW_Edw_CTZoXaPxTkRt-54-1Xpua3ctksq4jPtE2x6Voik45xH5oiFl_vZPQYMjGNnJhrFhwicmJLX5XmgkwE9cNDjppRe4jrRhPCUA_9M7JDOVteYA4BSaKtQyMmTjSBEnj6wNO-vf1VoI_3htSon-d9_bADEdGVKfm_COPHoocBzcD4Su-X1FFbhY5ECPafXQj5mSEgpzkAWGW024WULMZHVlUSQgxHpM3S5P5xv95P2nVg03jsjBN5o9BNkldUZh9zhMW8A"/>
+</div>
+<span class="text-white font-bold text-sm">Frango com Catupiry</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<div class="flex flex-wrap gap-1.5 max-w-xs">
+<span class="px-2 py-0.5 rounded-md bg-white/5 border border-white/5 text-[10px] text-slate-400">Frango Desfiado</span>
+<span class="px-2 py-0.5 rounded-md bg-white/5 border border-white/5 text-[10px] text-slate-400">Catupiry</span>
+<span class="px-2 py-0.5 rounded-md bg-white/5 border border-white/5 text-[10px] text-slate-400">Milho</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="text-[#10B981] font-semibold text-sm">+ R$ 7,50</span>
+</td>
+<td class="px-6 py-5">
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-800 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+<span class="ml-3 text-xs font-medium text-slate-500 peer-checked:text-primary">Disponível</span>
+</label>
+</td>
+<td class="px-6 py-5 text-right">
+<div class="flex items-center justify-end gap-2 opacity-40 group-hover:opacity-100 transition-opacity">
+<button class="p-2 rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all">
+<span class="material-symbols-outlined !text-lg">edit</span>
+</button>
+<button class="p-2 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all">
+<span class="material-symbols-outlined !text-lg">delete</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-white/[0.02] transition-colors group">
+<td class="px-6 py-5">
+<div class="flex items-center gap-3">
+<div class="size-12 rounded-lg bg-slate-800 overflow-hidden flex-shrink-0">
+<img class="w-full h-full object-cover" data-alt="Classic Margherita pizza with basil" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCgz_LrgpZix4zCFwtVMQHACM9_gkxERGcW6L9zTlCJEIY5UZccqdEwlApRjrmUf5SyJiDfJ4-MaG8KCFuC1r3YAl1HbtK1yzaL5QSjv2FbGQAWSDLsciaMIungKI8mnAVowo7zlhts8e1Z7LUURPPx3PgRprG9Qdhb7mUWyh1y2C3nu7c2Q-C76VWAfASPW1OxKVQVM9ag0jSjoQcV1ZWV-kLb2XIryD8FnSBk3TEb2SX4FsbmeUaVXIm12JaIayZbF8XEvZpXNg"/>
+</div>
+<span class="text-white font-bold text-sm">Margherita Premium</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<div class="flex flex-wrap gap-1.5 max-w-xs">
+<span class="px-2 py-0.5 rounded-md bg-white/5 border border-white/5 text-[10px] text-slate-400">Tomate Cereja</span>
+<span class="px-2 py-0.5 rounded-md bg-white/5 border border-white/5 text-[10px] text-slate-400">Manjericão</span>
+<span class="px-2 py-0.5 rounded-md bg-white/5 border border-white/5 text-[10px] text-slate-400">Mussarela de Búfala</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="text-[#10B981] font-semibold text-sm">+ R$ 4,00</span>
+</td>
+<td class="px-6 py-5">
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-800 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+<span class="ml-3 text-xs font-medium text-slate-500 peer-checked:text-primary">Disponível</span>
+</label>
+</td>
+<td class="px-6 py-5 text-right">
+<div class="flex items-center justify-end gap-2 opacity-40 group-hover:opacity-100 transition-opacity">
+<button class="p-2 rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all">
+<span class="material-symbols-outlined !text-lg">edit</span>
+</button>
+<button class="p-2 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all">
+<span class="material-symbols-outlined !text-lg">delete</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-white/[0.02] transition-colors group">
+<td class="px-6 py-5">
+<div class="flex items-center gap-3">
+<div class="size-12 rounded-lg bg-slate-800 overflow-hidden flex-shrink-0">
+<img class="w-full h-full object-cover" data-alt="Gourmet four cheese pizza" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDCuNMotXveQAF_BtWhOUZgSSdyI6a8lLEsJcpqhSOP7G8FBdG5Cn6iM8nmzzEt9qtxa92HttDuledENSoF8W7PKhnxG7SxJq1O1uUNcM43pGKzfKyc8ov2rK1RtILretBC_UK2Bw25TlLfdbIMAezXPxVSWgcI4ucvgOw1TR7KRvpVCPZh3TLXlxaD8mIgjoxyYdPcgOOiSQX_3z2qW49BKE_g-hHdVt74TzFpKOJAvV50CrUiunPRoQUgIwaMXltenefc9JKQuQ"/>
+</div>
+<span class="text-white font-bold text-sm">Quatro Queijos</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<div class="flex flex-wrap gap-1.5 max-w-xs">
+<span class="px-2 py-0.5 rounded-md bg-white/5 border border-white/5 text-[10px] text-slate-400">Gorgonzola</span>
+<span class="px-2 py-0.5 rounded-md bg-white/5 border border-white/5 text-[10px] text-slate-400">Parmesão</span>
+<span class="px-2 py-0.5 rounded-md bg-white/5 border border-white/5 text-[10px] text-slate-400">Provolone</span>
+<span class="px-2 py-0.5 rounded-md bg-white/5 border border-white/5 text-[10px] text-slate-400">Mussarela</span>
+</div>
+</td>
+<td class="px-6 py-5">
+<span class="text-[#10B981] font-semibold text-sm">+ R$ 8,00</span>
+</td>
+<td class="px-6 py-5">
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-slate-800 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+<span class="ml-3 text-xs font-medium text-slate-500 peer-checked:text-primary">Esgotado</span>
+</label>
+</td>
+<td class="px-6 py-5 text-right">
+<div class="flex items-center justify-end gap-2 opacity-40 group-hover:opacity-100 transition-opacity">
+<button class="p-2 rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all">
+<span class="material-symbols-outlined !text-lg">edit</span>
+</button>
+<button class="p-2 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all">
+<span class="material-symbols-outlined !text-lg">delete</span>
+</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination -->
+<div class="px-6 py-4 flex items-center justify-between border-t border-white/5 bg-white/[0.01]">
+<p class="text-xs text-slate-500">Exibindo 1 a 4 de 24 sabores</p>
+<div class="flex items-center gap-1">
+<button class="size-8 rounded-lg flex items-center justify-center text-slate-500 hover:bg-white/5 hover:text-white transition-colors">
+<span class="material-symbols-outlined !text-base">chevron_left</span>
+</button>
+<button class="size-8 rounded-lg flex items-center justify-center bg-primary text-white text-xs font-bold active-glow">1</button>
+<button class="size-8 rounded-lg flex items-center justify-center text-slate-500 hover:bg-white/5 hover:text-white text-xs font-medium transition-colors">2</button>
+<button class="size-8 rounded-lg flex items-center justify-center text-slate-500 hover:bg-white/5 hover:text-white text-xs font-medium transition-colors">3</button>
+<span class="text-slate-700 px-1">...</span>
+<button class="size-8 rounded-lg flex items-center justify-center text-slate-500 hover:bg-white/5 hover:text-white text-xs font-medium transition-colors">6</button>
+<button class="size-8 rounded-lg flex items-center justify-center text-slate-500 hover:bg-white/5 hover:text-white transition-colors">
+<span class="material-symbols-outlined !text-base">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Quick Stats -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+<div class="glass-panel p-6 rounded-2xl">
+<div class="flex items-center gap-4">
+<div class="size-12 rounded-xl bg-primary/20 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">restaurant_menu</span>
+</div>
+<div>
+<p class="text-slate-500 text-xs font-medium">Total de Sabores</p>
+<p class="text-white text-xl font-bold">24</p>
+</div>
+</div>
+</div>
+<div class="glass-panel p-6 rounded-2xl">
+<div class="flex items-center gap-4">
+<div class="size-12 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-500">
+<span class="material-symbols-outlined">check_circle</span>
+</div>
+<div>
+<p class="text-slate-500 text-xs font-medium">Ativos no Cardápio</p>
+<p class="text-white text-xl font-bold">21</p>
+</div>
+</div>
+</div>
+<div class="glass-panel p-6 rounded-2xl">
+<div class="flex items-center gap-4">
+<div class="size-12 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-500">
+<span class="material-symbols-outlined">trending_up</span>
+</div>
+<div>
+<p class="text-slate-500 text-xs font-medium">Mais Pedido</p>
+<p class="text-white text-xl font-bold">Calabresa</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

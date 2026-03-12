@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Lucchese Pizza - Gerenciamento de Tamanhos</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#8b5cf6",
+                        "background-light": "#0A0A0B",
+                        "background-dark": "#0A0A0B",
+                        "surface": "rgba(255, 255, 255, 0.05)",
+                        "border-glass": "rgba(255, 255, 255, 0.08)",
+                        "emerald-soft": "#10B981",
+                        "muted-red": "#EF4444"
+                    },
+                    fontFamily: {
+                        "display": ["Work Sans", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "1rem",
+                        "lg": "1.5rem",
+                        "xl": "2rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Work Sans', sans-serif;
+            background-color: #0A0A0B;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .sidebar-active {
+            background: rgba(139, 92, 246, 0.15);
+            border-right: 3px solid #8b5cf6;
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.2);
+        }
+        .primary-gradient {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+        }
+    </style>
+</head>
+<body class="bg-background-dark text-slate-100 antialiased font-display">
+<div class="flex h-screen overflow-hidden">
+<!-- Sidebar -->
+<aside class="w-[230px] flex-shrink-0 flex flex-col bg-[#050505] border-r border-border-glass">
+<div class="p-6 mb-4">
+<div class="flex items-center gap-3">
+<div class="h-10 w-10 rounded-full primary-gradient flex items-center justify-center shadow-lg shadow-primary/20" data-alt="Lucchese Pizza abstract logo circular gradient">
+<span class="material-symbols-outlined text-white">local_pizza</span>
+</div>
+<div class="flex flex-col">
+<h1 class="text-white text-sm font-bold leading-tight">Lucchese Pizza</h1>
+<p class="text-slate-500 text-[10px] uppercase tracking-widest font-semibold">Dashboard Pro</p>
+</div>
+</div>
+</div>
+<nav class="flex-1 px-3 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white transition-colors group" href="#">
+<span class="material-symbols-outlined text-[22px]">dashboard</span>
+<span class="text-sm font-medium">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white transition-colors group" href="#">
+<span class="material-symbols-outlined text-[22px]">restaurant_menu</span>
+<span class="text-sm font-medium">Cardápio</span>
+</a>
+<a class="sidebar-active flex items-center gap-3 px-4 py-3 text-primary transition-all group" href="#">
+<span class="material-symbols-outlined text-[22px] fill-1">aspect_ratio</span>
+<span class="text-sm font-bold">Tamanhos</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white transition-colors group" href="#">
+<span class="material-symbols-outlined text-[22px]">shopping_bag</span>
+<span class="text-sm font-medium">Pedidos</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white transition-colors group" href="#">
+<span class="material-symbols-outlined text-[22px]">group</span>
+<span class="text-sm font-medium">Clientes</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-400 hover:text-white transition-colors group" href="#">
+<span class="material-symbols-outlined text-[22px]">settings</span>
+<span class="text-sm font-medium">Configurações</span>
+</a>
+</nav>
+<div class="p-4 border-t border-border-glass">
+<button class="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-white/5 text-slate-300 hover:bg-muted-red hover:text-white transition-all text-sm font-semibold">
+<span class="material-symbols-outlined text-sm">logout</span>
+                    Sair do Sistema
+                </button>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex-1 flex flex-col overflow-y-auto bg-background-dark">
+<!-- Header -->
+<header class="px-8 pt-8 pb-4">
+<div class="flex items-center justify-between mb-8">
+<div>
+<h2 class="text-3xl font-black text-white tracking-tight">Tamanhos de Pizzas</h2>
+<p class="text-slate-400 text-sm mt-1">Configure as dimensões e regras de negócio para cada porte de pizza.</p>
+</div>
+<button class="primary-gradient text-white px-6 py-3 rounded-xl font-bold text-sm flex items-center gap-2 shadow-lg shadow-primary/30 hover:scale-[1.02] transition-transform">
+<span class="material-symbols-outlined">add_circle</span>
+                        Novo Tamanho
+                    </button>
+</div>
+<!-- Filters/Search -->
+<div class="flex gap-4 items-center">
+<div class="relative flex-1 group">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-primary transition-colors">search</span>
+<input class="w-full bg-surface border-border-glass rounded-xl py-3 pl-12 pr-4 text-white placeholder-slate-500 focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all outline-none" placeholder="Buscar por nome do tamanho ou fatias..." type="text"/>
+</div>
+<button class="bg-surface border border-border-glass p-3 rounded-xl text-slate-400 hover:text-white transition-all">
+<span class="material-symbols-outlined">filter_list</span>
+</button>
+</div>
+</header>
+<!-- Table Container -->
+<div class="px-8 py-4">
+<div class="glass-card rounded-lg overflow-hidden border border-border-glass shadow-2xl">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-white/[0.02] border-bottom border-border-glass">
+<th class="px-6 py-5 text-xs font-bold uppercase tracking-wider text-slate-400">Nome</th>
+<th class="px-6 py-5 text-xs font-bold uppercase tracking-wider text-slate-400">Fatias</th>
+<th class="px-6 py-5 text-xs font-bold uppercase tracking-wider text-slate-400">Máx. Sabores</th>
+<th class="px-6 py-5 text-xs font-bold uppercase tracking-wider text-slate-400">Preço Base</th>
+<th class="px-6 py-5 text-xs font-bold uppercase tracking-wider text-slate-400 text-right">Ações</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-border-glass">
+<!-- Row 1 -->
+<tr class="hover:bg-white/[0.02] transition-colors group">
+<td class="px-6 py-5">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-primary/10 flex items-center justify-center text-primary font-bold text-xs" data-alt="Small size icon abstract">P</div>
+<span class="text-white font-bold text-base">Pequena (Brotinho)</span>
+</div>
+</td>
+<td class="px-6 py-5 text-slate-300 font-medium">4 fatias</td>
+<td class="px-6 py-5">
+<span class="px-3 py-1 bg-white/5 border border-border-glass rounded-full text-xs font-medium text-slate-300">Até 1 sabor</span>
+</td>
+<td class="px-6 py-5">
+<span class="text-emerald-soft font-bold text-lg tracking-tight">R$ 35,00</span>
+</td>
+<td class="px-6 py-5">
+<div class="flex items-center justify-end gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
+<button class="p-2 rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all">
+<span class="material-symbols-outlined text-[20px]">edit</span>
+</button>
+<button class="p-2 rounded-lg bg-muted-red/10 text-muted-red hover:bg-muted-red hover:text-white transition-all">
+<span class="material-symbols-outlined text-[20px]">delete</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-white/[0.02] transition-colors group">
+<td class="px-6 py-5">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-primary/10 flex items-center justify-center text-primary font-bold text-xs" data-alt="Medium size icon abstract">M</div>
+<span class="text-white font-bold text-base">Média</span>
+</div>
+</td>
+<td class="px-6 py-5 text-slate-300 font-medium">6 fatias</td>
+<td class="px-6 py-5">
+<span class="px-3 py-1 bg-white/5 border border-border-glass rounded-full text-xs font-medium text-slate-300">Até 2 sabores</span>
+</td>
+<td class="px-6 py-5">
+<span class="text-emerald-soft font-bold text-lg tracking-tight">R$ 45,00</span>
+</td>
+<td class="px-6 py-5">
+<div class="flex items-center justify-end gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
+<button class="p-2 rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all">
+<span class="material-symbols-outlined text-[20px]">edit</span>
+</button>
+<button class="p-2 rounded-lg bg-muted-red/10 text-muted-red hover:bg-muted-red hover:text-white transition-all">
+<span class="material-symbols-outlined text-[20px]">delete</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-white/[0.02] transition-colors group">
+<td class="px-6 py-5">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-primary/10 flex items-center justify-center text-primary font-bold text-xs" data-alt="Large size icon abstract">G</div>
+<span class="text-white font-bold text-base">Grande</span>
+</div>
+</td>
+<td class="px-6 py-5 text-slate-300 font-medium">8 fatias</td>
+<td class="px-6 py-5">
+<span class="px-3 py-1 bg-white/5 border border-border-glass rounded-full text-xs font-medium text-slate-300">Até 3 sabores</span>
+</td>
+<td class="px-6 py-5">
+<span class="text-emerald-soft font-bold text-lg tracking-tight">R$ 55,00</span>
+</td>
+<td class="px-6 py-5">
+<div class="flex items-center justify-end gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
+<button class="p-2 rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all">
+<span class="material-symbols-outlined text-[20px]">edit</span>
+</button>
+<button class="p-2 rounded-lg bg-muted-red/10 text-muted-red hover:bg-muted-red hover:text-white transition-all">
+<span class="material-symbols-outlined text-[20px]">delete</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-white/[0.02] transition-colors group border-b-0">
+<td class="px-6 py-5">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-primary/10 flex items-center justify-center text-primary font-bold text-xs" data-alt="Family size icon abstract">F</div>
+<span class="text-white font-bold text-base">Família</span>
+</div>
+</td>
+<td class="px-6 py-5 text-slate-300 font-medium">12 fatias</td>
+<td class="px-6 py-5">
+<span class="px-3 py-1 bg-white/5 border border-border-glass rounded-full text-xs font-medium text-slate-300">Até 4 sabores</span>
+</td>
+<td class="px-6 py-5">
+<span class="text-emerald-soft font-bold text-lg tracking-tight">R$ 75,00</span>
+</td>
+<td class="px-6 py-5">
+<div class="flex items-center justify-end gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
+<button class="p-2 rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all">
+<span class="material-symbols-outlined text-[20px]">edit</span>
+</button>
+<button class="p-2 rounded-lg bg-muted-red/10 text-muted-red hover:bg-muted-red hover:text-white transition-all">
+<span class="material-symbols-outlined text-[20px]">delete</span>
+</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination -->
+<div class="mt-6 flex items-center justify-between text-slate-400">
+<p class="text-xs font-medium">Mostrando 4 de 4 tamanhos cadastrados</p>
+<div class="flex items-center gap-1">
+<button class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/5 disabled:opacity-30" disabled="">
+<span class="material-symbols-outlined text-sm">chevron_left</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg bg-primary text-white text-xs font-bold">1</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/5 disabled:opacity-30" disabled="">
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Footer Stats -->
+<footer class="mt-auto px-8 pb-8 pt-4">
+<div class="grid grid-cols-3 gap-4">
+<div class="glass-card p-4 rounded-xl border border-border-glass">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">analytics</span>
+</div>
+<div>
+<p class="text-[10px] text-slate-500 uppercase font-bold tracking-wider leading-none">Total Tamanhos</p>
+<p class="text-xl font-black text-white">4 Ativos</p>
+</div>
+</div>
+</div>
+<div class="glass-card p-4 rounded-xl border border-border-glass">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-emerald-soft/10 flex items-center justify-center text-emerald-soft">
+<span class="material-symbols-outlined">payments</span>
+</div>
+<div>
+<p class="text-[10px] text-slate-500 uppercase font-bold tracking-wider leading-none">Ticket Médio Base</p>
+<p class="text-xl font-black text-white">R$ 52,50</p>
+</div>
+</div>
+</div>
+<div class="glass-card p-4 rounded-xl border border-border-glass">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-slate-500/10 flex items-center justify-center text-slate-400">
+<span class="material-symbols-outlined">history</span>
+</div>
+<div>
+<p class="text-[10px] text-slate-500 uppercase font-bold tracking-wider leading-none">Última Alteração</p>
+<p class="text-xl font-black text-white">Hoje, 14:30</p>
+</div>
+</div>
+</div>
+</div>
+</footer>
+</main>
+</div>
+</body></html>

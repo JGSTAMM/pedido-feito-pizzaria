@@ -1,0 +1,8 @@
+﻿Analyzing waiter_app...                                         
+
+  error - The argument type 'CardTheme' can't be assigned to the parameter type 'CardThemeData?'.  - lib\core\theme\app_theme.dart:43:16 - argument_type_not_assignable
+  error - The argument type 'CardTheme' can't be assigned to the parameter type 'CardThemeData?'.  - lib\core\theme\app_theme.dart:73:16 - argument_type_not_assignable
+   info - The constant name 'pix_online' isn't a lowerCamelCase identifier - lib\features\cart\domain\models\order_enums.dart:8:3 - constant_identifier_names
+   info - The constant name 'credit_online' isn't a lowerCamelCase identifier - lib\features\cart\domain\models\order_enums.dart:9:3 - constant_identifier_names
+   info - The constant name 'card_machine' isn't a lowerCamelCase identifier - lib\features\cart\domain\models\order_enums.dart:11:3 - constant_identifier_names
+

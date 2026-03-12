@@ -1,0 +1,43 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Model;
+
+class Payment extends Model
+{
+    use HasUuids;
+
+    protected $fillable = [
+        'order_id', 'method', 'amount', 'notes',
+        'gateway_id', 'gateway_status', 'paid_at',
+    ];
+
+    protected $casts = [
+        'amount' => 'decimal:2',
+        'paid_at' => 'datetime',
+    ];
+
+    public function order()
+    {
+        return $this->belongsTo(Order::class);
+    }
+
+    public static function getMethodOptions(): array
+    {
+        return [
+            'dinheiro' => '💵 Dinheiro',
+            'pix' => '📱 PIX',
+            'pix_online' => '📱 PIX Online',
+            'credito' => '💳 Crédito',
+            'credito_online' => '💳 Crédito Online',
+            'debito' => '💳 Débito',
+        ];
+    }
+
+    public function isOnline(): bool
+    {
+        return !empty($this->gateway_id);
+    }
+}
