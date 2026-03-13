@@ -44,6 +44,8 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/cash-register/close', [CashRegisterController::class, 'close']);
 
     // CRUDs & Settings (Phase 3.5 & 5)
+    Route::resource('/users', \App\Http\Controllers\UserController::class)->except(['create', 'show', 'edit']);
+    
     Route::get('/products', [\App\Http\Controllers\ProductController::class, 'index'])->name('products');
     Route::post('/products', [\App\Http\Controllers\ProductController::class, 'store']);
     Route::put('/products/{product}', [\App\Http\Controllers\ProductController::class, 'update']);

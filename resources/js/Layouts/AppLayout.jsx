@@ -14,6 +14,7 @@ const configItems = [
     { href: '/flavors', icon: 'local_pizza', label: 'Sabores' },
     { href: '/sizes', icon: 'straighten', label: 'Tamanhos' },
     { href: '/reports', icon: 'analytics', label: 'Relatórios' },
+    { href: '/users', icon: 'group', label: 'Equipe' },
     { href: '/settings', icon: 'settings', label: 'Configurações' },
 ];
 
