@@ -15,16 +15,16 @@ function KdsItemRow({ item, compact = false, dimmed = false }) {
 
     return (
         <div>
-            <div className={`flex items-start gap-2 text-sm ${textColor}`}>
-                <span className={`font-bold ${dimmed ? 'text-slate-400 bg-white/5' : 'text-white bg-white/10'} px-1.5 rounded flex-shrink-0`}>
+            <div className={`flex items-start gap-2 text-sm md:text-base ${textColor}`}>
+                <span className={`font-black ${dimmed ? 'text-slate-400 bg-white/5' : 'text-white bg-white/10'} px-2 py-0.5 rounded flex-shrink-0 text-base md:text-lg`}>
                     {item.quantity}x
                 </span>
-                <div className="flex-1 min-w-0">
-                    <span className={`font-semibold ${nameColor}`}>
+                <div className="flex-1 min-w-0 mt-0.5">
+                    <span className={`font-bold ${nameColor}`}>
                         {item.is_pizza && '🍕 '}{item.name}
                     </span>
                     {item.is_pizza && item.flavor_names?.length > 0 && (
-                        <p className={`${compact ? 'text-[11px]' : 'text-xs'} text-slate-400 mt-0.5 pl-0.5`}>
+                        <p className={`${compact ? 'text-xs' : 'text-sm'} text-slate-400 mt-1 pl-0.5 font-medium`}>
                             {item.flavor_names.length > 1
                                 ? item.flavor_names.map(f => `1/${item.flavor_names.length} ${f}`).join(', ')
                                 : item.flavor_names[0]
@@ -34,9 +34,9 @@ function KdsItemRow({ item, compact = false, dimmed = false }) {
                 </div>
             </div>
             {item.notes && (
-                <div className={`flex items-center gap-1.5 text-[11px] text-orange-400 font-medium mt-1 ${compact ? 'ml-7' : 'ml-7'} bg-orange-500/5 px-2 py-1 rounded-md border border-orange-500/10`}>
-                    <span className="material-symbols-outlined text-[14px] flex-shrink-0">warning</span>
-                    <span>{item.notes}</span>
+                <div className={`flex items-start gap-2 mt-2 ${compact ? 'ml-9' : 'ml-10'} bg-red-600/20 px-3 py-2 rounded-lg border border-red-500/30`}>
+                    <span className="material-symbols-outlined text-red-500 text-[18px] flex-shrink-0 mt-0.5">error</span>
+                    <span className="text-red-500 font-black text-xs md:text-sm uppercase tracking-wide leading-snug">{item.notes}</span>
                 </div>
             )}
         </div>

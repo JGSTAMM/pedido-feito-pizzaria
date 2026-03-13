@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { router } from '@inertiajs/react';
 import { norm } from '@/utils/normalize';
 import PizzaBuilderModal from '@/Pages/POS/PizzaBuilderModal';
+import ReceiptPrint from '@/Components/ReceiptPrint';
 import axios from 'axios';
 
 export default function TableOrderDrawer({
@@ -542,9 +543,15 @@ export default function TableOrderDrawer({
                                 <h3 className="text-lg font-bold text-white mb-0.5">Encerrar Conta</h3>
                                 <p className="text-sm font-bold text-emerald-400">Total: R$ {Number(activeOrder.total).toFixed(2).replace('.', ',')}</p>
                             </div>
-                            <button onClick={() => !checkingOut && setShowCheckoutModal(false)} className="size-8 flex items-center justify-center rounded-lg bg-white/5 text-text-muted hover:text-white hover:bg-white/10 transition-colors">
-                                <span className="material-symbols-outlined text-[20px]">close</span>
-                            </button>
+                            <div className="flex items-center gap-3">
+                                <button onClick={() => window.print()} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface hover:bg-white/10 text-white text-xs font-bold transition-colors border border-border-subtle shadow-lg">
+                                    <span className="material-symbols-outlined text-[16px]">print</span>
+                                    <span>Conferência</span>
+                                </button>
+                                <button onClick={() => !checkingOut && setShowCheckoutModal(false)} className="size-8 flex items-center justify-center rounded-lg bg-white/5 text-text-muted hover:text-white hover:bg-white/10 transition-colors">
+                                    <span className="material-symbols-outlined text-[20px]">close</span>
+                                </button>
+                            </div>
                         </div>
                         <div className="p-5 overflow-y-auto custom-scrollbar flex-1 max-h-[60vh]">
                             <label className="block text-sm font-bold text-white mb-2">Adicionar Pagamento</label>
@@ -657,6 +664,9 @@ export default function TableOrderDrawer({
                     </div>
                 </div>
             )}
+
+            {/* Hidden Print Container for the Receipt */}
+            <ReceiptPrint order={activeOrder} />
         </>
     );
 }
