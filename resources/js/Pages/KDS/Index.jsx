@@ -155,7 +155,7 @@ function OrderDetailModal({ order, isOpen, onClose }) {
 }
 
 /* ─── Order Card ─── */
-function OrderCard({ order, columnStatus, onShowDetails }) {
+function OrderCard({ order, columnStatus, onShowDetails, onPrint }) {
     const colors = statusColors[order.status] || statusColors.pending;
     const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -208,6 +208,13 @@ function OrderCard({ order, columnStatus, onShowDetails }) {
                 </div>
                 <div className="flex items-center gap-2">
                     <button
+                        onClick={() => onPrint(order)}
+                        className="w-9 h-9 flex items-center justify-center rounded-lg bg-surface/50 hover:bg-surface text-text-muted hover:text-white border border-border-subtle transition-all"
+                        title="Imprimir via de produção"
+                    >
+                        <span className="material-symbols-outlined text-[18px]">print</span>
+                    </button>
+                    <button
                         onClick={() => onShowDetails(order)}
                         className="w-9 h-9 flex items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 text-text-muted hover:text-white border border-white/5 transition-all"
                         title="Ver detalhes"
@@ -245,7 +252,7 @@ function OrderCard({ order, columnStatus, onShowDetails }) {
 }
 
 /* ─── KDS Column ─── */
-function KdsColumn({ title, orders, color, count, glow = false, onShowDetails }) {
+function KdsColumn({ title, orders, color, count, glow = false, onShowDetails, onPrint }) {
     const colorMap = {
         pending: { badge: 'bg-amber-500/20 text-amber-400', label: 'Pendentes' },
         preparing: { badge: 'bg-primary/20 text-primary', label: 'Em Preparo' },
@@ -262,7 +269,7 @@ function KdsColumn({ title, orders, color, count, glow = false, onShowDetails })
             </div>
             <div className={`p-4 space-y-4 overflow-y-auto flex-1 scrollbar-hide ${color === 'ready' ? 'opacity-80 hover:opacity-100 transition-opacity' : ''}`}>
                 {orders.map(order => (
-                    <OrderCard key={order.id} order={order} columnStatus={color} onShowDetails={onShowDetails} />
+                    <OrderCard key={order.id} order={order} columnStatus={color} onShowDetails={onShowDetails} onPrint={onPrint} />
                 ))}
                 {orders.length === 0 && (
                     <div className="flex flex-col items-center justify-center py-12 text-text-muted opacity-50">
@@ -281,6 +288,14 @@ function KdsColumn({ title, orders, color, count, glow = false, onShowDetails })
 export default function Index({ orders = [], counts = {} }) {
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+    const [printOrder, setPrintOrder] = useState(null);
+
+    const handlePrintOrder = (order) => {
+        setPrintOrder(order);
+        setTimeout(() => {
+            window.print();
+        }, 100);
+    };
 
     const pendingOrders = orders.filter(o => o.status === 'pending');
     const preparingOrders = orders.filter(o => o.status === 'preparing');
@@ -325,9 +340,9 @@ export default function Index({ orders = [], counts = {} }) {
         <AppLayout topBar={kdsTopBar}>
             <div className="flex-1 overflow-x-auto overflow-y-hidden p-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 h-full min-w-[900px]">
-                    <KdsColumn title="Pendentes" orders={pendingOrders} color="pending" count={counts.pending ?? 0} onShowDetails={handleShowDetails} />
-                    <KdsColumn title="Em Preparo" orders={preparingOrders} color="preparing" count={counts.preparing ?? 0} onShowDetails={handleShowDetails} glow />
-                    <KdsColumn title="Prontos" orders={readyOrders} color="ready" count={counts.ready ?? 0} onShowDetails={handleShowDetails} />
+                    <KdsColumn title="Pendentes" orders={pendingOrders} color="pending" count={counts.pending ?? 0} onShowDetails={handleShowDetails} onPrint={handlePrintOrder} />
+                    <KdsColumn title="Em Preparo" orders={preparingOrders} color="preparing" count={counts.preparing ?? 0} onShowDetails={handleShowDetails} onPrint={handlePrintOrder} glow />
+                    <KdsColumn title="Prontos" orders={readyOrders} color="ready" count={counts.ready ?? 0} onShowDetails={handleShowDetails} onPrint={handlePrintOrder} />
                 </div>
 
                 <OrderDetailModal
@@ -335,6 +350,8 @@ export default function Index({ orders = [], counts = {} }) {
                     isOpen={isDetailModalOpen}
                     onClose={() => setIsDetailModalOpen(false)}
                 />
+                
+                <KitchenReceiptPrint order={printOrder} />
             </div>
         </AppLayout>
     );
