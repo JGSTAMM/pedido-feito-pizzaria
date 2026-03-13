@@ -32,6 +32,7 @@ function Toast({ message, type = 'success' }) {
 /* ── TABS CONFIG ── */
 const TABS = [
     { key: 'perfil', label: 'Perfil do Negócio', icon: 'storefront' },
+    { key: 'recibos', label: 'Impressão e Recibos', icon: 'receipt_long' },
     { key: 'impressoras', label: 'Impressoras', icon: 'print' },
     { key: 'integracoes', label: 'Integrações', icon: 'integration_instructions' },
 ];
@@ -87,6 +88,7 @@ export default function Index({ settings, printers = [] }) {
                     {/* Content Panel */}
                     <div className="flex-1 space-y-6">
                         {activeTab === 'perfil' && <TabPerfil settings={settings} />}
+                        {activeTab === 'recibos' && <TabRecibos settings={settings} />}
                         {activeTab === 'impressoras' && <TabImpressoras printers={printers} />}
                         {activeTab === 'integracoes' && <TabIntegracoes />}
                     </div>
@@ -234,6 +236,68 @@ function TabPerfil({ settings }) {
                 </form>
             </Card>
         </>
+    );
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   TAB: RECIBOS (SaaS)
+   ═══════════════════════════════════════════════════════════════════ */
+import { useForm } from '@inertiajs/react';
+
+function TabRecibos({ settings }) {
+    const { data, setData, post, processing, errors } = useForm({
+        receipt_header_1: settings?.receipt_header_1 || '',
+        receipt_header_2: settings?.receipt_header_2 || '',
+        receipt_footer: settings?.receipt_footer || '',
+        receipt_show_cnpj: settings?.receipt_show_cnpj ?? true,
+    });
+
+    const submit = (e) => {
+        e.preventDefault();
+        post('/settings/receipt', { preserveScroll: true });
+    };
+
+    return (
+        <Card>
+            <div className="mb-6">
+                <h3 className="text-lg font-bold text-white mb-1">Impressão e Recibos</h3>
+                <p className="text-sm text-text-muted">Personalize a Via de Conferência do termo de impressão 80mm.</p>
+            </div>
+            <form onSubmit={submit} className="space-y-6">
+                <div className="grid grid-cols-2 gap-6">
+                    <div>
+                        <Label>Cabeçalho Linha 1</Label>
+                        <input type="text" value={data.receipt_header_1} onChange={e => setData('receipt_header_1', e.target.value)} placeholder="Ex: LUCCHESE" className="w-full bg-background border border-border-subtle rounded-xl px-4 py-2.5 text-sm text-white focus:border-primary/50 outline-none" />
+                        {errors.receipt_header_1 && <p className="text-red-400 text-xs mt-1">{errors.receipt_header_1}</p>}
+                    </div>
+
+                    <div>
+                        <Label>Cabeçalho Linha 2</Label>
+                        <input type="text" value={data.receipt_header_2} onChange={e => setData('receipt_header_2', e.target.value)} placeholder="Ex: Pizzaria Gourmet" className="w-full bg-background border border-border-subtle rounded-xl px-4 py-2.5 text-sm text-white focus:border-primary/50 outline-none" />
+                        {errors.receipt_header_2 && <p className="text-red-400 text-xs mt-1">{errors.receipt_header_2}</p>}
+                    </div>
+                </div>
+
+                <div>
+                    <Label>Mensagem de Rodapé (Volte Sempre, Senha de Wi-Fi, etc)</Label>
+                    <textarea rows="3" value={data.receipt_footer} onChange={e => setData('receipt_footer', e.target.value)} className="w-full bg-background border border-border-subtle rounded-xl px-4 py-2.5 text-sm text-white focus:border-primary/50 outline-none resize-none"></textarea>
+                    {errors.receipt_footer && <p className="text-red-400 text-xs mt-1">{errors.receipt_footer}</p>}
+                </div>
+
+                <label className="flex items-center gap-3 cursor-pointer group w-max">
+                    <div className={`relative w-12 h-6 rounded-full transition-colors ${data.receipt_show_cnpj ? 'bg-primary' : 'bg-surface border border-border-subtle'}`}>
+                        <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform ${data.receipt_show_cnpj ? 'translate-x-6' : 'translate-x-0'}`}></div>
+                    </div>
+                    <span className="text-sm font-bold text-slate-300 group-hover:text-white transition-colors">Exibir o CNPJ da Loja no Recibo</span>
+                </label>
+
+                <div className="pt-4 border-t border-border-subtle flex justify-end">
+                    <button type="submit" disabled={processing} className="px-6 py-2.5 rounded-xl text-sm font-bold bg-primary text-white hover:bg-primary-dark transition-colors disabled:opacity-50">
+                        {processing ? 'Salvando...' : 'Salvar Formato de Recibo'}
+                    </button>
+                </div>
+            </form>
+        </Card>
     );
 }
 

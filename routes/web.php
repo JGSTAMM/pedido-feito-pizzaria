@@ -65,6 +65,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/settings/status', [\App\Http\Controllers\SettingsController::class, 'updateStoreStatus']);
     Route::post('/settings/hours', [\App\Http\Controllers\SettingsController::class, 'updateOpeningHours']);
     Route::post('/settings/profile', [\App\Http\Controllers\SettingsController::class, 'updateProfile']);
+    Route::post('/settings/receipt', [\App\Http\Controllers\SettingsController::class, 'updateReceipt']);
 
 
     // Printers CRUD (inside settings)

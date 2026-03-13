@@ -63,6 +63,19 @@ class SettingsController extends Controller
         return redirect()->back()->with('success', 'Perfil atualizado.');
     }
 
+    // ── Receipt ──
+    public function updateReceipt(Request $request)
+    {
+        $request->validate([
+            'receipt_header_1' => 'nullable|string|max:255',
+            'receipt_header_2' => 'nullable|string|max:255',
+            'receipt_footer' => 'nullable|string',
+            'receipt_show_cnpj' => 'required|boolean',
+        ]);
+        StoreSetting::first()->update($request->only('receipt_header_1', 'receipt_header_2', 'receipt_footer', 'receipt_show_cnpj'));
+        return redirect()->back()->with('success', 'Configurações de Recibo atualizadas.');
+    }
+
 
 
     // ── Printers CRUD ──

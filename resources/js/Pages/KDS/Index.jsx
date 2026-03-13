@@ -8,23 +8,22 @@ const statusColors = {
     ready: { bg: 'border-l-emerald-500', badge: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20', text: 'text-emerald-400', icon: 'check_circle' },
 };
 
-/* ─── Reusable Item Renderer (shared by card + modal) ─── */
 function KdsItemRow({ item, compact = false, dimmed = false }) {
     const textColor = dimmed ? 'text-text-muted' : 'text-slate-300';
     const nameColor = dimmed ? 'text-slate-400 line-through decoration-slate-600' : 'text-white';
 
     return (
-        <div>
-            <div className={`flex items-start gap-2 text-sm md:text-base ${textColor}`}>
-                <span className={`font-black ${dimmed ? 'text-slate-400 bg-white/5' : 'text-white bg-white/10'} px-2 py-0.5 rounded flex-shrink-0 text-base md:text-lg`}>
+        <div className="mb-2">
+            <div className={`flex items-start gap-3 md:gap-4 text-sm md:text-base ${textColor}`}>
+                <span className={`font-black ${dimmed ? 'text-slate-400 bg-white/5' : 'text-white bg-white/10'} px-2.5 py-1 rounded text-lg md:text-xl flex-shrink-0 shadow`}>
                     {item.quantity}x
                 </span>
                 <div className="flex-1 min-w-0 mt-0.5">
-                    <span className={`font-bold ${nameColor}`}>
+                    <span className={`font-black text-lg md:text-xl tracking-wide uppercase ${nameColor}`}>
                         {item.is_pizza && '🍕 '}{item.name}
                     </span>
                     {item.is_pizza && item.flavor_names?.length > 0 && (
-                        <p className={`${compact ? 'text-xs' : 'text-sm'} text-slate-400 mt-1 pl-0.5 font-medium`}>
+                        <p className={`text-base md:text-lg text-white mt-1 pl-1 font-bold leading-tight uppercase`}>
                             {item.flavor_names.length > 1
                                 ? item.flavor_names.map(f => `1/${item.flavor_names.length} ${f}`).join(', ')
                                 : item.flavor_names[0]
@@ -34,9 +33,9 @@ function KdsItemRow({ item, compact = false, dimmed = false }) {
                 </div>
             </div>
             {item.notes && (
-                <div className={`flex items-start gap-2 mt-2 ${compact ? 'ml-9' : 'ml-10'} bg-red-600/20 px-3 py-2 rounded-lg border border-red-500/30`}>
-                    <span className="material-symbols-outlined text-red-500 text-[18px] flex-shrink-0 mt-0.5">error</span>
-                    <span className="text-red-500 font-black text-xs md:text-sm uppercase tracking-wide leading-snug">{item.notes}</span>
+                <div className={`flex items-start gap-2 mt-3 ${compact ? 'ml-[42px]' : 'ml-[52px]'} bg-red-700 p-3 rounded-lg border-2 border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.7)]`}>
+                    <span className="material-symbols-outlined text-white text-[24px] flex-shrink-0 animate-pulse font-black">warning</span>
+                    <span className="text-white font-black text-sm md:text-lg uppercase tracking-widest leading-snug drop-shadow-md">{item.notes}</span>
                 </div>
             )}
         </div>

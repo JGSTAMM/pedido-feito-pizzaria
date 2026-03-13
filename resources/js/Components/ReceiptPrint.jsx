@@ -1,15 +1,26 @@
 import React from 'react';
 
+import { usePage } from '@inertiajs/react';
+
 // Estilos de impressão injetados globalmente ou via classe isolada para afetar apenas este componente
 export default function ReceiptPrint({ order }) {
+    const { storeSetting } = usePage().props;
     if (!order) return null;
 
+    const header1 = storeSetting?.receipt_header_1 || storeSetting?.store_name || "LUCCHESE";
+    const header2 = storeSetting?.receipt_header_2 || "PIZZARIA GOURMET";
+    const footerMsg = storeSetting?.receipt_footer || "Obrigado pela preferência!";
+    const showCnpj = storeSetting?.receipt_show_cnpj ?? true;
+
     return (
-        <div className="hidden print:block bg-white text-black font-mono w-[80mm] p-2 mx-auto text-xs leading-snug print:m-0 print:p-0">
+        <div className="hidden print:block font-mono bg-white text-black p-0 m-0 w-[80mm] leading-snug">
             {/* Cabecalho */}
             <div className="text-center mb-4 border-b border-black pb-2 border-dashed">
-                <h2 className="text-xl font-bold uppercase tracking-widest mb-1">Lucchese</h2>
-                <p className="text-[10px] uppercase font-bold">Pizzaria Gourmet</p>
+                <h2 className="text-xl font-bold uppercase tracking-widest mb-1">{header1}</h2>
+                <p className="text-[10px] uppercase font-bold">{header2}</p>
+                {showCnpj && storeSetting?.cnpj && (
+                    <p className="text-[10px] uppercase font-bold mt-0.5">CNPJ: {storeSetting.cnpj}</p>
+                )}
                 <p className="text-[10px] mt-1">
                     {new Date().toLocaleDateString('pt-BR')} {new Date().toLocaleTimeString('pt-BR')}
                 </p>
@@ -73,16 +84,20 @@ export default function ReceiptPrint({ order }) {
             </div>
 
             {/* Rodapé */}
-            <div className="text-center text-[10px] mt-6 pt-4 border-t border-black border-solid space-y-1">
+            <div className="text-center text-[10px] mt-6 pt-4 border-t border-black border-dashed space-y-1">
                 <p className="font-bold uppercase tracking-widest">*** CONFERÊNCIA DE MESA ***</p>
                 <p>NÃO É DOCUMENTO FISCAL</p>
-                <p className="mt-2 text-[9px] !mt-4">Obrigado pela preferência!</p>
+                {footerMsg && <p className="mt-2 text-[10px] !mt-4 whitespace-pre-wrap leading-tight">{footerMsg}</p>}
             </div>
 
             {/* Estilo Global exclusivo para Impressão */}
             <style>
                 {`
                     @media print {
+                        @page {
+                            margin: 0;
+                            size: 80mm auto;
+                        }
                         body * {
                             visibility: hidden;
                         }
@@ -93,10 +108,10 @@ export default function ReceiptPrint({ order }) {
                             position: absolute;
                             left: 0;
                             top: 0;
-                            width: 100%;
-                        }
-                        @page {
+                            width: 80mm !important;
                             margin: 0;
+                            padding: 0;
+                            font-size: 11px;
                         }
                     }
                 `}
