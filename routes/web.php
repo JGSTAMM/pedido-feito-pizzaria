@@ -66,10 +66,6 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/settings/hours', [\App\Http\Controllers\SettingsController::class, 'updateOpeningHours']);
     Route::post('/settings/profile', [\App\Http\Controllers\SettingsController::class, 'updateProfile']);
 
-    // Users CRUD (inside settings)
-    Route::post('/settings/users', [\App\Http\Controllers\SettingsController::class, 'storeUser']);
-    Route::put('/settings/users/{user}', [\App\Http\Controllers\SettingsController::class, 'updateUser']);
-    Route::delete('/settings/users/{user}', [\App\Http\Controllers\SettingsController::class, 'destroyUser']);
 
     // Printers CRUD (inside settings)
     Route::post('/settings/printers', [\App\Http\Controllers\SettingsController::class, 'storePrinter']);

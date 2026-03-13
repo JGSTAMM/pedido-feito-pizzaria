@@ -33,14 +33,13 @@ function Toast({ message, type = 'success' }) {
 const TABS = [
     { key: 'perfil', label: 'Perfil do Negócio', icon: 'storefront' },
     { key: 'impressoras', label: 'Impressoras', icon: 'print' },
-    { key: 'usuarios', label: 'Usuários', icon: 'manage_accounts' },
     { key: 'integracoes', label: 'Integrações', icon: 'integration_instructions' },
 ];
 
 /* ═══════════════════════════════════════════════════════════════════
    MAIN COMPONENT
    ═══════════════════════════════════════════════════════════════════ */
-export default function Index({ settings, users = [], printers = [] }) {
+export default function Index({ settings, printers = [] }) {
     const [activeTab, setActiveTab] = useState('perfil');
     const { flash } = usePage().props;
     const [toast, setToast] = useState(null);
@@ -89,7 +88,6 @@ export default function Index({ settings, users = [], printers = [] }) {
                     <div className="flex-1 space-y-6">
                         {activeTab === 'perfil' && <TabPerfil settings={settings} />}
                         {activeTab === 'impressoras' && <TabImpressoras printers={printers} />}
-                        {activeTab === 'usuarios' && <TabUsuarios users={users} />}
                         {activeTab === 'integracoes' && <TabIntegracoes />}
                     </div>
                 </div>
@@ -335,105 +333,6 @@ function TabImpressoras({ printers }) {
                         <input type="text" value={data.ip_address} onChange={e => setData('ip_address', e.target.value)} placeholder="Ex: 192.168.1.100" className="w-full bg-surface border border-border-subtle rounded-xl px-4 py-2.5 text-sm text-white focus:border-primary/50 outline-none" />
                     </div>
                     <ModalFooter onClose={() => setModalOpen(false)} processing={processing} label={editingId ? 'Salvar' : 'Adicionar'} />
-                </form>
-            </Modal>
-        </>
-    );
-}
-
-/* ═══════════════════════════════════════════════════════════════════
-   TAB: USUÁRIOS
-   ═══════════════════════════════════════════════════════════════════ */
-function TabUsuarios({ users }) {
-    const [modalOpen, setModalOpen] = useState(false);
-    const [editingId, setEditingId] = useState(null);
-    const { data, setData, post, put, processing, reset, clearErrors, errors } = useForm({ name: '', email: '', password: '', role: 'caixa' });
-
-    const openCreate = () => { clearErrors(); reset(); setEditingId(null); setModalOpen(true); };
-    const openEdit = (u) => { clearErrors(); setData({ name: u.name, email: u.email, password: '', role: u.role || 'admin' }); setEditingId(u.id); setModalOpen(true); };
-
-    const submit = (e) => {
-        e.preventDefault();
-        if (editingId) {
-            put(`/settings/users/${editingId}`, { preserveScroll: true, onSuccess: () => setModalOpen(false) });
-        } else {
-            post('/settings/users', { preserveScroll: true, onSuccess: () => setModalOpen(false) });
-        }
-    };
-
-    const handleDelete = (id) => { if (confirm('Excluir este usuário?')) router.delete(`/settings/users/${id}`, { preserveScroll: true }); };
-
-    const roleBadge = (role) => {
-        const map = { admin: 'Administrador', caixa: 'Caixa', garcom: 'Garçom' };
-        const colorMap = { admin: 'text-primary bg-primary/10 border-primary/20', caixa: 'text-amber-400 bg-amber-400/10 border-amber-400/20', garcom: 'text-cyan-400 bg-cyan-400/10 border-cyan-400/20' };
-        return <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border ${colorMap[role] || colorMap.admin}`}>{map[role] || role}</span>;
-    };
-
-    return (
-        <>
-            <Card>
-                <div className="flex items-center justify-between mb-6">
-                    <div>
-                        <h3 className="text-lg font-bold text-white mb-1">Equipe</h3>
-                        <p className="text-sm text-text-muted">Gerencie os membros da equipe e suas permissões.</p>
-                    </div>
-                    <button onClick={openCreate} className="flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-bold rounded-xl hover:bg-primary-dark transition-all shadow-lg shadow-primary/20">
-                        <span className="material-symbols-outlined text-lg">person_add</span> Novo Usuário
-                    </button>
-                </div>
-
-                {users.length === 0 ? (
-                    <div className="p-8 text-center text-text-muted">Nenhum usuário cadastrado.</div>
-                ) : (
-                    <div className="space-y-3">
-                        {users.map(u => (
-                            <div key={u.id} className="flex items-center justify-between p-4 rounded-xl border border-border-subtle bg-background-dark">
-                                <div className="flex items-center gap-4">
-                                    <div className="size-10 bg-primary/10 rounded-full flex items-center justify-center text-primary font-bold text-sm uppercase">
-                                        {u.name.charAt(0)}
-                                    </div>
-                                    <div>
-                                        <h4 className="text-white font-bold text-sm">{u.name}</h4>
-                                        <p className="text-xs text-text-muted">{u.email}</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                    {roleBadge(u.role)}
-                                    <button onClick={() => openEdit(u)} className="text-text-muted hover:text-white transition-colors"><span className="material-symbols-outlined text-[20px]">edit</span></button>
-                                    <button onClick={() => handleDelete(u.id)} className="text-text-muted hover:text-red-400 transition-colors"><span className="material-symbols-outlined text-[20px]">delete</span></button>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </Card>
-
-            <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={editingId ? 'Editar Usuário' : 'Novo Usuário'}>
-                <form onSubmit={submit} className="flex flex-col gap-4">
-                    <div>
-                        <Label>Nome</Label>
-                        <input type="text" value={data.name} onChange={e => setData('name', e.target.value)} className="w-full bg-surface border border-border-subtle rounded-xl px-4 py-2.5 text-sm text-white focus:border-primary/50 outline-none" required />
-                        {errors.name && <p className="text-red-400 text-xs mt-1">{errors.name}</p>}
-                    </div>
-                    <div>
-                        <Label>Email</Label>
-                        <input type="email" value={data.email} onChange={e => setData('email', e.target.value)} className="w-full bg-surface border border-border-subtle rounded-xl px-4 py-2.5 text-sm text-white focus:border-primary/50 outline-none" required />
-                        {errors.email && <p className="text-red-400 text-xs mt-1">{errors.email}</p>}
-                    </div>
-                    <div>
-                        <Label>{editingId ? 'Nova Senha (deixe vazio para manter)' : 'Senha'}</Label>
-                        <input type="password" value={data.password} onChange={e => setData('password', e.target.value)} className="w-full bg-surface border border-border-subtle rounded-xl px-4 py-2.5 text-sm text-white focus:border-primary/50 outline-none" {...(!editingId && { required: true })} />
-                        {errors.password && <p className="text-red-400 text-xs mt-1">{errors.password}</p>}
-                    </div>
-                    <div>
-                        <Label>Função</Label>
-                        <select value={data.role} onChange={e => setData('role', e.target.value)} className="w-full bg-surface border border-border-subtle rounded-xl px-4 py-2.5 text-sm text-white focus:border-primary/50 outline-none">
-                            <option value="admin">Administrador</option>
-                            <option value="caixa">Caixa</option>
-                            <option value="garcom">Garçom</option>
-                        </select>
-                    </div>
-                    <ModalFooter onClose={() => setModalOpen(false)} processing={processing} label={editingId ? 'Salvar' : 'Cadastrar'} />
                 </form>
             </Modal>
         </>

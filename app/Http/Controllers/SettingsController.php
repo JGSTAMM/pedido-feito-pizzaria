@@ -6,7 +6,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
 use App\Models\StoreSetting;
-use App\Models\User;
 use App\Models\Printer;
 
 class SettingsController extends Controller
@@ -33,7 +32,6 @@ class SettingsController extends Controller
 
         return Inertia::render('Settings/Index', [
             'settings' => $settings,
-            'users' => User::orderBy('name')->get(['id', 'name', 'email', 'role']),
             'printers' => Printer::orderBy('name')->get(),
         ]);
     }
@@ -65,51 +63,7 @@ class SettingsController extends Controller
         return redirect()->back()->with('success', 'Perfil atualizado.');
     }
 
-    // ── Users CRUD ──
-    public function storeUser(Request $request)
-    {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|string|min:6',
-            'role' => 'required|in:admin,caixa,garcom',
-        ]);
 
-        User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'role' => $request->role,
-        ]);
-
-        return redirect()->back()->with('success', 'Usuário criado.');
-    }
-
-    public function updateUser(Request $request, User $user)
-    {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $user->id,
-            'role' => 'required|in:admin,caixa,garcom',
-        ]);
-
-        $data = $request->only('name', 'email', 'role');
-        if ($request->filled('password')) {
-            $data['password'] = Hash::make($request->password);
-        }
-        $user->update($data);
-
-        return redirect()->back()->with('success', 'Usuário atualizado.');
-    }
-
-    public function destroyUser(User $user)
-    {
-        if (User::count() <= 1) {
-            return redirect()->back()->with('error', 'Não é possível excluir o único usuário.');
-        }
-        $user->delete();
-        return redirect()->back()->with('success', 'Usuário excluído.');
-    }
 
     // ── Printers CRUD ──
     public function storePrinter(Request $request)
