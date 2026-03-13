@@ -242,7 +242,6 @@ function TabPerfil({ settings }) {
 /* ═══════════════════════════════════════════════════════════════════
    TAB: RECIBOS (SaaS)
    ═══════════════════════════════════════════════════════════════════ */
-import { useForm } from '@inertiajs/react';
 
 function TabRecibos({ settings }) {
     const { data, setData, post, processing, errors } = useForm({
