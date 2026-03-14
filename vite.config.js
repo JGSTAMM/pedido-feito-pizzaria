@@ -24,9 +24,12 @@ export default defineConfig({
         react(),
     ],
     server: {
-        host: 'localhost',
+        host: '127.0.0.1',
         watch: {
             ignored: ['**/storage/framework/views/**'],
+        },
+        hmr: {
+            host: '127.0.0.1',
         },
     },
 });

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { router } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
+import KitchenReceiptPrint from '@/Components/KitchenReceiptPrint';
 
 const statusColors = {
     pending: { bg: 'border-l-amber-400', badge: 'bg-amber-500/10 text-amber-400 border-amber-500/20', text: 'text-amber-400', icon: 'schedule' },
