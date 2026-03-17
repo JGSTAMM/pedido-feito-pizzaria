@@ -9,12 +9,17 @@ use App\Models\Neighborhood;
 use App\Services\PaymentGatewayService;
 use App\Services\PizzaPriceService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 class OnlinePaymentController extends Controller
 {
+    public function __construct(private readonly PaymentGatewayService $paymentGatewayService)
+    {
+    }
+
     /**
      * POST /api/online-orders
      * 
@@ -186,10 +191,42 @@ class OnlinePaymentController extends Controller
     {
         Log::info('Mercado Pago webhook received', $request->all());
 
-        $gateway = new PaymentGatewayService();
-        $success = $gateway->handleWebhook($request->all());
+        if (!$this->paymentGatewayService->validateWebhookSignature($request)) {
+            return response()->json([
+                'received' => false,
+                'message' => __('webhook.invalid_signature'),
+            ], 403);
+        }
 
-        return response()->json(['received' => $success], $success ? 200 : 400);
+        $notificationId = $this->paymentGatewayService->extractNotificationId($request);
+
+        if (!$notificationId) {
+            return response()->json([
+                'received' => false,
+                'message' => __('webhook.missing_notification_id'),
+            ], 400);
+        }
+
+        $cacheKey = "mercadopago:webhook:{$notificationId}";
+        if (!Cache::add($cacheKey, now()->toISOString(), now()->addDay())) {
+            return response()->json([
+                'received' => true,
+                'duplicate' => true,
+                'message' => __('webhook.duplicate_notification'),
+            ]);
+        }
+
+        $success = $this->paymentGatewayService->handleWebhook($request->all());
+
+        if (!$success) {
+            Cache::forget($cacheKey);
+            return response()->json([
+                'received' => false,
+                'message' => __('webhook.processing_failed'),
+            ], 400);
+        }
+
+        return response()->json(['received' => true]);
     }
 
     /**

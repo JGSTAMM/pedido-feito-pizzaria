@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useForm, router } from '@inertiajs/react';
 import { norm } from '@/utils/normalize';
 import AppLayout from '@/Layouts/AppLayout';
+import useI18n from '@/hooks/useI18n';
 
 function Modal({ isOpen, onClose, title, children }) {
     if (!isOpen) return null;
@@ -26,6 +27,7 @@ function Modal({ isOpen, onClose, title, children }) {
 }
 
 export default function Index({ flavors = [] }) {
+    const { t } = useI18n();
     const [searchTerm, setSearchTerm] = useState('');
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingId, setEditingId] = useState(null);
@@ -61,7 +63,7 @@ export default function Index({ flavors = [] }) {
     };
 
     const handleDelete = (id) => {
-        if (confirm('Tem certeza que deseja excluir este sabor?')) {
+        if (confirm(t('flavors.messages.confirmDelete'))) {
             router.delete(`/flavors/${id}`);
         }
     };
@@ -95,13 +97,13 @@ export default function Index({ flavors = [] }) {
                             <span className="material-symbols-outlined">restaurant_menu</span>
                         </div>
                         <div>
-                            <h2 className="text-white text-xl font-bold tracking-tight">Sabores de Pizza</h2>
-                            <p className="text-text-muted text-xs">Gerencie os sabores disponíveis no cardápio</p>
+                            <h2 className="text-white text-xl font-bold tracking-tight">{t('flavors.header.title')}</h2>
+                            <p className="text-text-muted text-xs">{t('flavors.header.subtitle')}</p>
                         </div>
                     </div>
                     <button onClick={openCreate} className="flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-bold rounded-xl hover:bg-primary-dark transition-all shadow-lg shadow-primary/20">
                         <span className="material-symbols-outlined text-lg">add</span>
-                        Novo Sabor
+                        {t('flavors.actions.new')}
                     </button>
                 </header>
 
@@ -111,7 +113,7 @@ export default function Index({ flavors = [] }) {
                         <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-text-muted">search</span>
                         <input
                             type="text"
-                            placeholder="Buscar sabor..."
+                            placeholder={t('flavors.search.placeholder')}
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="w-full bg-surface border border-border-subtle rounded-xl pl-12 pr-4 py-3 text-sm text-white focus:outline-none focus:border-primary/50 transition-all"
@@ -122,13 +124,13 @@ export default function Index({ flavors = [] }) {
                     <div className="bg-surface rounded-2xl border border-border-subtle overflow-hidden relative" style={{ background: 'rgba(255,255,255,0.03)' }}>
                         <div className="absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent"></div>
                         <div className="grid grid-cols-[1fr_120px_100px_80px] gap-4 px-6 py-4 border-b border-border-subtle bg-black/20 text-xs font-bold text-text-muted uppercase tracking-wider">
-                            <span>Nome do Sabor</span>
-                            <span>Preço Base</span>
-                            <span>Status</span>
-                            <span className="text-right">Ações</span>
+                            <span>{t('flavors.table.name')}</span>
+                            <span>{t('flavors.table.basePrice')}</span>
+                            <span>{t('flavors.table.status')}</span>
+                            <span className="text-right">{t('flavors.table.actions')}</span>
                         </div>
                         {filtered.length === 0 ? (
-                            <div className="p-12 text-center text-text-muted">Nenhum sabor encontrado.</div>
+                            <div className="p-12 text-center text-text-muted">{t('flavors.empty')}</div>
                         ) : (
                             filtered.map((flavor, idx) => (
                                 <div key={flavor.id} className={`grid grid-cols-[1fr_120px_100px_80px] gap-4 px-6 py-4 items-center hover:bg-surface-hover transition-colors ${idx !== filtered.length - 1 ? 'border-b border-border-subtle' : ''}`}>
@@ -139,7 +141,7 @@ export default function Index({ flavors = [] }) {
                                             onClick={() => toggleStatus(flavor.id)}
                                             className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background-dark ${flavor.is_active !== false ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.3)]' : 'bg-surface-hover'}`}
                                         >
-                                            <span className="sr-only">Toggle Status</span>
+                                            <span className="sr-only">{t('flavors.table.toggleStatus')}</span>
                                             <span
                                                 aria-hidden="true"
                                                 className={`pointer-events-none inline-block size-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${flavor.is_active !== false ? 'translate-x-2.5' : '-translate-x-2.5'}`}
@@ -158,22 +160,22 @@ export default function Index({ flavors = [] }) {
             </div>
 
             {/* Form Modal */}
-            <Modal isOpen={isFormOpen} onClose={() => setIsFormOpen(false)} title={editingId ? 'Editar Sabor' : 'Novo Sabor'}>
+            <Modal isOpen={isFormOpen} onClose={() => setIsFormOpen(false)} title={editingId ? t('flavors.modal.editTitle') : t('flavors.modal.newTitle')}>
                 <form onSubmit={submit} className="flex flex-col gap-4">
                     <div>
-                        <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-1.5">Nome do Sabor</label>
+                        <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-1.5">{t('flavors.form.name')}</label>
                         <input
                             type="text"
                             value={data.name}
                             onChange={e => setData('name', e.target.value)}
-                            placeholder="Ex: Calabresa"
+                            placeholder={t('flavors.form.namePlaceholder')}
                             className="w-full bg-surface border border-border-subtle rounded-xl px-4 py-2.5 text-sm text-white focus:border-primary/50 outline-none"
                             required
                         />
                         {errors.name && <div className="text-red-400 text-xs mt-1">{errors.name}</div>}
                     </div>
                     <div>
-                        <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-1.5">Preço Base (R$)</label>
+                        <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-1.5">{t('flavors.form.basePrice')}</label>
                         <input
                             type="number"
                             step="0.01"
@@ -192,7 +194,7 @@ export default function Index({ flavors = [] }) {
                                 onChange={e => setData('is_active', e.target.checked)}
                                 className="w-4 h-4 rounded border-border-subtle text-primary bg-surface focus:ring-primary focus:ring-offset-background-dark"
                             />
-                            <span className="text-sm text-white font-medium">Sabor Ativo no Cardápio</span>
+                            <span className="text-sm text-white font-medium">{t('flavors.form.activeLabel')}</span>
                         </label>
                     </div>
 
@@ -202,14 +204,14 @@ export default function Index({ flavors = [] }) {
                             onClick={() => setIsFormOpen(false)}
                             className="px-4 py-2 rounded-xl text-sm font-bold text-text-muted hover:text-white transition-colors"
                         >
-                            Cancelar
+                            {t('flavors.form.cancel')}
                         </button>
                         <button
                             type="submit"
                             disabled={processing}
                             className="px-4 py-2 rounded-xl text-sm font-bold bg-primary text-white hover:bg-primary-dark transition-colors disabled:opacity-50"
                         >
-                            {processing ? 'Salvando...' : 'Salvar Sabor'}
+                            {processing ? t('flavors.form.saving') : t('flavors.form.save')}
                         </button>
                     </div>
                 </form>

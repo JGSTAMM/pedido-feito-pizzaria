@@ -1,21 +1,22 @@
 import { Link, usePage } from '@inertiajs/react';
+import useI18n from '@/hooks/useI18n';
 
 const navItems = [
-    { href: '/pos', icon: 'point_of_sale', label: 'PDV' },
-    { href: '/dashboard', icon: 'dashboard', label: 'Painel de Controle' },
-    { href: '/orders', icon: 'receipt_long', label: 'Pedidos' },
-    { href: '/kds', icon: 'skillet', label: 'Cozinha (KDS)' },
-    { href: '/floor', icon: 'table_restaurant', label: 'Mapa do Salão' },
-    { href: '/cash-register', icon: 'point_of_sale', label: 'Caixa' },
+    { href: '/pos', icon: 'point_of_sale', labelKey: 'nav.pos' },
+    { href: '/dashboard', icon: 'dashboard', labelKey: 'nav.dashboard' },
+    { href: '/orders', icon: 'receipt_long', labelKey: 'nav.orders' },
+    { href: '/kds', icon: 'skillet', labelKey: 'nav.kds' },
+    { href: '/floor', icon: 'table_restaurant', labelKey: 'nav.floor' },
+    { href: '/cash-register', icon: 'point_of_sale', labelKey: 'nav.cashRegister' },
 ];
 
 const configItems = [
-    { href: '/products', icon: 'inventory_2', label: 'Produtos' },
-    { href: '/flavors', icon: 'local_pizza', label: 'Sabores' },
-    { href: '/sizes', icon: 'straighten', label: 'Tamanhos' },
-    { href: '/reports', icon: 'analytics', label: 'Relatórios' },
-    { href: '/users', icon: 'group', label: 'Equipe' },
-    { href: '/settings', icon: 'settings', label: 'Configurações' },
+    { href: '/products', icon: 'inventory_2', labelKey: 'nav.products' },
+    { href: '/flavors', icon: 'local_pizza', labelKey: 'nav.flavors' },
+    { href: '/sizes', icon: 'straighten', labelKey: 'nav.sizes' },
+    { href: '/reports', icon: 'analytics', labelKey: 'nav.reports' },
+    { href: '/users', icon: 'group', labelKey: 'nav.team' },
+    { href: '/settings', icon: 'settings', labelKey: 'nav.settings' },
 ];
 
 function SidebarLink({ href, icon, label, active }) {
@@ -37,7 +38,8 @@ function SidebarLink({ href, icon, label, active }) {
 
 export default function AppLayout({ children, topBar = null }) {
     const { url, props } = usePage();
-    const appName = props.appName || 'Pedido Feito';
+    const { t } = useI18n();
+    const appName = props.appName || t('layout.defaultAppName');
 
     // Determine active route from current URL
     const isActive = (href) => {
@@ -53,9 +55,9 @@ export default function AppLayout({ children, topBar = null }) {
                 {/* Brand */}
                 <div className="p-6 pb-8 border-b border-border-subtle">
                     <h1 className="text-white text-xl font-bold tracking-tight">
-                        {appName || 'Pedido Feito'}
+                        {appName || t('layout.defaultAppName')}
                     </h1>
-                    <p className="text-text-muted text-xs mt-1 font-medium">System Admin v2.0</p>
+                    <p className="text-text-muted text-xs mt-1 font-medium">{t('layout.systemAdminVersion')}</p>
                 </div>
 
                 {/* Navigation Links */}
@@ -65,21 +67,21 @@ export default function AppLayout({ children, topBar = null }) {
                             key={item.href}
                             href={item.href}
                             icon={item.icon}
-                            label={item.label}
+                            label={t(item.labelKey)}
                             active={isActive(item.href)}
                         />
                     ))}
 
                     <div className="pt-4 mt-4 border-t border-border-subtle">
                         <p className="px-4 text-xs font-semibold text-text-muted uppercase tracking-wider mb-2">
-                            Configurações
+                            {t('layout.settingsSection')}
                         </p>
                         {configItems.map((item) => (
                             <SidebarLink
                                 key={item.href}
                                 href={item.href}
                                 icon={item.icon}
-                                label={item.label}
+                                label={t(item.labelKey)}
                                 active={isActive(item.href)}
                             />
                         ))}
@@ -90,11 +92,11 @@ export default function AppLayout({ children, topBar = null }) {
                 <div className="p-4 border-t border-border-subtle flex items-center justify-between gap-2">
                     <Link href="/settings" className="flex items-center gap-3 p-2 flex-1 rounded-xl hover:bg-surface transition-colors cursor-pointer group">
                         <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-primary to-purple-400 flex items-center justify-center text-white font-bold text-sm">
-                            {props.auth?.user?.name ? props.auth.user.name.substring(0,2).toUpperCase() : 'AD'}
+                            {props.auth?.user?.name ? props.auth.user.name.substring(0, 2).toUpperCase() : 'AD'}
                         </div>
                         <div className="flex flex-col overflow-hidden">
-                            <p className="text-sm font-medium text-white truncate group-hover:text-primary transition-colors">{props.auth?.user?.name || 'Admin'}</p>
-                            <p className="text-xs text-emerald-soft truncate">Online</p>
+                            <p className="text-sm font-medium text-white truncate group-hover:text-primary transition-colors">{props.auth?.user?.name || t('layout.defaultAdmin')}</p>
+                            <p className="text-xs text-emerald-soft truncate">{t('common.online')}</p>
                         </div>
                     </Link>
                     <Link
@@ -102,7 +104,7 @@ export default function AppLayout({ children, topBar = null }) {
                         method="post"
                         as="button"
                         className="p-2 rounded-xl text-text-muted hover:bg-red-500/10 hover:text-red-400 transition-colors shrink-0"
-                        title="Sair do Sistema"
+                        title={t('layout.logoutTitle')}
                     >
                         <span className="material-symbols-outlined">logout</span>
                     </Link>

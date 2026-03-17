@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useForm, router } from '@inertiajs/react';
 import { norm } from '@/utils/normalize';
 import AppLayout from '@/Layouts/AppLayout';
+import useI18n from '@/hooks/useI18n';
 
 function Modal({ isOpen, onClose, title, children }) {
     if (!isOpen) return null;
@@ -26,6 +27,7 @@ function Modal({ isOpen, onClose, title, children }) {
 }
 
 export default function Index({ products = [] }) {
+    const { t } = useI18n();
     const [searchTerm, setSearchTerm] = useState('');
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingId, setEditingId] = useState(null);
@@ -66,7 +68,7 @@ export default function Index({ products = [] }) {
     };
 
     const handleDelete = (id) => {
-        if (confirm('Tem certeza que deseja excluir este produto?')) {
+        if (confirm(t('products.messages.confirmDelete'))) {
             router.delete(`/products/${id}`);
         }
     };
@@ -100,13 +102,13 @@ export default function Index({ products = [] }) {
                             <span className="material-symbols-outlined">inventory_2</span>
                         </div>
                         <div>
-                            <h2 className="text-white text-xl font-bold tracking-tight">Produtos</h2>
-                            <p className="text-text-muted text-xs">Catálogo geral de bebidas e complementos</p>
+                            <h2 className="text-white text-xl font-bold tracking-tight">{t('products.header.title')}</h2>
+                            <p className="text-text-muted text-xs">{t('products.header.subtitle')}</p>
                         </div>
                     </div>
                     <button onClick={openCreate} className="flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-bold rounded-xl hover:bg-primary-dark transition-all shadow-lg shadow-primary/20">
                         <span className="material-symbols-outlined text-lg">add</span>
-                        Novo Produto
+                        {t('products.actions.new')}
                     </button>
                 </header>
 
@@ -116,7 +118,7 @@ export default function Index({ products = [] }) {
                         <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-text-muted">search</span>
                         <input
                             type="text"
-                            placeholder="Buscar por nome ou categoria..."
+                            placeholder={t('products.search.placeholder')}
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className="w-full bg-surface border border-border-subtle rounded-xl pl-12 pr-4 py-3 text-sm text-white focus:outline-none focus:border-primary/50 transition-all"
@@ -126,15 +128,15 @@ export default function Index({ products = [] }) {
                     {/* Table */}
                     <div className="bg-surface rounded-2xl border border-border-subtle overflow-hidden relative" style={{ background: 'rgba(255,255,255,0.03)' }}>
                         <div className="grid grid-cols-[60px_1fr_150px_120px_100px_80px] gap-4 px-6 py-4 border-b border-border-subtle bg-black/20 text-xs font-bold text-text-muted uppercase tracking-wider">
-                            <span>Img</span>
-                            <span>Nome do Produto</span>
-                            <span>Categoria</span>
-                            <span>Preço</span>
-                            <span>Status</span>
-                            <span className="text-right">Ações</span>
+                            <span>{t('products.table.image')}</span>
+                            <span>{t('products.table.name')}</span>
+                            <span>{t('products.table.category')}</span>
+                            <span>{t('products.table.price')}</span>
+                            <span>{t('products.table.status')}</span>
+                            <span className="text-right">{t('products.table.actions')}</span>
                         </div>
                         {filtered.length === 0 ? (
-                            <div className="p-12 text-center text-text-muted">Nenhum produto encontrado.</div>
+                            <div className="p-12 text-center text-text-muted">{t('products.empty')}</div>
                         ) : (
                             filtered.map((product, idx) => (
                                 <div key={product.id} className={`grid grid-cols-[60px_1fr_150px_120px_100px_80px] gap-4 px-6 py-4 items-center hover:bg-surface-hover transition-colors ${idx !== filtered.length - 1 ? 'border-b border-border-subtle' : ''}`}>
@@ -153,7 +155,7 @@ export default function Index({ products = [] }) {
                                             onClick={() => toggleStatus(product.id)}
                                             className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background-dark ${product.is_active !== false ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.3)]' : 'bg-surface-hover'}`}
                                         >
-                                            <span className="sr-only">Toggle Status</span>
+                                            <span className="sr-only">{t('products.table.toggleStatus')}</span>
                                             <span
                                                 aria-hidden="true"
                                                 className={`pointer-events-none inline-block size-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${product.is_active !== false ? 'translate-x-2.5' : '-translate-x-2.5'}`}
@@ -172,10 +174,10 @@ export default function Index({ products = [] }) {
             </div>
 
             {/* Form Modal */}
-            <Modal isOpen={isFormOpen} onClose={() => setIsFormOpen(false)} title={editingId ? 'Editar Produto' : 'Novo Produto'}>
+            <Modal isOpen={isFormOpen} onClose={() => setIsFormOpen(false)} title={editingId ? t('products.modal.editTitle') : t('products.modal.newTitle')}>
                 <form onSubmit={submit} className="flex flex-col gap-4">
                     <div>
-                        <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-1.5">Nome do Produto</label>
+                        <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-1.5">{t('products.form.name')}</label>
                         <input
                             type="text"
                             value={data.name}
@@ -187,19 +189,19 @@ export default function Index({ products = [] }) {
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-1.5">Categoria</label>
+                            <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-1.5">{t('products.form.category')}</label>
                             <input
                                 type="text"
                                 value={data.category}
                                 onChange={e => setData('category', e.target.value)}
-                                placeholder="Ex: Bebidas"
+                                placeholder={t('products.form.categoryPlaceholder')}
                                 className="w-full bg-surface border border-border-subtle rounded-xl px-4 py-2.5 text-sm text-white focus:border-primary/50 outline-none"
                                 required
                             />
                             {errors.category && <div className="text-red-400 text-xs mt-1">{errors.category}</div>}
                         </div>
                         <div>
-                            <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-1.5">Preço (R$)</label>
+                            <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-1.5">{t('products.form.price')}</label>
                             <input
                                 type="number"
                                 step="0.01"
@@ -212,7 +214,7 @@ export default function Index({ products = [] }) {
                         </div>
                     </div>
                     <div>
-                        <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-1.5">Descrição</label>
+                        <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-1.5">{t('products.form.description')}</label>
                         <textarea
                             value={data.description}
                             onChange={e => setData('description', e.target.value)}
@@ -227,7 +229,7 @@ export default function Index({ products = [] }) {
                                 onChange={e => setData('is_active', e.target.checked)}
                                 className="w-4 h-4 rounded border-border-subtle text-primary bg-surface focus:ring-primary focus:ring-offset-background-dark"
                             />
-                            <span className="text-sm text-white font-medium">Produto Ativo</span>
+                            <span className="text-sm text-white font-medium">{t('products.form.activeLabel')}</span>
                         </label>
                     </div>
 
@@ -237,14 +239,14 @@ export default function Index({ products = [] }) {
                             onClick={() => setIsFormOpen(false)}
                             className="px-4 py-2 rounded-xl text-sm font-bold text-text-muted hover:text-white transition-colors"
                         >
-                            Cancelar
+                            {t('products.form.cancel')}
                         </button>
                         <button
                             type="submit"
                             disabled={processing}
                             className="px-4 py-2 rounded-xl text-sm font-bold bg-primary text-white hover:bg-primary-dark transition-colors disabled:opacity-50"
                         >
-                            {processing ? 'Salvando...' : 'Salvar Produto'}
+                            {processing ? t('products.form.saving') : t('products.form.save')}
                         </button>
                     </div>
                 </form>

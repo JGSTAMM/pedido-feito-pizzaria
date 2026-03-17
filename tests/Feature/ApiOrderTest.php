@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\CashRegister;
 use App\Models\Order;
 use App\Models\PizzaFlavor;
 use App\Models\PizzaSize;
@@ -18,8 +19,19 @@ class ApiOrderTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
         // Seed necessary data
-        $this->user = User::factory()->create();
+        $this->user = User::factory()->create([
+            'role' => 'waiter',
+        ]);
+
+        CashRegister::create([
+            'user_id' => $this->user->id,
+            'opened_at' => now(),
+            'opening_balance' => 100,
+            'status' => 'open',
+        ]);
+
         $this->table = Table::create(['name' => 'Table 1', 'status' => 'available']);
         $this->size = PizzaSize::create(['name' => 'Large', 'slices' => 8, 'max_flavors' => 2]);
         $this->flavor = PizzaFlavor::create(['name' => 'Pepperoni', 'base_price' => 20.00]);

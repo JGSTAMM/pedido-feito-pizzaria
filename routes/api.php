@@ -24,11 +24,19 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
-    Route::get('/sync', [DataController::class, 'index']);
-    Route::post('/orders', [OrderController::class, 'store']);
-    Route::get('/tables/{table}/orders', [OrderController::class, 'getByTable']);
-    Route::get('/orders/active', [OrderController::class, 'getAllActive']);
-    Route::get('/orders/ready', [OrderController::class, 'getReady']);
-    Route::post('/tables/{table}/close', [OrderController::class, 'closeTable']);
-    Route::post('/tables/{table}/pay', [OrderController::class, 'payAndCloseTable']);
+
+    Route::middleware('role:admin,cashier,caixa,waiter,garcom')->group(function () {
+        Route::get('/sync', [DataController::class, 'index']);
+        Route::post('/orders', [OrderController::class, 'store']);
+        Route::get('/tables/{table}/orders', [OrderController::class, 'getByTable']);
+        Route::get('/orders/active', [OrderController::class, 'getAllActive']);
+        Route::get('/orders/ready', [OrderController::class, 'getReady']);
+        Route::post('/tables/{table}/pay', [OrderController::class, 'payAndCloseTable'])
+            ->middleware('can:payAndClose,table');
+    });
+
+    Route::middleware('role:admin,cashier,caixa')->group(function () {
+        Route::post('/tables/{table}/close', [OrderController::class, 'closeTable'])
+            ->middleware('can:closeWithoutPayment,table');
+    });
 });

@@ -3,6 +3,7 @@ import { useForm, router } from '@inertiajs/react';
 import { norm } from '@/utils/normalize';
 import AppLayout from '@/Layouts/AppLayout';
 import TableOrderDrawer from './TableOrderDrawer';
+import useI18n from '@/hooks/useI18n';
 
 function Modal({ isOpen, onClose, title, children }) {
     if (!isOpen) return null;
@@ -35,6 +36,7 @@ export default function Index({
     categories = [],
     borderOptions = [],
 }) {
+    const { t } = useI18n();
     const [searchTerm, setSearchTerm] = useState('');
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingId, setEditingId] = useState(null);
@@ -83,7 +85,7 @@ export default function Index({
     };
 
     const handleDelete = (id) => {
-        if (confirm('Tem certeza que deseja remover esta mesa?')) {
+        if (confirm(t('floor.messages.confirmDelete'))) {
             router.delete(`/floor/${id}`);
         }
     };
@@ -118,8 +120,8 @@ export default function Index({
                             <span className="material-symbols-outlined">table_restaurant</span>
                         </div>
                         <div>
-                            <h2 className="text-white text-xl font-bold tracking-tight">Mapa do Salão</h2>
-                            <p className="text-text-muted text-xs">Visão geral e status das mesas</p>
+                            <h2 className="text-white text-xl font-bold tracking-tight">{t('floor.header.title')}</h2>
+                            <p className="text-text-muted text-xs">{t('floor.header.subtitle')}</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-3">
@@ -128,12 +130,12 @@ export default function Index({
                             className={`flex items-center gap-2 px-4 py-2 text-sm font-bold rounded-xl transition-all border ${isEditMode ? 'bg-orange-500/20 text-orange-400 border-orange-500/30' : 'bg-surface hover:bg-surface-hover text-text-muted border-border-subtle'}`}
                         >
                             <span className="material-symbols-outlined text-lg">edit_square</span>
-                            {isEditMode ? 'Modo de Edição Ativo' : 'Editar Layout'}
+                            {isEditMode ? t('floor.actions.editModeOn') : t('floor.actions.editLayout')}
                         </button>
                         {isEditMode && (
                             <button onClick={openCreate} className="flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-bold rounded-xl hover:bg-primary-dark transition-all shadow-lg shadow-primary/20">
                                 <span className="material-symbols-outlined text-lg">add</span>
-                                Nova Mesa
+                                {t('floor.actions.newTable')}
                             </button>
                         )}
                     </div>
@@ -144,7 +146,7 @@ export default function Index({
                     <div className="grid grid-cols-3 gap-6">
                         <div className="bg-surface border border-border-subtle rounded-2xl p-6 flex flex-col justify-center relative overflow-hidden group">
                             <div className="absolute right-0 top-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-10 -mt-10 transition-transform group-hover:scale-150"></div>
-                            <span className="text-text-muted text-sm font-bold uppercase tracking-wider mb-2">Total de Mesas</span>
+                            <span className="text-text-muted text-sm font-bold uppercase tracking-wider mb-2">{t('floor.stats.totalTables')}</span>
                             <div className="flex items-baseline gap-2">
                                 <span className="text-4xl font-black text-white">{stats.total || 0}</span>
                             </div>
@@ -153,7 +155,7 @@ export default function Index({
                             <div className="absolute right-0 top-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-3xl -mr-10 -mt-10 transition-transform group-hover:scale-150"></div>
                             <span className="text-emerald-400 text-sm font-bold uppercase tracking-wider mb-2 flex items-center gap-2">
                                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                                Livres
+                                {t('floor.stats.free')}
                             </span>
                             <div className="flex items-baseline gap-2">
                                 <span className="text-4xl font-black text-white">{stats.free || 0}</span>
@@ -163,7 +165,7 @@ export default function Index({
                             <div className="absolute right-0 top-0 w-32 h-32 bg-orange-500/5 rounded-full blur-3xl -mr-10 -mt-10 transition-transform group-hover:scale-150"></div>
                             <span className="text-orange-400 text-sm font-bold uppercase tracking-wider mb-2 flex items-center gap-2">
                                 <span className="w-2 h-2 rounded-full bg-orange-400"></span>
-                                Ocupadas
+                                {t('floor.stats.occupied')}
                             </span>
                             <div className="flex items-baseline gap-2">
                                 <span className="text-4xl font-black text-white">{stats.occupied || 0}</span>
@@ -176,7 +178,7 @@ export default function Index({
                             <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-text-muted">search</span>
                             <input
                                 type="text"
-                                placeholder="Buscar mesa..."
+                                placeholder={t('floor.search.placeholder')}
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 className="w-full bg-surface border border-border-subtle rounded-xl pl-12 pr-4 py-3 text-sm text-white focus:outline-none focus:border-primary/50 transition-all"
@@ -188,7 +190,7 @@ export default function Index({
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                         {filtered.length === 0 ? (
                             <div className="col-span-full p-12 text-center text-text-muted bg-surface rounded-2xl border border-border-subtle">
-                                Nenhuma mesa encontrada.
+                                {t('floor.empty')}
                             </div>
                         ) : (
                             filtered.map(table => (
@@ -212,11 +214,11 @@ export default function Index({
                                     <div className="flex justify-between items-start mb-6 pt-2">
                                         <div>
                                             <h3 className="text-2xl font-black text-white mb-1 group-hover:text-primary transition-colors">{table.name}</h3>
-                                            <span className="text-text-muted text-sm">{table.seats} Lugares</span>
+                                            <span className="text-text-muted text-sm">{t('floor.table.seats', { count: table.seats })}</span>
                                         </div>
                                         <div className={`px-3 py-1.5 rounded-lg text-xs font-bold border flex items-center gap-1.5 ${table.status === 'occupied' ? 'bg-orange-500/10 text-orange-400 border-orange-500/20' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'}`}>
                                             <span className={`w-1.5 h-1.5 rounded-full ${table.status === 'occupied' ? 'bg-orange-400 animate-pulse' : 'bg-emerald-400'}`}></span>
-                                            {table.status === 'occupied' ? 'Ocupada' : 'Livre'}
+                                            {table.status === 'occupied' ? t('floor.table.statusOccupied') : t('floor.table.statusFree')}
                                         </div>
                                     </div>
 
@@ -225,12 +227,12 @@ export default function Index({
                                             <div className="absolute inset-0 bg-gradient-to-r from-orange-500/5 to-transparent opacity-0 group-hover/order:opacity-100 transition-opacity"></div>
                                             <div className="flex justify-between items-end relative z-10">
                                                 <div>
-                                                    <span className="text-text-muted text-xs block mb-1">Pedido Atual</span>
+                                                    <span className="text-text-muted text-xs block mb-1">{t('floor.table.currentOrder')}</span>
                                                     <span className="text-sm font-bold text-white">#{table.active_order.short_code || String(table.active_order.id).substring(0, 5).toUpperCase()}</span>
                                                 </div>
                                                 <div className="text-right">
                                                     <span className="text-orange-400 text-xs font-bold block mb-1">
-                                                        {Math.floor(table.active_order.elapsed_minutes)} {Math.floor(table.active_order.elapsed_minutes) === 1 ? 'min atrás' : 'mins atrás'}
+                                                        {t('floor.table.elapsedMinutes', { count: Math.floor(table.active_order.elapsed_minutes) })}
                                                     </span>
                                                     <span className="text-lg font-black text-emerald-400 tracking-tight flex items-center justify-end gap-1">
                                                         <span className="text-xs text-text-muted font-normal">R$</span>
@@ -242,11 +244,11 @@ export default function Index({
                                     ) : (
                                         <div className="h-[76px] flex items-center justify-center rounded-xl border border-dashed border-border-subtle bg-black/20 text-text-muted text-sm">
                                             {isEditMode ? (
-                                                <span>Mesa disponível</span>
+                                                <span>{t('floor.table.available')}</span>
                                             ) : (
                                                 <div className="flex items-center gap-2 text-emerald-400 font-bold">
                                                     <span className="material-symbols-outlined text-lg">add_circle</span>
-                                                    Clique para Abrir Mesa
+                                                    {t('floor.table.clickToOpen')}
                                                 </div>
                                             )}
                                         </div>
@@ -271,22 +273,22 @@ export default function Index({
             />
 
             {/* Form Modal (Edit Mode) */}
-            <Modal isOpen={isFormOpen} onClose={() => setIsFormOpen(false)} title={editingId ? 'Editar Mesa' : 'Nova Mesa'}>
+            <Modal isOpen={isFormOpen} onClose={() => setIsFormOpen(false)} title={editingId ? t('floor.modal.editTitle') : t('floor.modal.newTitle')}>
                 <form onSubmit={submit} className="flex flex-col gap-4">
                     <div>
-                        <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-1.5">Nome/Número da Mesa</label>
+                        <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-1.5">{t('floor.form.name')}</label>
                         <input
                             type="text"
                             value={data.name}
                             onChange={e => setData('name', e.target.value)}
-                            placeholder="Ex: Mesa 12"
+                            placeholder={t('floor.form.namePlaceholder')}
                             className="w-full bg-surface border border-border-subtle rounded-xl px-4 py-2.5 text-sm text-white focus:border-primary/50 outline-none"
                             required
                         />
                         {errors.name && <div className="text-red-400 text-xs mt-1">{errors.name}</div>}
                     </div>
                     <div>
-                        <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-1.5">Capacidade (Lugares)</label>
+                        <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-1.5">{t('floor.form.capacity')}</label>
                         <input
                             type="number"
                             min="1"
@@ -304,14 +306,14 @@ export default function Index({
                             onClick={() => setIsFormOpen(false)}
                             className="px-4 py-2 rounded-xl text-sm font-bold text-text-muted hover:text-white transition-colors"
                         >
-                            Cancelar
+                            {t('floor.form.cancel')}
                         </button>
                         <button
                             type="submit"
                             disabled={processing}
                             className="px-4 py-2 rounded-xl text-sm font-bold bg-primary text-white hover:bg-primary-dark transition-colors disabled:opacity-50"
                         >
-                            {processing ? 'Salvando...' : 'Salvar Mesa'}
+                            {processing ? t('floor.form.saving') : t('floor.form.save')}
                         </button>
                     </div>
                 </form>

@@ -2,28 +2,29 @@ import { useState, useMemo } from 'react';
 import { Link } from '@inertiajs/react';
 import { norm } from '@/utils/normalize';
 import AppLayout from '@/Layouts/AppLayout';
+import useI18n from '@/hooks/useI18n';
 
-const statusConfig = {
-    pending: { label: 'Pendente', color: 'bg-amber-500/20 text-amber-400 border-amber-500/30', icon: 'schedule' },
-    preparing: { label: 'Preparando', color: 'bg-blue-500/20 text-blue-400 border-blue-500/30', icon: 'skillet' },
-    ready: { label: 'Pronto', color: 'bg-purple-500/20 text-purple-400 border-purple-500/30', icon: 'done_all' },
-    paid: { label: 'Pago', color: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30', icon: 'paid' },
-    delivered: { label: 'Entregue', color: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30', icon: 'local_shipping' },
-    completed: { label: 'Concluído', color: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30', icon: 'check_circle' },
-    accepted: { label: 'Aceite', color: 'bg-blue-500/20 text-blue-400 border-blue-500/30', icon: 'thumb_up' },
-    rejected: { label: 'Rejeitado', color: 'bg-red-500/20 text-red-400 border-red-500/30', icon: 'cancel' },
-    awaiting_payment: { label: 'Aguardando Pag.', color: 'bg-amber-500/20 text-amber-400 border-amber-500/30', icon: 'hourglass_top' },
-    paid_online: { label: 'Pago Online', color: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30', icon: 'cloud_done' },
-};
+const getStatusConfig = (t) => ({
+    pending: { label: t('orders.status.pending'), color: 'bg-amber-500/20 text-amber-400 border-amber-500/30', icon: 'schedule' },
+    preparing: { label: t('orders.status.preparing'), color: 'bg-blue-500/20 text-blue-400 border-blue-500/30', icon: 'skillet' },
+    ready: { label: t('orders.status.ready'), color: 'bg-purple-500/20 text-purple-400 border-purple-500/30', icon: 'done_all' },
+    paid: { label: t('orders.status.paid'), color: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30', icon: 'paid' },
+    delivered: { label: t('orders.status.delivered'), color: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30', icon: 'local_shipping' },
+    completed: { label: t('orders.status.completed'), color: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30', icon: 'check_circle' },
+    accepted: { label: t('orders.status.accepted'), color: 'bg-blue-500/20 text-blue-400 border-blue-500/30', icon: 'thumb_up' },
+    rejected: { label: t('orders.status.rejected'), color: 'bg-red-500/20 text-red-400 border-red-500/30', icon: 'cancel' },
+    awaiting_payment: { label: t('orders.status.awaiting_payment'), color: 'bg-amber-500/20 text-amber-400 border-amber-500/30', icon: 'hourglass_top' },
+    paid_online: { label: t('orders.status.paid_online'), color: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30', icon: 'cloud_done' },
+});
 
-const typeConfig = {
-    pickup: { label: 'Balcão', icon: 'storefront' },
-    delivery: { label: 'Delivery', icon: 'delivery_dining' },
-    salon: { label: 'Salão', icon: 'restaurant' },
-    dine_in: { label: 'Salão', icon: 'restaurant' },
-};
+const getTypeConfig = (t) => ({
+    pickup: { label: t('orders.types.pickup'), icon: 'storefront' },
+    delivery: { label: t('orders.types.delivery'), icon: 'delivery_dining' },
+    salon: { label: t('orders.types.salon'), icon: 'restaurant' },
+    dine_in: { label: t('orders.types.dine_in'), icon: 'restaurant' },
+});
 
-function StatusBadge({ status }) {
+function StatusBadge({ status, statusConfig }) {
     const config = statusConfig[status] || { label: status, color: 'bg-zinc-500/20 text-zinc-400 border-zinc-500/30', icon: 'help' };
     return (
         <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold border ${config.color}`}>
@@ -47,10 +48,8 @@ function StatCard({ icon, label, value, valueColor = 'text-white' }) {
     );
 }
 
-function OrderDetailsModal({ order, onClose }) {
+function OrderDetailsModal({ order, onClose, t, statusConfig, typeConfig, formatCurrency }) {
     if (!order) return null;
-
-    const formatBRL = (value) => `R$ ${Number(value).toFixed(2).replace('.', ',')}`;
     const typeInfo = typeConfig[order.type] || { label: order.type, icon: 'help' };
 
     return (
@@ -60,8 +59,8 @@ function OrderDetailsModal({ order, onClose }) {
                 <div className="flex items-center justify-between p-6 border-b border-border-subtle">
                     <div>
                         <div className="flex items-center gap-3 mb-1">
-                            <h2 className="text-xl font-bold text-white tracking-tight">Pedido #{order.short_code || String(order.id).substring(0, 5).toUpperCase()}</h2>
-                            <StatusBadge status={order.status} />
+                            <h2 className="text-xl font-bold text-white tracking-tight">{t('orders.modal.orderCode')} #{order.short_code || String(order.id).substring(0, 5).toUpperCase()}</h2>
+                            <StatusBadge status={order.status} statusConfig={statusConfig} />
                         </div>
                         <p className="text-sm text-text-muted">{order.created_at}</p>
                     </div>
@@ -75,18 +74,18 @@ function OrderDetailsModal({ order, onClose }) {
                     {/* Customer Info */}
                     <div className="grid grid-cols-2 gap-4">
                         <div className="bg-background-dark p-4 rounded-xl border border-border-subtle">
-                            <span className="text-xs font-bold text-text-muted uppercase tracking-wider block mb-2">Cliente</span>
+                            <span className="text-xs font-bold text-text-muted uppercase tracking-wider block mb-2">{t('orders.table.customer')}</span>
                             <div className="flex items-center gap-3">
                                 <span className="material-symbols-outlined text-primary">person</span>
                                 <span className="text-white font-medium">{order.customer_name}</span>
                             </div>
                         </div>
                         <div className="bg-background-dark p-4 rounded-xl border border-border-subtle">
-                            <span className="text-xs font-bold text-text-muted uppercase tracking-wider block mb-2">Detalhes de Entrega</span>
+                            <span className="text-xs font-bold text-text-muted uppercase tracking-wider block mb-2">{t('orders.modal.deliveryDetails')}</span>
                             <div className="flex items-center gap-3">
                                 <span className="material-symbols-outlined text-emerald-400">{typeInfo.icon}</span>
                                 <span className="text-white font-medium">
-                                    {typeInfo.label} {order.table_name && `- Mesa ${order.table_name}`}
+                                    {typeInfo.label} {order.table_name && `- ${t('orders.table.table')} ${order.table_name}`}
                                 </span>
                             </div>
                         </div>
@@ -94,7 +93,7 @@ function OrderDetailsModal({ order, onClose }) {
 
                     {/* Items List */}
                     <div>
-                        <h3 className="text-sm font-bold text-white mb-4">Itens do Pedido ({order.items_count})</h3>
+                        <h3 className="text-sm font-bold text-white mb-4">{t('orders.modal.itemsTitle', { count: order.items_count })}</h3>
                         <div className="space-y-3">
                             {order.items?.map(item => (
                                 <div key={item.id} className="flex items-center justify-between p-4 bg-background-dark rounded-xl border border-border-subtle">
@@ -104,12 +103,12 @@ function OrderDetailsModal({ order, onClose }) {
                                         </div>
                                         <div>
                                             <p className="text-white font-medium">{item.name}</p>
-                                            {item.notes && <p className="text-xs text-amber-400/80 mt-1 italic">Obs: {item.notes}</p>}
+                                            {item.notes && <p className="text-xs text-amber-400/80 mt-1 italic">{t('orders.modal.notesPrefix')}: {item.notes}</p>}
                                         </div>
                                     </div>
                                     <div className="text-right">
-                                        <p className="text-white font-bold font-mono">{formatBRL(item.total_price)}</p>
-                                        {item.quantity > 1 && <p className="text-xs text-text-muted">{formatBRL(item.unit_price)} cada</p>}
+                                        <p className="text-white font-bold font-mono">{formatCurrency(item.total_price)}</p>
+                                        {item.quantity > 1 && <p className="text-xs text-text-muted">{t('orders.modal.eachPrice', { price: formatCurrency(item.unit_price) })}</p>}
                                     </div>
                                 </div>
                             ))}
@@ -124,8 +123,8 @@ function OrderDetailsModal({ order, onClose }) {
                         <span className="text-sm text-text-muted capitalize">{order.payment_method}</span>
                     </div>
                     <div className="text-right">
-                        <span className="text-sm text-text-muted mr-3">Total do Pedido</span>
-                        <span className="text-2xl font-bold text-emerald-400 font-mono">{formatBRL(order.total_amount)}</span>
+                        <span className="text-sm text-text-muted mr-3">{t('orders.modal.totalOrder')}</span>
+                        <span className="text-2xl font-bold text-emerald-400 font-mono">{formatCurrency(order.total_amount)}</span>
                     </div>
                 </div>
             </div>
@@ -134,11 +133,12 @@ function OrderDetailsModal({ order, onClose }) {
 }
 
 export default function Index({ orders = [], stats = {} }) {
+    const { t, formatCurrency } = useI18n();
+    const statusConfig = getStatusConfig(t);
+    const typeConfig = getTypeConfig(t);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
     const [selectedOrder, setSelectedOrder] = useState(null);
-
-    const formatBRL = (value) => `R$ ${value.toFixed(2).replace('.', ',')}`;
 
     const filteredOrders = useMemo(() => {
         let items = orders;
@@ -163,11 +163,11 @@ export default function Index({ orders = [], stats = {} }) {
     }, [orders, statusFilter, searchTerm]);
 
     const statusTabs = [
-        { key: 'all', label: 'Todos', count: orders.length },
-        { key: 'pending', label: 'Pendentes', count: orders.filter(o => o.status === 'pending').length },
-        { key: 'preparing', label: 'Preparando', count: orders.filter(o => o.status === 'preparing').length },
-        { key: 'ready', label: 'Prontos', count: orders.filter(o => o.status === 'ready').length },
-        { key: 'paid', label: 'Pagos', count: orders.filter(o => o.is_paid).length },
+        { key: 'all', label: t('orders.filters.all'), count: orders.length },
+        { key: 'pending', label: t('orders.filters.pending'), count: orders.filter(o => o.status === 'pending').length },
+        { key: 'preparing', label: t('orders.filters.preparing'), count: orders.filter(o => o.status === 'preparing').length },
+        { key: 'ready', label: t('orders.filters.ready'), count: orders.filter(o => o.status === 'ready').length },
+        { key: 'paid', label: t('orders.filters.paid'), count: orders.filter(o => o.is_paid).length },
     ];
 
     return (
@@ -178,24 +178,24 @@ export default function Index({ orders = [], stats = {} }) {
                 <div className="px-8 pt-8 pb-6">
                     <div className="flex items-center justify-between mb-8">
                         <div>
-                            <h1 className="text-3xl font-bold text-white">Pedidos</h1>
-                            <p className="text-text-muted text-sm mt-1">Gerencie todos os pedidos do estabelecimento</p>
+                            <h1 className="text-3xl font-bold text-white">{t('orders.header.title')}</h1>
+                            <p className="text-text-muted text-sm mt-1">{t('orders.header.subtitle')}</p>
                         </div>
                         <Link
                             href="/pos"
                             className="flex items-center gap-2 px-5 py-3 rounded-xl bg-primary hover:bg-primary-dark text-white font-bold text-sm shadow-lg shadow-primary/25 transition-all"
                         >
                             <span className="material-symbols-outlined text-[18px]">add</span>
-                            Novo Pedido
+                            {t('orders.actions.newOrder')}
                         </Link>
                     </div>
 
                     {/* Stats Cards */}
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
-                        <StatCard icon="receipt_long" label="Pedidos Hoje" value={stats.total_today ?? 0} />
-                        <StatCard icon="payments" label="Receita Hoje" value={formatBRL(stats.revenue_today ?? 0)} valueColor="text-emerald-soft" />
-                        <StatCard icon="pending_actions" label="Em Andamento" value={stats.pending_count ?? 0} valueColor="text-amber-400" />
-                        <StatCard icon="check_circle" label="Concluídos Hoje" value={stats.completed_today ?? 0} valueColor="text-primary" />
+                        <StatCard icon="receipt_long" label={t('orders.stats.ordersToday')} value={stats.total_today ?? 0} />
+                        <StatCard icon="payments" label={t('orders.stats.revenueToday')} value={formatCurrency(stats.revenue_today ?? 0)} valueColor="text-emerald-soft" />
+                        <StatCard icon="pending_actions" label={t('orders.stats.inProgress')} value={stats.pending_count ?? 0} valueColor="text-amber-400" />
+                        <StatCard icon="check_circle" label={t('orders.stats.completedToday')} value={stats.completed_today ?? 0} valueColor="text-primary" />
                     </div>
 
                     {/* Filters Bar */}
@@ -227,7 +227,7 @@ export default function Index({ orders = [], stats = {} }) {
                             <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-text-muted text-[20px]">search</span>
                             <input
                                 className="bg-surface border border-border-subtle rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-primary/50 w-72 transition-all"
-                                placeholder="Buscar por cliente ou #pedido..."
+                                placeholder={t('orders.search.placeholder')}
                                 type="text"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -242,21 +242,21 @@ export default function Index({ orders = [], stats = {} }) {
                         {/* Table Header */}
                         <div className="grid grid-cols-[80px_1fr_140px_120px_140px_140px_160px] gap-4 px-6 py-4 border-b border-border-subtle bg-[#111118]/50">
                             <span className="text-xs font-bold text-text-muted uppercase tracking-wider">#</span>
-                            <span className="text-xs font-bold text-text-muted uppercase tracking-wider">Cliente</span>
-                            <span className="text-xs font-bold text-text-muted uppercase tracking-wider">Tipo</span>
-                            <span className="text-xs font-bold text-text-muted uppercase tracking-wider">Itens</span>
-                            <span className="text-xs font-bold text-text-muted uppercase tracking-wider">Total</span>
-                            <span className="text-xs font-bold text-text-muted uppercase tracking-wider">Status</span>
-                            <span className="text-xs font-bold text-text-muted uppercase tracking-wider">Data</span>
+                            <span className="text-xs font-bold text-text-muted uppercase tracking-wider">{t('orders.table.customer')}</span>
+                            <span className="text-xs font-bold text-text-muted uppercase tracking-wider">{t('orders.table.type')}</span>
+                            <span className="text-xs font-bold text-text-muted uppercase tracking-wider">{t('orders.table.items')}</span>
+                            <span className="text-xs font-bold text-text-muted uppercase tracking-wider">{t('orders.table.total')}</span>
+                            <span className="text-xs font-bold text-text-muted uppercase tracking-wider">{t('orders.table.status')}</span>
+                            <span className="text-xs font-bold text-text-muted uppercase tracking-wider">{t('orders.table.date')}</span>
                         </div>
 
                         {/* Table Body */}
                         {filteredOrders.length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-20 text-text-muted">
                                 <span className="material-symbols-outlined text-4xl mb-3">inbox</span>
-                                <p className="font-semibold">Nenhum pedido encontrado</p>
+                                <p className="font-semibold">{t('orders.empty.title')}</p>
                                 <p className="text-sm mt-1">
-                                    {searchTerm ? 'Tente outro termo de busca' : 'Os pedidos aparecerão aqui'}
+                                    {searchTerm ? t('orders.empty.searchHint') : t('orders.empty.defaultHint')}
                                 </p>
                             </div>
                         ) : (
@@ -280,7 +280,7 @@ export default function Index({ orders = [], stats = {} }) {
                                             <div className="min-w-0">
                                                 <p className="text-sm font-semibold text-white truncate">{order.customer_name}</p>
                                                 {order.table_name && (
-                                                    <p className="text-xs text-text-muted">Mesa {order.table_name}</p>
+                                                    <p className="text-xs text-text-muted">{t('orders.table.table')} {order.table_name}</p>
                                                 )}
                                             </div>
                                         </div>
@@ -292,13 +292,13 @@ export default function Index({ orders = [], stats = {} }) {
                                         </div>
 
                                         {/* Items Count */}
-                                        <span className="text-sm text-white font-mono">{order.items_count} {order.items_count === 1 ? 'item' : 'itens'}</span>
+                                        <span className="text-sm text-white font-mono">{order.items_count} {order.items_count === 1 ? t('orders.table.itemSingular') : t('orders.table.itemPlural')}</span>
 
                                         {/* Total */}
-                                        <span className="text-sm font-bold text-emerald-soft font-mono">{formatBRL(order.total_amount)}</span>
+                                        <span className="text-sm font-bold text-emerald-soft font-mono">{formatCurrency(order.total_amount)}</span>
 
                                         {/* Status */}
-                                        <StatusBadge status={order.status} />
+                                        <StatusBadge status={order.status} statusConfig={statusConfig} />
 
                                         {/* Date */}
                                         <div className="flex items-center justify-between">
@@ -319,13 +319,13 @@ export default function Index({ orders = [], stats = {} }) {
                     {/* Footer */}
                     <div className="flex items-center justify-between mt-4 px-2">
                         <p className="text-sm text-text-muted">
-                            Exibindo <span className="font-bold text-white">{filteredOrders.length}</span> de <span className="font-bold text-white">{orders.length}</span> pedidos
+                            {t('orders.footer.showing', { filtered: filteredOrders.length, total: orders.length })}
                         </p>
                     </div>
                 </div>
             </div>
             {/* Modal */}
-            <OrderDetailsModal order={selectedOrder} onClose={() => setSelectedOrder(null)} />
+            <OrderDetailsModal order={selectedOrder} onClose={() => setSelectedOrder(null)} t={t} statusConfig={statusConfig} typeConfig={typeConfig} formatCurrency={formatCurrency} />
         </AppLayout>
     );
 }

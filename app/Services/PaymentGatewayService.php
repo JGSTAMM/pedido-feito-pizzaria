@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Order;
 use App\Models\Payment;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use MercadoPago\Client\Payment\PaymentClient;
 use MercadoPago\Client\Common\RequestOptions;
@@ -15,6 +16,61 @@ class PaymentGatewayService
     public function __construct()
     {
         MercadoPagoConfig::setAccessToken(config('services.mercadopago.access_token'));
+    }
+
+    public function extractNotificationId(Request $request): ?string
+    {
+        $notificationId = $request->input('data.id')
+            ?? $request->query('data.id')
+            ?? $request->input('id')
+            ?? $request->query('id');
+
+        if ($notificationId === null) {
+            return null;
+        }
+
+        return (string) $notificationId;
+    }
+
+    public function validateWebhookSignature(Request $request): bool
+    {
+        $secret = (string) config('services.mercadopago.webhook_secret');
+        if ($secret === '') {
+            Log::error('Mercado Pago webhook secret is not configured');
+            return false;
+        }
+
+        $signatureHeader = (string) $request->header('x-signature', '');
+        $requestId = (string) $request->header('x-request-id', '');
+        $notificationId = $this->extractNotificationId($request);
+
+        if ($signatureHeader === '' || $requestId === '' || $notificationId === null) {
+            return false;
+        }
+
+        $parts = collect(explode(',', $signatureHeader))
+            ->map(fn (string $segment) => trim($segment))
+            ->filter();
+
+        $signatureData = [];
+        foreach ($parts as $part) {
+            [$key, $value] = array_pad(explode('=', $part, 2), 2, null);
+            if ($key !== null && $value !== null) {
+                $signatureData[strtolower(trim($key))] = trim($value);
+            }
+        }
+
+        $ts = $signatureData['ts'] ?? null;
+        $receivedSignature = $signatureData['v1'] ?? null;
+
+        if ($ts === null || $receivedSignature === null) {
+            return false;
+        }
+
+        $manifest = "id:{$notificationId};request-id:{$requestId};ts:{$ts};";
+        $computedSignature = hash_hmac('sha256', $manifest, $secret);
+
+        return hash_equals($computedSignature, $receivedSignature);
     }
 
     /**

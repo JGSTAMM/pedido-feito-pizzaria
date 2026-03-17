@@ -2,35 +2,30 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Application\Orders\CreateOrderAction;
+use App\Application\Orders\OrderActionException;
+use App\Application\Orders\PayAndCloseTableAction;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Order;
-use App\Models\OrderItem;
-use App\Models\PizzaSize;
-use App\Models\Product;
 use App\Models\Table;
-use App\Services\PizzaPriceService;
-use App\Services\PrintService;
-use Illuminate\Support\Facades\DB;
 
 class OrderController extends Controller
 {
-    protected $priceService;
+    protected CreateOrderAction $createOrderAction;
+    protected PayAndCloseTableAction $payAndCloseTableAction;
 
-    public function __construct(PizzaPriceService $priceService)
+    public function __construct(
+        CreateOrderAction $createOrderAction,
+        PayAndCloseTableAction $payAndCloseTableAction
+    )
     {
-        $this->priceService = $priceService;
+        $this->createOrderAction = $createOrderAction;
+        $this->payAndCloseTableAction = $payAndCloseTableAction;
     }
 
     public function store(Request $request)
     {
-        $caixaAberto = \App\Models\CashRegister::where('status', 'open')->exists();
-        if (!$caixaAberto) {
-            return response()->json([
-                'message' => 'Operação bloqueada: O caixa está fechado. Peça ao gerente para abrir o caixa.'
-            ], 403);
-        }
-
         $validated = $request->validate([
             'table_id' => 'required|exists:tables,id',
             'items' => 'required|array',
@@ -46,89 +41,14 @@ class OrderController extends Controller
         ]);
 
         try {
-            DB::beginTransaction();
-
-            $order = Order::create([
-                'table_id' => $validated['table_id'],
-                'user_id' => $request->user()->id,
-                'status' => 'preparing', // Orders from waiter go directly to kitchen
-                'type' => 'salon',
-                'total_amount' => 0,
-            ]);
-
-            // Update table status to occupied
-            Table::where('id', $validated['table_id'])->update(['status' => 'occupied']);
-
-            $totalAmount = 0;
-
-            foreach ($validated['items'] as $item) {
-                $notes = $item['notes'] ?? null;
-
-                if ($item['type'] === 'pizza') {
-                    $sizeId = $item['size_id'];
-                    $flavorIds = $item['flavor_ids'];
-
-                    $price = $this->priceService->calculateItemPrice($sizeId, $flavorIds);
-
-                    $orderItem = OrderItem::create([
-                        'order_id' => $order->id,
-                        'pizza_size_id' => $sizeId,
-                        'quantity' => 1,
-                        'unit_price' => $price,
-                        'subtotal' => $price,
-                        'type' => 'pizza',
-                        'notes' => $notes,
-                    ]);
-
-                    // Attach flavors
-                    $fraction = '1/' . count($flavorIds);
-                    $attachData = [];
-                    foreach ($flavorIds as $flavorId) {
-                        $attachData[$flavorId] = [
-                            'id' => \Illuminate\Support\Str::uuid()->toString(),
-                            'fraction' => $fraction
-                        ];
-                    }
-                    $orderItem->flavors()->attach($attachData);
-
-                    $totalAmount += $price;
-                } elseif ($item['type'] === 'product') {
-                    $product = Product::find($item['product_id']);
-                    $quantity = $item['quantity'];
-                    $price = $product->price * $quantity;
-
-                    OrderItem::create([
-                        'order_id' => $order->id,
-                        'product_id' => $product->id,
-                        'quantity' => $quantity,
-                        'unit_price' => $product->price,
-                        'subtotal' => $price,
-                        'type' => 'product',
-                        'notes' => $notes,
-                    ]);
-
-                    $totalAmount += $price;
-                }
-            }
-
-            $order->update(['total_amount' => $totalAmount]);
-
-            DB::commit();
-
-            // Auto-print kitchen ticket if enabled
-            if (config('printing.auto_print_kitchen')) {
-                $printService = new PrintService();
-                $printService->printKitchenTicket($order);
-            }
+            $order = $this->createOrderAction->execute($validated, $request->user());
 
             return response()->json([
-                'message' => 'Order created',
+                'message' => __('order.create.success'),
                 'order_id' => $order->id
             ], 201);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json(['message' => 'Error creating order: ' . $e->getMessage()], 500);
+        } catch (OrderActionException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->getStatus());
         }
     }
 
@@ -289,99 +209,12 @@ class OrderController extends Controller
             'payments.*.amount' => 'required|numeric|min:0',
         ]);
 
-        // Get active orders
-        $orders = Order::where('table_id', $table->id)
-            ->whereNotIn('status', ['completed', 'paid', 'cancelled'])
-            ->get();
-
-        if ($orders->isEmpty()) {
-            return response()->json(['message' => 'Nenhum pedido ativo'], 404);
-        }
-
-        $totalAmount = $orders->sum('total_amount');
-        $totalPaid = collect($validated['payments'])->sum('amount');
-
-        // Allow small floating point difference or check exact?
-        // Let's enforce totalPaid >= totalAmount
-        if ($totalPaid < $totalAmount - 0.01) {
-             return response()->json(['message' => 'Valor pago insuficiente'], 400);
-        }
-
-        // Find active cash register for this user (waiter)
-        $activeRegister = \App\Models\CashRegister::where('user_id', $request->user()->id)
-            ->where('status', 'open')
-            ->latest()
-            ->first();
-
-        DB::beginTransaction();
         try {
-            $paymentPool = collect($validated['payments'])->map(function($p) {
-                return ['method' => $p['method'], 'amount' => (float)$p['amount']];
-            })->toArray();
+            $this->payAndCloseTableAction->execute($table, $validated['payments'], $request->user());
 
-            $pIndex = 0;
-
-            foreach ($orders as $index => $order) {
-                $amountToPayForOrder = (float)$order->total_amount;
-                
-                // Distribute payment to this order
-                while ($amountToPayForOrder > 0.001 && $pIndex < count($paymentPool)) {
-                    $currentMethod = &$paymentPool[$pIndex]; // Reference to modify amount
-                    if ($currentMethod['amount'] <= 0) {
-                        $pIndex++;
-                        continue;
-                    }
-
-                    $take = min($currentMethod['amount'], $amountToPayForOrder);
-
-                    \App\Models\Payment::create([
-                        'order_id' => $order->id,
-                        'method' => $currentMethod['method'],
-                        'amount' => $take,
-                    ]);
-
-                    $currentMethod['amount'] -= $take;
-                    $amountToPayForOrder -= $take;
-
-                    if ($currentMethod['amount'] <= 0.001) {
-                        $pIndex++;
-                    }
-                }
-                
-                // If last order, dump remaining payment (change)
-                if ($index === $orders->count() - 1) {
-                     while($pIndex < count($paymentPool)) {
-                        if ($paymentPool[$pIndex]['amount'] > 0.001) {
-                            \App\Models\Payment::create([
-                                'order_id' => $order->id,
-                                'method' => $paymentPool[$pIndex]['method'],
-                                'amount' => $paymentPool[$pIndex]['amount'],
-                            ]);
-                            // Calculate change amount on order? 
-                            // Order model has change_amount.
-                            // We can sum up all payments for this order and subtract total_amount.
-                            // But let's leave as is for now, standardizing on Payment records.
-                        }
-                        $pIndex++;
-                     }
-                }
-
-                // Update order
-                $order->update([
-                    'status' => 'paid',
-                    'paid_at' => now(),
-                    'cash_register_id' => $activeRegister?->id,
-                ]);
-            }
-
-            $table->update(['status' => 'available']);
-
-            DB::commit();
-            return response()->json(['message' => 'Mesa paga e fechada com sucesso']);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json(['message' => 'Erro ao processar pagamento: ' . $e->getMessage()], 500);
+            return response()->json(['message' => __('order.payment.success')]);
+        } catch (OrderActionException $e) {
+            return response()->json(['message' => $e->getMessage()], $e->getStatus());
         }
     }
 }

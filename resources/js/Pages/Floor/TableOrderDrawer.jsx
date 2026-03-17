@@ -3,7 +3,7 @@ import { router } from '@inertiajs/react';
 import { norm } from '@/utils/normalize';
 import PizzaBuilderModal from '@/Pages/POS/PizzaBuilderModal';
 import ReceiptPrint from '@/Components/ReceiptPrint';
-import axios from 'axios';
+import useI18n from '@/hooks/useI18n';
 
 export default function TableOrderDrawer({
     table,
@@ -16,6 +16,7 @@ export default function TableOrderDrawer({
     borderOptions = [],
     isMobile = false,
 }) {
+    const { t, formatCurrency } = useI18n();
     const [cart, setCart] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [activeCategory, setActiveCategory] = useState(null);
@@ -227,7 +228,7 @@ export default function TableOrderDrawer({
                             <div className="flex items-center gap-2">
                                 <span className={`w-1.5 h-1.5 rounded-full ${isOccupied ? 'bg-orange-400 animate-pulse' : 'bg-emerald-400'}`} />
                                 <span className={`text-xs font-bold uppercase tracking-wider ${isOccupied ? 'text-orange-400' : 'text-emerald-400'}`}>
-                                    {isOccupied ? 'Ocupada' : 'Livre'} • {table.seats} Lugares
+                                    {isOccupied ? t('floor.drawer.statusOccupied') : t('floor.drawer.statusFree')} • {t('floor.drawer.seats', { count: table.seats })}
                                 </span>
                             </div>
                         </div>
@@ -252,13 +253,13 @@ export default function TableOrderDrawer({
                         className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all ${activeTab === 'account' ? 'bg-white/10 text-white shadow-sm' : 'text-text-muted hover:text-white hover:bg-white/5'} ${!isOccupied ? 'opacity-50 cursor-not-allowed' : ''}`}
                         disabled={!isOccupied}
                     >
-                        Conta Atual
+                        {t('floor.drawer.tabs.account')}
                     </button>
                     <button
                         onClick={() => setActiveTab('add_items')}
                         className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all ${activeTab === 'add_items' ? 'bg-white/10 text-white shadow-sm' : 'text-text-muted hover:text-white hover:bg-white/5'}`}
                     >
-                        Adicionar Itens
+                        {t('floor.drawer.tabs.addItems')}
                     </button>
                 </div>
 
@@ -270,10 +271,10 @@ export default function TableOrderDrawer({
                         <div className={`${isMobile ? 'p-4' : 'p-6'} border-b border-border-subtle bg-white/[0.01]`}>
                             <div className="flex items-center justify-between mb-3">
                                 <p className="text-xs text-text-muted uppercase font-bold tracking-wider">
-                                    Pedido #{activeOrder.short_code || String(activeOrder.id).substring(0, 5).toUpperCase()}
+                                    {t('floor.drawer.orderCode')} #{activeOrder.short_code || String(activeOrder.id).substring(0, 5).toUpperCase()}
                                 </p>
                                 <span className="text-emerald-400 text-sm font-bold bg-emerald-400/10 px-2 py-1 rounded-lg border border-emerald-400/20">
-                                    R$ {Number(activeOrder.total).toFixed(2).replace('.', ',')}
+                                    {formatCurrency(activeOrder.total)}
                                 </span>
                             </div>
                             <div className={`bg-surface rounded-xl border border-border-subtle divide-y divide-border-subtle ${isMobile ? 'max-h-40' : 'max-h-48'} overflow-y-auto custom-scrollbar`}>
@@ -302,7 +303,7 @@ export default function TableOrderDrawer({
                                             )}
                                         </div>
                                         <span className="text-sm text-text-muted font-medium whitespace-nowrap">
-                                            R$ {Number(item.subtotal).toFixed(2).replace('.', ',')}
+                                            {formatCurrency(item.subtotal)}
                                         </span>
                                     </div>
                                 ))}
@@ -312,7 +313,7 @@ export default function TableOrderDrawer({
                                 className="w-full mt-4 py-3 bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:text-red-300 font-bold rounded-xl border border-red-500/20 hover:border-red-500/30 transition-all flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(239,68,68,0.1)]"
                             >
                                 <span className="material-symbols-outlined text-[20px]">receipt_long</span>
-                                Encerrar Conta
+                                {t('floor.drawer.actions.closeAccount')}
                             </button>
                         </div>
                     )}
@@ -321,7 +322,7 @@ export default function TableOrderDrawer({
                     {activeTab === 'add_items' && (
                         <div className={`${isMobile ? 'p-4' : 'p-6'}`}>
                             <p className="text-xs text-text-muted uppercase font-bold tracking-wider mb-3">
-                                Adicionar Itens
+                                {t('floor.drawer.addItems.title')}
                             </p>
 
                             {/* Search */}
@@ -329,7 +330,7 @@ export default function TableOrderDrawer({
                                 <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-text-muted text-[20px]">search</span>
                                 <input
                                     type="text"
-                                    placeholder="Buscar produto..."
+                                    placeholder={t('floor.drawer.addItems.searchPlaceholder')}
                                     value={searchTerm}
                                     onChange={e => setSearchTerm(e.target.value)}
                                     className="w-full bg-surface border border-border-subtle rounded-xl pl-12 pr-4 py-3 text-sm text-white focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all placeholder:text-text-muted"
@@ -342,7 +343,7 @@ export default function TableOrderDrawer({
                                     onClick={() => setActiveCategory(null)}
                                     className={`px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap transition-all border ${!activeCategory ? 'bg-primary/20 text-primary border-primary/30 shadow-[0_0_15px_rgba(139,92,246,0.15)]' : 'bg-surface text-text-muted border-border-subtle hover:bg-surface-hover hover:text-white'}`}
                                 >
-                                    Todos
+                                    {t('floor.drawer.addItems.all')}
                                 </button>
                                 {categories.map(cat => (
                                     <button
@@ -365,8 +366,8 @@ export default function TableOrderDrawer({
                                         <span className="material-symbols-outlined text-[24px]">local_pizza</span>
                                     </div>
                                     <div className="text-left flex-1">
-                                        <p className="text-white font-bold text-base mb-0.5">Montar Pizza Personalizada</p>
-                                        <p className="text-text-muted text-sm group-hover:text-white/70 transition-colors">Tamanhos, sabores mistos e bordas</p>
+                                        <p className="text-white font-bold text-base mb-0.5">{t('floor.drawer.addItems.customPizzaTitle')}</p>
+                                        <p className="text-text-muted text-sm group-hover:text-white/70 transition-colors">{t('floor.drawer.addItems.customPizzaSubtitle')}</p>
                                     </div>
                                     <span className="material-symbols-outlined text-primary text-[24px] bg-primary/10 size-10 flex items-center justify-center rounded-lg group-hover:bg-primary group-hover:text-white transition-colors">arrow_forward</span>
                                 </button>
@@ -378,7 +379,7 @@ export default function TableOrderDrawer({
                                     {filteredItems.length === 0 && (
                                         <div className="text-center bg-surface border border-border-subtle rounded-2xl py-8">
                                             <span className="material-symbols-outlined text-4xl text-text-muted/50 mb-2">search_off</span>
-                                            <p className="text-text-muted text-sm font-medium">Nenhum produto encontrado na busca.</p>
+                                            <p className="text-text-muted text-sm font-medium">{t('floor.drawer.addItems.emptySearch')}</p>
                                         </div>
                                     )}
                                     {filteredItems.map(item => (
@@ -396,7 +397,7 @@ export default function TableOrderDrawer({
                                             </div>
                                             <div className="bg-emerald-500/10 px-3 py-1.5 rounded-lg border border-emerald-500/20 group-hover:bg-emerald-500/20 transition-colors">
                                                 <span className="text-sm font-bold text-emerald-400 whitespace-nowrap">
-                                                    R$ {Number(item.price).toFixed(2).replace('.', ',')}
+                                                    {formatCurrency(item.price)}
                                                 </span>
                                             </div>
                                         </button>
@@ -412,7 +413,7 @@ export default function TableOrderDrawer({
                     <div className="border-t border-border-subtle bg-surface/50 backdrop-blur-xl shrink-0">
                         <div className={`${isMobile ? 'p-3 max-h-32' : 'p-6 max-h-48'} overflow-y-auto custom-scrollbar space-y-2 border-b border-border-subtle`}>
                             <p className="text-xs text-text-muted uppercase font-bold tracking-wider mb-2">
-                                Novos Itens ({cart.length})
+                                {t('floor.drawer.cart.newItems', { count: cart.length })}
                             </p>
                             {cart.map(item => (
                                 <div key={item.key} className="flex items-center gap-4 bg-surface rounded-2xl p-3 border border-border-subtle hover:border-border-subtle-hover transition-colors shadow-sm">
@@ -426,7 +427,7 @@ export default function TableOrderDrawer({
                                     </span>
                                     <div className="bg-emerald-500/10 px-2.5 py-1 rounded-md border border-emerald-500/20">
                                         <span className="text-sm font-bold text-emerald-400 whitespace-nowrap">
-                                            R$ {(item.price * item.quantity).toFixed(2).replace('.', ',')}
+                                            {formatCurrency(item.price * item.quantity)}
                                         </span>
                                     </div>
                                     <button onClick={() => removeFromCart(item.key)} className="size-8 flex items-center justify-center rounded-lg text-text-muted hover:text-red-400 hover:bg-red-400/10 transition-all border border-transparent hover:border-red-400/20">
@@ -437,9 +438,9 @@ export default function TableOrderDrawer({
                         </div>
                         <div className={`${isMobile ? 'p-4' : 'p-6'} bg-surface/80`}>
                             <div className="flex items-center justify-between mb-3 bg-background-dark/50 border border-white/5 p-3 rounded-xl">
-                                <span className="text-sm text-text-muted font-bold tracking-wide uppercase">Total a Enviar</span>
+                                <span className="text-sm text-text-muted font-bold tracking-wide uppercase">{t('floor.drawer.cart.totalToSend')}</span>
                                 <span className="text-2xl font-black text-white tracking-tight">
-                                    R$ {cartTotal.toFixed(2).replace('.', ',')}
+                                    {formatCurrency(cartTotal)}
                                 </span>
                             </div>
                             <button
@@ -448,7 +449,7 @@ export default function TableOrderDrawer({
                                 className="w-full py-4 bg-gradient-to-r from-primary to-[#7C3AED] hover:from-[#7C3AED] hover:to-primary text-white font-bold rounded-xl transition-all shadow-[0_0_20px_rgba(139,92,246,0.3)] hover:shadow-[0_0_30px_rgba(139,92,246,0.5)] flex items-center justify-center gap-3 disabled:opacity-50 disabled:shadow-none"
                             >
                                 <span className="material-symbols-outlined text-[24px]">send</span>
-                                <span className="text-base tracking-wide">{sending ? 'Enviando...' : 'Enviar para Cozinha'}</span>
+                                <span className="text-base tracking-wide">{sending ? t('floor.drawer.cart.sending') : t('floor.drawer.cart.sendToKitchen')}</span>
                             </button>
                         </div>
                     </div>
@@ -461,12 +462,12 @@ export default function TableOrderDrawer({
                     {/* Backdrop — only visible on desktop */}
                     <div className="absolute inset-0 bg-background-dark/80 sm:backdrop-blur-sm" onClick={() => setSelectedQuickItem(null)} />
                     <div className={`relative w-full h-[100dvh] bg-[#120F1D] flex flex-col overflow-hidden sm:absolute sm:inset-auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:w-full sm:max-w-sm sm:h-auto sm:rounded-2xl sm:border sm:border-border-subtle sm:shadow-2xl sm:animate-scale-in`}>
-                        
+
                         {/* ── Image Placeholder ── */}
                         <div className="w-full h-44 bg-surface-hover flex items-center justify-center relative shrink-0">
                             <span className="material-symbols-outlined text-4xl text-white/5">image</span>
                             <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-[#120F1D] to-transparent"></div>
-                            
+
                             {/* Close button inside image area for native app feel */}
                             <button onClick={() => setSelectedQuickItem(null)} className="absolute top-4 right-4 size-9 flex items-center justify-center rounded-full bg-black/40 backdrop-blur-md text-white/80 hover:text-white transition-colors border border-white/10">
                                 <span className="material-symbols-outlined text-[20px]">close</span>
@@ -480,18 +481,18 @@ export default function TableOrderDrawer({
                                 {selectedQuickItem.ingredients && (
                                     <p className="text-sm text-text-muted mb-3 leading-snug">{selectedQuickItem.ingredients}</p>
                                 )}
-                                <p className="text-lg font-bold text-emerald-400 font-mono">R$ {Number(selectedQuickItem.price).toFixed(2).replace('.', ',')}</p>
+                                <p className="text-lg font-bold text-emerald-400 font-mono">{formatCurrency(selectedQuickItem.price)}</p>
                             </div>
-                            
+
                             {/* ── Observation Field ── */}
                             <div>
-                                <label className="block text-sm font-bold text-white mb-2">Observação (Opcional)</label>
+                                <label className="block text-sm font-bold text-white mb-2">{t('floor.drawer.quickItem.observationOptional')}</label>
                                 <textarea
                                     rows={3}
                                     placeholder={
                                         selectedQuickItem?.category === 'Pizzas' || selectedQuickItem?.name?.toLowerCase().includes('pizza')
-                                            ? "Ex: Sem orégano, bem assada, borda fina..."
-                                            : "Ex: Com gelo e limão, sem açúcar..."
+                                            ? t('floor.drawer.quickItem.pizzaObservationPlaceholder')
+                                            : t('floor.drawer.quickItem.defaultObservationPlaceholder')
                                     }
                                     value={quickObservation}
                                     onChange={e => setQuickObservation(e.target.value)}
@@ -514,7 +515,7 @@ export default function TableOrderDrawer({
                                 className="w-full py-4 bg-primary hover:bg-[#7C3AED] text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(139,92,246,0.2)]"
                             >
                                 <span className="material-symbols-outlined text-[20px]">add_shopping_cart</span>
-                                Adicionar ao Pedido
+                                {t('floor.drawer.quickItem.addToOrder')}
                             </button>
                         </div>
                     </div>
@@ -540,13 +541,13 @@ export default function TableOrderDrawer({
                     <div className={`relative w-full h-[100dvh] bg-[#120F1D] flex flex-col overflow-hidden sm:absolute sm:inset-auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:w-full sm:max-w-sm sm:h-auto sm:max-h-[85vh] sm:rounded-2xl sm:border sm:border-border-subtle sm:shadow-2xl sm:animate-scale-in`}>
                         <div className="p-5 border-b border-border-subtle flex items-center justify-between bg-white/[0.02]">
                             <div>
-                                <h3 className="text-lg font-bold text-white mb-0.5">Encerrar Conta</h3>
-                                <p className="text-sm font-bold text-emerald-400">Total: R$ {Number(activeOrder.total).toFixed(2).replace('.', ',')}</p>
+                                <h3 className="text-lg font-bold text-white mb-0.5">{t('floor.drawer.checkout.title')}</h3>
+                                <p className="text-sm font-bold text-emerald-400">{t('floor.drawer.checkout.totalWithValue', { value: formatCurrency(activeOrder.total) })}</p>
                             </div>
                             <div className="flex items-center gap-3">
                                 <button onClick={() => window.print()} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface hover:bg-white/10 text-white text-xs font-bold transition-colors border border-border-subtle shadow-lg">
                                     <span className="material-symbols-outlined text-[16px]">print</span>
-                                    <span>Conferência</span>
+                                    <span>{t('floor.drawer.checkout.conference')}</span>
                                 </button>
                                 <button onClick={() => !checkingOut && setShowCheckoutModal(false)} className="size-8 flex items-center justify-center rounded-lg bg-white/5 text-text-muted hover:text-white hover:bg-white/10 transition-colors">
                                     <span className="material-symbols-outlined text-[20px]">close</span>
@@ -554,14 +555,14 @@ export default function TableOrderDrawer({
                             </div>
                         </div>
                         <div className="p-5 overflow-y-auto custom-scrollbar flex-1 max-h-[60vh]">
-                            <label className="block text-sm font-bold text-white mb-2">Adicionar Pagamento</label>
+                            <label className="block text-sm font-bold text-white mb-2">{t('floor.drawer.checkout.addPayment')}</label>
 
                             <div className="grid grid-cols-2 gap-2 mb-4">
                                 {[
-                                    { method: 'dinheiro', icon: 'payments', label: 'Dinheiro' },
-                                    { method: 'pix', icon: 'qr_code_2', label: 'Pix' },
-                                    { method: 'credito', icon: 'credit_card', label: 'Crédito' },
-                                    { method: 'debito', icon: 'credit_card', label: 'Débito' },
+                                    { method: 'dinheiro', icon: 'payments', label: t('floor.drawer.methods.dinheiro') },
+                                    { method: 'pix', icon: 'qr_code_2', label: t('floor.drawer.methods.pix') },
+                                    { method: 'credito', icon: 'credit_card', label: t('floor.drawer.methods.credito') },
+                                    { method: 'debito', icon: 'credit_card', label: t('floor.drawer.methods.debito') },
                                 ].map(m => (
                                     <button
                                         key={m.method}
@@ -579,7 +580,7 @@ export default function TableOrderDrawer({
 
                             <div className="flex gap-2 mb-6">
                                 <div className="flex-1 relative">
-                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted text-sm font-bold">R$</span>
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted text-sm font-bold">{t('floor.drawer.currencyPrefix')}</span>
                                     <input
                                         type="number"
                                         step="0.01"
@@ -587,7 +588,7 @@ export default function TableOrderDrawer({
                                         value={paymentInputValue}
                                         onChange={e => setPaymentInputValue(e.target.value)}
                                         className="w-full bg-background-dark border border-border-subtle rounded-xl pl-10 pr-4 py-3 text-white font-mono font-bold focus:border-primary/50 outline-none transition-all"
-                                        placeholder="0,00"
+                                        placeholder={t('floor.drawer.zeroPlaceholder')}
                                     />
                                 </div>
                                 <button
@@ -608,12 +609,12 @@ export default function TableOrderDrawer({
                             {/* Added Payments List */}
                             {payments.length > 0 && (
                                 <div className="space-y-2 mb-2">
-                                    <p className="text-[11px] font-bold text-text-muted uppercase tracking-wider">Pagamentos Adicionados</p>
+                                    <p className="text-[11px] font-bold text-text-muted uppercase tracking-wider">{t('floor.drawer.checkout.addedPayments')}</p>
                                     {payments.map(p => (
                                         <div key={p.id} className="flex items-center justify-between bg-background-dark p-3 rounded-xl border border-border-subtle group">
                                             <span className="text-white text-sm font-bold capitalize">{p.method}</span>
                                             <div className="flex items-center gap-3">
-                                                <span className="text-emerald-400 font-mono font-bold">R$ {p.amount.toFixed(2).replace('.', ',')}</span>
+                                                <span className="text-emerald-400 font-mono font-bold">{formatCurrency(p.amount)}</span>
                                                 <button onClick={() => setPayments(prev => prev.filter(x => x.id !== p.id))} className="text-text-muted hover:text-red-400 transition-colors">
                                                     <span className="material-symbols-outlined text-[18px]">close</span>
                                                 </button>
@@ -637,15 +638,15 @@ export default function TableOrderDrawer({
                                     <>
                                         <div className="grid grid-cols-2 gap-3 mb-4">
                                             <div className="bg-black/40 rounded-xl p-3 text-center border border-border-subtle">
-                                                <span className="text-text-muted text-[10px] uppercase tracking-wider font-bold block mb-1">Restante</span>
+                                                <span className="text-text-muted text-[10px] uppercase tracking-wider font-bold block mb-1">{t('floor.drawer.checkout.remaining')}</span>
                                                 <span className={`text-lg font-black font-mono ${remaining > 0 ? 'text-amber-400' : 'text-emerald-400'}`}>
-                                                    R$ {remaining.toFixed(2).replace('.', ',')}
+                                                    {formatCurrency(remaining)}
                                                 </span>
                                             </div>
                                             <div className="bg-black/40 rounded-xl p-3 text-center border border-border-subtle">
-                                                <span className="text-text-muted text-[10px] uppercase tracking-wider font-bold block mb-1">Troco</span>
+                                                <span className="text-text-muted text-[10px] uppercase tracking-wider font-bold block mb-1">{t('floor.drawer.checkout.change')}</span>
                                                 <span className={`text-lg font-black font-mono ${change > 0 ? 'text-primary' : 'text-text-muted'}`}>
-                                                    R$ {change.toFixed(2).replace('.', ',')}
+                                                    {formatCurrency(change)}
                                                 </span>
                                             </div>
                                         </div>
@@ -655,7 +656,7 @@ export default function TableOrderDrawer({
                                             className="w-full py-4 rounded-xl flex items-center justify-center gap-2 font-bold transition-all shadow-lg disabled:shadow-none disabled:bg-surface disabled:text-text-muted disabled:opacity-100 disabled:border disabled:border-border-subtle bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/25 text-white"
                                         >
                                             <span className="material-symbols-outlined text-[20px]">{canFinalize ? 'done_all' : 'lock'}</span>
-                                            {checkingOut ? 'Aguarde...' : canFinalize ? 'Confirmar e Fechar Mesa' : 'Valor Insuficiente'}
+                                            {checkingOut ? t('floor.drawer.checkout.wait') : canFinalize ? t('floor.drawer.checkout.confirmAndClose') : t('floor.drawer.checkout.insufficient')}
                                         </button>
                                     </>
                                 );

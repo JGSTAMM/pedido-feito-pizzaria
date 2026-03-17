@@ -1,0 +1,387 @@
+{
+    "common": {
+        "currency": "USD",
+        "unknown": "Unknown",
+        "online": "Online"
+    },
+    "status": {
+        "pending": "Pending",
+        "preparing": "Preparing",
+        "ready": "Ready",
+        "paid": "Paid",
+        "delivered": "Delivered"
+    },
+    "dashboard": {
+        "title": "Control Panel",
+        "subtitle": "General overview of the business",
+        "cashRegisterOpen": "Cash Register Open",
+        "cashRegisterClosed": "Cash Register Closed",
+        "stats": {
+            "revenueToday": "Revenue Today",
+            "ordersToday": "Orders Today",
+            "inProgress": "In Progress",
+            "activeProducts": "Active Products"
+        },
+        "quickActions": {
+            "openPos": "Open POS",
+            "viewOrders": "View Orders",
+            "kitchenKds": "Kitchen (KDS)",
+            "floorMap": "Floor Map"
+        },
+        "recentOrders": {
+            "title": "Recent Orders",
+            "viewAll": "View all ->",
+            "empty": "No recent orders"
+        }
+    },
+    "layout": {
+        "defaultAppName": "Order Ready",
+        "systemAdminVersion": "System Admin v2.0",
+        "settingsSection": "Settings",
+        "logoutTitle": "Logout",
+        "defaultAdmin": "Admin"
+    },
+    "nav": {
+        "pos": "POS",
+        "dashboard": "Control Panel",
+        "orders": "Orders",
+        "kds": "Kitchen (KDS)",
+        "floor": "Floor Map",
+        "cashRegister": "Cash Register",
+        "products": "Products",
+        "flavors": "Flavors",
+        "sizes": "Sizes",
+        "reports": "Reports",
+        "team": "Team",
+        "settings": "Settings",
+        "tables": "Tables",
+        "tabsOrders": "Tickets",
+        "profile": "Profile"
+    },
+    "flavors": {
+        "header": {
+            "title": "Pizza Flavors",
+            "subtitle": "Manage available menu flavors"
+        },
+        "actions": {
+            "new": "New Flavor"
+        },
+        "search": {
+            "placeholder": "Search flavor..."
+        },
+        "table": {
+            "name": "Flavor Name",
+            "basePrice": "Base Price",
+            "status": "Status",
+            "actions": "Actions",
+            "toggleStatus": "Toggle status"
+        },
+        "empty": "No flavors found.",
+        "modal": {
+            "editTitle": "Edit Flavor",
+            "newTitle": "New Flavor"
+        },
+        "form": {
+            "name": "Flavor Name",
+            "namePlaceholder": "Ex: Pepperoni",
+            "basePrice": "Base Price (R$)",
+            "activeLabel": "Flavor Active on Menu",
+            "cancel": "Cancel",
+            "saving": "Saving...",
+            "save": "Save Flavor"
+        },
+        "messages": {
+            "confirmDelete": "Are you sure you want to delete this flavor?"
+        }
+    },
+    "products": {
+        "header": {
+            "title": "Products",
+            "subtitle": "General catalog of drinks and side items"
+        },
+        "actions": {
+            "new": "New Product"
+        },
+        "search": {
+            "placeholder": "Search by name or category..."
+        },
+        "table": {
+            "image": "Img",
+            "name": "Product Name",
+            "category": "Category",
+            "price": "Price",
+            "status": "Status",
+            "actions": "Actions",
+            "toggleStatus": "Toggle status"
+        },
+        "empty": "No products found.",
+        "modal": {
+            "editTitle": "Edit Product",
+            "newTitle": "New Product"
+        },
+        "form": {
+            "name": "Product Name",
+            "category": "Category",
+            "categoryPlaceholder": "Ex: Drinks",
+            "price": "Price (R$)",
+            "description": "Description",
+            "activeLabel": "Active Product",
+            "cancel": "Cancel",
+            "saving": "Saving...",
+            "save": "Save Product"
+        },
+        "messages": {
+            "confirmDelete": "Are you sure you want to delete this product?"
+        }
+    },
+    "floor": {
+        "header": {
+            "title": "Dining Floor Map",
+            "subtitle": "Overview and status of all tables"
+        },
+        "actions": {
+            "editModeOn": "Edit Mode Active",
+            "editLayout": "Edit Layout",
+            "newTable": "New Table"
+        },
+        "stats": {
+            "totalTables": "Total Tables",
+            "free": "Free",
+            "occupied": "Occupied"
+        },
+        "search": {
+            "placeholder": "Search table..."
+        },
+        "empty": "No table found.",
+        "table": {
+            "seats": ":count Seats",
+            "statusOccupied": "Occupied",
+            "statusFree": "Free",
+            "currentOrder": "Current Order",
+            "available": "Available table",
+            "clickToOpen": "Click to Open Table",
+            "elapsedMinutes": ":count min ago"
+        },
+        "modal": {
+            "editTitle": "Edit Table",
+            "newTitle": "New Table"
+        },
+        "form": {
+            "name": "Table Name/Number",
+            "namePlaceholder": "Ex: Table 12",
+            "capacity": "Capacity (Seats)",
+            "cancel": "Cancel",
+            "saving": "Saving...",
+            "save": "Save Table"
+        },
+        "messages": {
+            "confirmDelete": "Are you sure you want to remove this table?"
+        },
+        "drawer": {
+            "statusOccupied": "Occupied",
+            "statusFree": "Free",
+            "seats": ":count Seats",
+            "orderCode": "Order",
+            "currencyPrefix": "$",
+            "zeroPlaceholder": "0.00",
+            "tabs": {
+                "account": "Current Bill",
+                "addItems": "Add Items"
+            },
+            "actions": {
+                "closeAccount": "Close Bill"
+            },
+            "addItems": {
+                "title": "Add Items",
+                "searchPlaceholder": "Search product...",
+                "all": "All",
+                "customPizzaTitle": "Build Custom Pizza",
+                "customPizzaSubtitle": "Sizes, mixed flavors and crusts",
+                "emptySearch": "No products found for this search."
+            },
+            "cart": {
+                "newItems": "New Items (:count)",
+                "totalToSend": "Total to Send",
+                "sending": "Sending...",
+                "sendToKitchen": "Send to Kitchen"
+            },
+            "quickItem": {
+                "observationOptional": "Observation (Optional)",
+                "pizzaObservationPlaceholder": "Ex: No oregano, well baked, thin crust...",
+                "defaultObservationPlaceholder": "Ex: With ice and lemon, no sugar...",
+                "addToOrder": "Add to Order"
+            },
+            "checkout": {
+                "title": "Close Bill",
+                "totalWithValue": "Total: :value",
+                "conference": "Check Receipt",
+                "addPayment": "Add Payment",
+                "addedPayments": "Added Payments",
+                "remaining": "Remaining",
+                "change": "Change",
+                "wait": "Please wait...",
+                "confirmAndClose": "Confirm and Close Table",
+                "insufficient": "Insufficient Amount"
+            },
+            "methods": {
+                "dinheiro": "Cash",
+                "pix": "Pix",
+                "credito": "Credit",
+                "debito": "Debit"
+            }
+        }
+    },
+    "orders": {
+        "header": {
+            "title": "Orders",
+            "subtitle": "Track all orders in real time"
+        },
+        "actions": {
+            "newOrder": "New Order"
+        },
+        "stats": {
+            "ordersToday": "Orders Today",
+            "revenueToday": "Revenue Today",
+            "inProgress": "In Progress",
+            "completedToday": "Completed Today"
+        },
+        "filters": {
+            "all": "All",
+            "pending": "Pending",
+            "preparing": "Preparing",
+            "ready": "Ready",
+            "paid": "Paid"
+        },
+        "search": {
+            "placeholder": "Search by customer or order number..."
+        },
+        "table": {
+            "customer": "Customer",
+            "type": "Type",
+            "items": "Items",
+            "total": "Total",
+            "status": "Status",
+            "date": "Date",
+            "table": "Table",
+            "itemSingular": "item",
+            "itemPlural": "items"
+        },
+        "empty": {
+            "title": "No orders found",
+            "searchHint": "Try adjusting your search or filters",
+            "defaultHint": "New orders will appear here"
+        },
+        "footer": {
+            "showing": "Showing :filtered of :total orders"
+        },
+        "status": {
+            "pending": "Pending",
+            "preparing": "Preparing",
+            "ready": "Ready",
+            "paid": "Paid",
+            "delivered": "Delivered",
+            "completed": "Completed",
+            "accepted": "Accepted",
+            "rejected": "Rejected",
+            "awaiting_payment": "Awaiting Payment",
+            "paid_online": "Paid Online"
+        },
+        "types": {
+            "pickup": "Pickup",
+            "delivery": "Delivery",
+            "salon": "Dine-In Hall",
+            "dine_in": "Dine-In"
+        },
+        "modal": {
+            "orderCode": "Order",
+            "deliveryDetails": "Delivery Details",
+            "itemsTitle": "Items (:count)",
+            "notesPrefix": "Notes",
+            "eachPrice": "Each :price",
+            "totalOrder": "Order Total"
+        }
+    },
+    "cashRegister": {
+        "currencyPrefix": "$",
+        "zeroPlaceholder": "0.00",
+        "messages": {
+            "openSuccess": "Cash register opened successfully!",
+            "closeSuccess": "Cash register closed successfully!"
+        },
+        "methods": {
+            "credito": "Credit Card",
+            "debito": "Debit Card",
+            "dinheiro": "Cash",
+            "pix": "Pix"
+        },
+        "header": {
+            "title": "Cash Register Control",
+            "subtitle": "Open and close the cash register",
+            "operator": "Operator",
+            "defaultOperator": "Admin"
+        },
+        "openCard": {
+            "title": "Open Cash Register",
+            "subtitle": "Enter the opening balance (change fund) to start operations",
+            "opening": "Opening...",
+            "confirm": "Open Cash Register"
+        },
+        "management": {
+            "title": "Cash Register Management",
+            "openBadge": "REGISTER OPEN"
+        },
+        "cards": {
+            "openingBalance": "Opening Balance",
+            "changeFund": "Change fund",
+            "cashSales": "Cash Sales",
+            "cashInflow": "Cash inflow",
+            "totalChange": "Given Change",
+            "cashOutflow": "Cash outflow",
+            "drawerTotal": "Drawer Total",
+            "expectedPhysical": "Expected physical amount"
+        },
+        "salesSummary": {
+            "totalSales": "Total Sales: :value",
+            "title": "Payment Summary",
+            "empty": "No recorded sales"
+        },
+        "closeForm": {
+            "title": "Close Cash Register",
+            "countedBalance": "Counted Balance*",
+            "notes": "Notes",
+            "notesPlaceholder": "Differences, justifications...",
+            "closing": "Closing...",
+            "confirm": "Confirm Closing"
+        },
+        "history": {
+            "title": "Cash Register History",
+            "until": "to",
+            "table": {
+                "opening": "Opening",
+                "closing": "Closing",
+                "finalBalance": "Final Balance",
+                "action": "Action",
+                "summary": "Summary"
+            },
+            "pagination": {
+                "pageOf": "Page :current of :total"
+            },
+            "empty": "No cash register found for this period."
+        },
+        "modal": {
+            "flashSummary": "Flash Summary",
+            "cashChecked": "Cash Verified",
+            "cashMismatch": "Cash Difference",
+            "noDiscrepancy": "No financial discrepancies were found in this closing.",
+            "discrepancyWithValue": "The physically informed balance differs from the expected system balance by :value.",
+            "totalSales": "Total Revenue",
+            "expectedPhysical": "Expected Physical",
+            "totalOrders": "Total Orders",
+            "openingFund": "Opening Fund / Minimum",
+            "receiptsAndSales": "Receipts and Sales",
+            "noSales": "No finalized sales",
+            "operatorNotes": "Operator Notes",
+            "closeSummary": "Close Summary"
+        }
+    }
+}

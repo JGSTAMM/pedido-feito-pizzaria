@@ -1,0 +1,387 @@
+{
+    "common": {
+        "currency": "BRL",
+        "unknown": "Desconhecido",
+        "online": "Online"
+    },
+    "status": {
+        "pending": "Pendente",
+        "preparing": "Preparando",
+        "ready": "Pronto",
+        "paid": "Pago",
+        "delivered": "Entregue"
+    },
+    "dashboard": {
+        "title": "Painel de Controle",
+        "subtitle": "Visao geral do estabelecimento",
+        "cashRegisterOpen": "Caixa Aberto",
+        "cashRegisterClosed": "Caixa Fechado",
+        "stats": {
+            "revenueToday": "Receita Hoje",
+            "ordersToday": "Pedidos Hoje",
+            "inProgress": "Em Andamento",
+            "activeProducts": "Produtos Ativos"
+        },
+        "quickActions": {
+            "openPos": "Abrir PDV",
+            "viewOrders": "Ver Pedidos",
+            "kitchenKds": "Cozinha (KDS)",
+            "floorMap": "Mapa do Salao"
+        },
+        "recentOrders": {
+            "title": "Pedidos Recentes",
+            "viewAll": "Ver todos ->",
+            "empty": "Nenhum pedido recente"
+        }
+    },
+    "layout": {
+        "defaultAppName": "Pedido Feito",
+        "systemAdminVersion": "System Admin v2.0",
+        "settingsSection": "Configuracoes",
+        "logoutTitle": "Sair do Sistema",
+        "defaultAdmin": "Admin"
+    },
+    "nav": {
+        "pos": "PDV",
+        "dashboard": "Painel de Controle",
+        "orders": "Pedidos",
+        "kds": "Cozinha (KDS)",
+        "floor": "Mapa do Salao",
+        "cashRegister": "Caixa",
+        "products": "Produtos",
+        "flavors": "Sabores",
+        "sizes": "Tamanhos",
+        "reports": "Relatorios",
+        "team": "Equipe",
+        "settings": "Configuracoes",
+        "tables": "Mesas",
+        "tabsOrders": "Comandas",
+        "profile": "Perfil"
+    },
+    "flavors": {
+        "header": {
+            "title": "Sabores de Pizza",
+            "subtitle": "Gerencie os sabores disponíveis no cardápio"
+        },
+        "actions": {
+            "new": "Novo Sabor"
+        },
+        "search": {
+            "placeholder": "Buscar sabor..."
+        },
+        "table": {
+            "name": "Nome do Sabor",
+            "basePrice": "Preço Base",
+            "status": "Status",
+            "actions": "Ações",
+            "toggleStatus": "Alternar status"
+        },
+        "empty": "Nenhum sabor encontrado.",
+        "modal": {
+            "editTitle": "Editar Sabor",
+            "newTitle": "Novo Sabor"
+        },
+        "form": {
+            "name": "Nome do Sabor",
+            "namePlaceholder": "Ex: Calabresa",
+            "basePrice": "Preço Base (R$)",
+            "activeLabel": "Sabor Ativo no Cardápio",
+            "cancel": "Cancelar",
+            "saving": "Salvando...",
+            "save": "Salvar Sabor"
+        },
+        "messages": {
+            "confirmDelete": "Tem certeza que deseja excluir este sabor?"
+        }
+    },
+    "products": {
+        "header": {
+            "title": "Produtos",
+            "subtitle": "Catálogo geral de bebidas e complementos"
+        },
+        "actions": {
+            "new": "Novo Produto"
+        },
+        "search": {
+            "placeholder": "Buscar por nome ou categoria..."
+        },
+        "table": {
+            "image": "Img",
+            "name": "Nome do Produto",
+            "category": "Categoria",
+            "price": "Preço",
+            "status": "Status",
+            "actions": "Ações",
+            "toggleStatus": "Alternar status"
+        },
+        "empty": "Nenhum produto encontrado.",
+        "modal": {
+            "editTitle": "Editar Produto",
+            "newTitle": "Novo Produto"
+        },
+        "form": {
+            "name": "Nome do Produto",
+            "category": "Categoria",
+            "categoryPlaceholder": "Ex: Bebidas",
+            "price": "Preço (R$)",
+            "description": "Descrição",
+            "activeLabel": "Produto Ativo",
+            "cancel": "Cancelar",
+            "saving": "Salvando...",
+            "save": "Salvar Produto"
+        },
+        "messages": {
+            "confirmDelete": "Tem certeza que deseja excluir este produto?"
+        }
+    },
+    "floor": {
+        "header": {
+            "title": "Mapa do Salão",
+            "subtitle": "Visão geral e status das mesas"
+        },
+        "actions": {
+            "editModeOn": "Modo de Edição Ativo",
+            "editLayout": "Editar Layout",
+            "newTable": "Nova Mesa"
+        },
+        "stats": {
+            "totalTables": "Total de Mesas",
+            "free": "Livres",
+            "occupied": "Ocupadas"
+        },
+        "search": {
+            "placeholder": "Buscar mesa..."
+        },
+        "empty": "Nenhuma mesa encontrada.",
+        "table": {
+            "seats": ":count Lugares",
+            "statusOccupied": "Ocupada",
+            "statusFree": "Livre",
+            "currentOrder": "Pedido Atual",
+            "available": "Mesa disponível",
+            "clickToOpen": "Clique para Abrir Mesa",
+            "elapsedMinutes": ":count min atrás"
+        },
+        "modal": {
+            "editTitle": "Editar Mesa",
+            "newTitle": "Nova Mesa"
+        },
+        "form": {
+            "name": "Nome/Número da Mesa",
+            "namePlaceholder": "Ex: Mesa 12",
+            "capacity": "Capacidade (Lugares)",
+            "cancel": "Cancelar",
+            "saving": "Salvando...",
+            "save": "Salvar Mesa"
+        },
+        "messages": {
+            "confirmDelete": "Tem certeza que deseja remover esta mesa?"
+        },
+        "drawer": {
+            "statusOccupied": "Ocupada",
+            "statusFree": "Livre",
+            "seats": ":count Lugares",
+            "orderCode": "Pedido",
+            "currencyPrefix": "R$",
+            "zeroPlaceholder": "0,00",
+            "tabs": {
+                "account": "Conta Atual",
+                "addItems": "Adicionar Itens"
+            },
+            "actions": {
+                "closeAccount": "Encerrar Conta"
+            },
+            "addItems": {
+                "title": "Adicionar Itens",
+                "searchPlaceholder": "Buscar produto...",
+                "all": "Todos",
+                "customPizzaTitle": "Montar Pizza Personalizada",
+                "customPizzaSubtitle": "Tamanhos, sabores mistos e bordas",
+                "emptySearch": "Nenhum produto encontrado na busca."
+            },
+            "cart": {
+                "newItems": "Novos Itens (:count)",
+                "totalToSend": "Total a Enviar",
+                "sending": "Enviando...",
+                "sendToKitchen": "Enviar para Cozinha"
+            },
+            "quickItem": {
+                "observationOptional": "Observação (Opcional)",
+                "pizzaObservationPlaceholder": "Ex: Sem orégano, bem assada, borda fina...",
+                "defaultObservationPlaceholder": "Ex: Com gelo e limão, sem açúcar...",
+                "addToOrder": "Adicionar ao Pedido"
+            },
+            "checkout": {
+                "title": "Encerrar Conta",
+                "totalWithValue": "Total: :value",
+                "conference": "Conferência",
+                "addPayment": "Adicionar Pagamento",
+                "addedPayments": "Pagamentos Adicionados",
+                "remaining": "Restante",
+                "change": "Troco",
+                "wait": "Aguarde...",
+                "confirmAndClose": "Confirmar e Fechar Mesa",
+                "insufficient": "Valor Insuficiente"
+            },
+            "methods": {
+                "dinheiro": "Dinheiro",
+                "pix": "Pix",
+                "credito": "Crédito",
+                "debito": "Débito"
+            }
+        }
+    },
+    "orders": {
+        "header": {
+            "title": "Pedidos",
+            "subtitle": "Acompanhe todos os pedidos em tempo real"
+        },
+        "actions": {
+            "newOrder": "Novo Pedido"
+        },
+        "stats": {
+            "ordersToday": "Pedidos Hoje",
+            "revenueToday": "Receita Hoje",
+            "inProgress": "Em Andamento",
+            "completedToday": "Concluídos Hoje"
+        },
+        "filters": {
+            "all": "Todos",
+            "pending": "Pendentes",
+            "preparing": "Preparando",
+            "ready": "Prontos",
+            "paid": "Pagos"
+        },
+        "search": {
+            "placeholder": "Buscar por cliente ou número do pedido..."
+        },
+        "table": {
+            "customer": "Cliente",
+            "type": "Tipo",
+            "items": "Itens",
+            "total": "Total",
+            "status": "Status",
+            "date": "Data",
+            "table": "Mesa",
+            "itemSingular": "item",
+            "itemPlural": "itens"
+        },
+        "empty": {
+            "title": "Nenhum pedido encontrado",
+            "searchHint": "Tente ajustar sua busca ou filtros",
+            "defaultHint": "Novos pedidos aparecerão aqui"
+        },
+        "footer": {
+            "showing": "Mostrando :filtered de :total pedidos"
+        },
+        "status": {
+            "pending": "Pendente",
+            "preparing": "Preparando",
+            "ready": "Pronto",
+            "paid": "Pago",
+            "delivered": "Entregue",
+            "completed": "Concluído",
+            "accepted": "Aceito",
+            "rejected": "Recusado",
+            "awaiting_payment": "Aguardando Pagamento",
+            "paid_online": "Pago Online"
+        },
+        "types": {
+            "pickup": "Retirada",
+            "delivery": "Entrega",
+            "salon": "Salão",
+            "dine_in": "Mesa"
+        },
+        "modal": {
+            "orderCode": "Pedido",
+            "deliveryDetails": "Detalhes de Entrega",
+            "itemsTitle": "Itens (:count)",
+            "notesPrefix": "Obs",
+            "eachPrice": "Cada :price",
+            "totalOrder": "Total do Pedido"
+        }
+    },
+    "cashRegister": {
+        "currencyPrefix": "R$",
+        "zeroPlaceholder": "0,00",
+        "messages": {
+            "openSuccess": "Caixa aberto com sucesso!",
+            "closeSuccess": "Caixa fechado com sucesso!"
+        },
+        "methods": {
+            "credito": "Cartão de Crédito",
+            "debito": "Cartão de Débito",
+            "dinheiro": "Dinheiro",
+            "pix": "Pix"
+        },
+        "header": {
+            "title": "Controle de Caixa",
+            "subtitle": "Abertura e fechamento do caixa",
+            "operator": "Operador",
+            "defaultOperator": "Admin"
+        },
+        "openCard": {
+            "title": "Abrir Caixa",
+            "subtitle": "Informe o saldo inicial (fundo de troco) para iniciar as operações",
+            "opening": "Abrindo...",
+            "confirm": "Abrir Caixa"
+        },
+        "management": {
+            "title": "Gestão de Caixa",
+            "openBadge": "CAIXA ABERTO"
+        },
+        "cards": {
+            "openingBalance": "Saldo Inicial",
+            "changeFund": "Fundo de troco",
+            "cashSales": "Vendas Dinheiro",
+            "cashInflow": "Entradas em espécie",
+            "totalChange": "Trocos Entregues",
+            "cashOutflow": "Saídas de caixa",
+            "drawerTotal": "Total em Gaveta",
+            "expectedPhysical": "Valor esperado físico"
+        },
+        "salesSummary": {
+            "totalSales": "Vendas Totais: :value",
+            "title": "Resumo por Pagamento",
+            "empty": "Nenhuma venda registrada"
+        },
+        "closeForm": {
+            "title": "Fechar Caixa",
+            "countedBalance": "Saldo em Caixa (Contado)*",
+            "notes": "Observações",
+            "notesPlaceholder": "Diferenças, justificativas...",
+            "closing": "Fechando...",
+            "confirm": "Confirmar Fechamento"
+        },
+        "history": {
+            "title": "Histórico de Caixas",
+            "until": "até",
+            "table": {
+                "opening": "Abertura",
+                "closing": "Fechamento",
+                "finalBalance": "Saldo Final",
+                "action": "Ação",
+                "summary": "Resumo"
+            },
+            "pagination": {
+                "pageOf": "Página :current de :total"
+            },
+            "empty": "Nenhum caixa encontrado neste período."
+        },
+        "modal": {
+            "flashSummary": "Flash Summary",
+            "cashChecked": "Caixa Conferido",
+            "cashMismatch": "Quebra de Caixa",
+            "noDiscrepancy": "Não houve discrepâncias financeiras neste fechamento.",
+            "discrepancyWithValue": "O saldo informado fisicamente difere do esperado pelo sistema em :value.",
+            "totalSales": "Total Faturado",
+            "expectedPhysical": "Físico Esperado",
+            "totalOrders": "Total de Pedidos",
+            "openingFund": "Fundo / Mínimo",
+            "receiptsAndSales": "Recebimentos e Vendas",
+            "noSales": "Sem vendas finalizadas",
+            "operatorNotes": "Observações do Operador",
+            "closeSummary": "Fechar Resumo"
+        }
+    }
+}

@@ -3,6 +3,9 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -12,6 +15,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->alias([
+            'role' => \App\Http\Middleware\EnsureUserHasRole::class,
+        ]);
+
         $middleware->web(append: [
             \App\Http\Middleware\HandleInertiaRequests::class,
         ]);
@@ -20,5 +27,33 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->render(function (\Throwable $exception, Request $request) {
+            if (! $request->expectsJson() && ! $request->is('api/*')) {
+                return null;
+            }
+
+            if (config('app.debug')) {
+                return null;
+            }
+
+            $statusCode = $exception instanceof HttpExceptionInterface
+                ? $exception->getStatusCode()
+                : 500;
+
+            $statusCode = ($statusCode >= 400 && $statusCode <= 599) ? $statusCode : 500;
+
+            Log::error('Unhandled API exception', [
+                'message' => $exception->getMessage(),
+                'exception' => get_class($exception),
+                'trace' => $exception->getTraceAsString(),
+                'path' => $request->path(),
+                'method' => $request->method(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => __('common.error.unexpected'),
+                'error_code' => 'UNEXPECTED_ERROR',
+            ], $statusCode);
+        });
     })->create();

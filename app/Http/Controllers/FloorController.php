@@ -13,6 +13,7 @@ use App\Services\PizzaPriceService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
 class FloorController extends Controller
@@ -279,7 +280,12 @@ class FloorController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->back()->with('error', 'Erro ao lançar itens: ' . $e->getMessage());
+            Log::error('Error adding floor items', [
+                'table_id' => $table->id,
+                'exception' => $e,
+            ]);
+
+            return redirect()->back()->with('error', __('common.error.unexpected'));
         }
     }
 
@@ -380,7 +386,12 @@ class FloorController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->back()->with('error', 'Erro ao processar o pagamento: ' . $e->getMessage());
+            Log::error('Error paying and closing floor table', [
+                'table_id' => $table->id,
+                'exception' => $e,
+            ]);
+
+            return redirect()->back()->with('error', __('common.error.unexpected'));
         }
     }
 

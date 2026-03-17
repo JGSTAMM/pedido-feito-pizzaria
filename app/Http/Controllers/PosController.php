@@ -14,6 +14,7 @@ use App\Services\PizzaPriceService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
 class PosController extends Controller
@@ -326,7 +327,12 @@ class PosController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->back()->with('error', 'Erro ao criar pedido: ' . $e->getMessage());
+            Log::error('Error creating POS order', [
+                'exception' => $e,
+                'user_id' => Auth::id(),
+            ]);
+
+            return redirect()->back()->with('error', __('common.error.unexpected'));
         }
     }
 }
