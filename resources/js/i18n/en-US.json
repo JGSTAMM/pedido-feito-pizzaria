@@ -463,12 +463,37 @@
         "checkout": {
             "title": "Checkout",
             "subtitle": "Provide details to place your order",
+            "form_title": "Order details",
+            "order_summary_title": "Order summary",
             "customer_name": "Customer name",
             "customer_phone": "Customer phone",
             "payer_email": "Payer email",
             "delivery_address": "Delivery address",
             "payment_method": "Payment method",
             "submit_order": "Place order",
+            "submitting_order": "Submitting order...",
+            "empty_cart_message": "Add items to your cart to place the order.",
+            "item_quantity": "Quantity: :count",
+            "placeholders": {
+                "customer_name": "Enter your name",
+                "customer_phone": "Enter your phone",
+                "payer_email": "Enter your email",
+                "delivery_address": "Enter delivery address"
+            },
+            "payment_options": {
+                "pix": "Pix",
+                "credit_card": "Credit card"
+            },
+            "errors": {
+                "customer_name_required": "Customer name is required.",
+                "customer_phone_required": "Customer phone is required.",
+                "payer_email_required": "Payer email is required.",
+                "delivery_address_required": "Delivery address is required.",
+                "payment_method_required": "Payment method is required.",
+                "empty_cart": "Your cart is empty.",
+                "validation_failed": "Please review the fields and try again.",
+                "submit_failed": "Unable to submit order. Please try again."
+            },
             "back_to_menu": "Back to menu"
         },
         "payment": {

@@ -463,12 +463,37 @@
         "checkout": {
             "title": "Checkout",
             "subtitle": "Informe os dados para concluir seu pedido",
+            "form_title": "Dados do pedido",
+            "order_summary_title": "Resumo do pedido",
             "customer_name": "Nome do cliente",
             "customer_phone": "Telefone do cliente",
             "payer_email": "Email do pagador",
             "delivery_address": "Endereço de entrega",
             "payment_method": "Forma de pagamento",
             "submit_order": "Enviar pedido",
+            "submitting_order": "Enviando pedido...",
+            "empty_cart_message": "Adicione itens ao carrinho para finalizar o pedido.",
+            "item_quantity": "Quantidade: :count",
+            "placeholders": {
+                "customer_name": "Digite seu nome",
+                "customer_phone": "Digite seu telefone",
+                "payer_email": "Digite seu email",
+                "delivery_address": "Digite o endereço de entrega"
+            },
+            "payment_options": {
+                "pix": "Pix",
+                "credit_card": "Cartão de crédito"
+            },
+            "errors": {
+                "customer_name_required": "O nome do cliente é obrigatório.",
+                "customer_phone_required": "O telefone do cliente é obrigatório.",
+                "payer_email_required": "O email do pagador é obrigatório.",
+                "delivery_address_required": "O endereço de entrega é obrigatório.",
+                "payment_method_required": "A forma de pagamento é obrigatória.",
+                "empty_cart": "Seu carrinho está vazio.",
+                "validation_failed": "Verifique os campos e tente novamente.",
+                "submit_failed": "Não foi possível enviar o pedido. Tente novamente."
+            },
             "back_to_menu": "Voltar ao cardápio"
         },
         "payment": {
