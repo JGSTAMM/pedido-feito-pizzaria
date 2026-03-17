@@ -423,5 +423,63 @@
             "dateTimePatternHint": "dd/MM/yyyy HH:mm:ss",
             "timePatternHint": "HH:mm:ss"
         }
+    },
+    "digital_menu": {
+        "meta": {
+            "appName": "Cardápio Digital"
+        },
+        "header": {
+            "title": "Cardápio Digital",
+            "subtitle": "Escolha seus itens favoritos e finalize seu pedido online"
+        },
+        "catalog": {
+            "search_placeholder": "Buscar produtos e sabores...",
+            "empty_title": "Nenhum item encontrado",
+            "empty_description": "Tente ajustar os filtros para visualizar o catálogo."
+        },
+        "pizza_builder": {
+            "title": "Monte sua pizza",
+            "select_size": "Selecione o tamanho",
+            "select_flavors": "Selecione os sabores",
+            "select_border": "Selecione a borda"
+        },
+        "cart": {
+            "title": "Carrinho",
+            "empty": "Seu carrinho está vazio",
+            "total": "Total",
+            "checkout_action": "Ir para checkout"
+        },
+        "checkout": {
+            "title": "Checkout",
+            "subtitle": "Informe os dados para concluir seu pedido",
+            "customer_name": "Nome do cliente",
+            "customer_phone": "Telefone do cliente",
+            "payer_email": "Email do pagador",
+            "delivery_address": "Endereço de entrega",
+            "payment_method": "Forma de pagamento",
+            "submit_order": "Enviar pedido",
+            "back_to_menu": "Voltar ao cardápio"
+        },
+        "payment": {
+            "status_title": "Status do pagamento",
+            "status_subtitle": "Acompanhe a confirmação do seu pedido",
+            "pix_qr_title": "Pague com Pix",
+            "copy_code": "Copiar código Pix",
+            "order_id": "Pedido #:id",
+            "back_to_menu": "Voltar ao cardápio"
+        },
+        "status": {
+            "awaiting_payment": "Aguardando pagamento",
+            "paid_online": "Pago online",
+            "accepted": "Aceito",
+            "rejected": "Recusado"
+        },
+        "errors": {
+            "generic": "Ocorreu um erro inesperado.",
+            "catalog_load_failed": "Falha ao carregar o catálogo digital."
+        },
+        "success": {
+            "order_created": "Pedido criado com sucesso"
+        }
     }
 }

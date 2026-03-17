@@ -423,5 +423,63 @@
             "dateTimePatternHint": "MM/dd/yyyy HH:mm:ss",
             "timePatternHint": "HH:mm:ss"
         }
+    },
+    "digital_menu": {
+        "meta": {
+            "appName": "Digital Menu"
+        },
+        "header": {
+            "title": "Digital Menu",
+            "subtitle": "Choose your favorite items and complete your order online"
+        },
+        "catalog": {
+            "search_placeholder": "Search products and flavors...",
+            "empty_title": "No items found",
+            "empty_description": "Try adjusting filters to view the catalog."
+        },
+        "pizza_builder": {
+            "title": "Build your pizza",
+            "select_size": "Select size",
+            "select_flavors": "Select flavors",
+            "select_border": "Select crust"
+        },
+        "cart": {
+            "title": "Cart",
+            "empty": "Your cart is empty",
+            "total": "Total",
+            "checkout_action": "Go to checkout"
+        },
+        "checkout": {
+            "title": "Checkout",
+            "subtitle": "Provide details to place your order",
+            "customer_name": "Customer name",
+            "customer_phone": "Customer phone",
+            "payer_email": "Payer email",
+            "delivery_address": "Delivery address",
+            "payment_method": "Payment method",
+            "submit_order": "Place order",
+            "back_to_menu": "Back to menu"
+        },
+        "payment": {
+            "status_title": "Payment status",
+            "status_subtitle": "Track your order confirmation",
+            "pix_qr_title": "Pay with Pix",
+            "copy_code": "Copy Pix code",
+            "order_id": "Order #:id",
+            "back_to_menu": "Back to menu"
+        },
+        "status": {
+            "awaiting_payment": "Awaiting payment",
+            "paid_online": "Paid online",
+            "accepted": "Accepted",
+            "rejected": "Rejected"
+        },
+        "errors": {
+            "generic": "An unexpected error occurred.",
+            "catalog_load_failed": "Failed to load digital catalog."
+        },
+        "success": {
+            "order_created": "Order created successfully"
+        }
     }
 }

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\CashRegisterController;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\CustomerMenuController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FloorController;
 use App\Http\Controllers\KdsController;
@@ -19,6 +20,10 @@ Route::get('/', function () {
 
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
+
+Route::get('/menu', [CustomerMenuController::class, 'index'])->name('customer-menu.index');
+Route::get('/menu/checkout', [CustomerMenuController::class, 'checkout'])->name('customer-menu.checkout');
+Route::get('/menu/order/{order}/status', [CustomerMenuController::class, 'status'])->name('customer-menu.status');
 
 // ── React/Inertia Tenant Routes ──
 Route::middleware(['auth'])->group(function () {
