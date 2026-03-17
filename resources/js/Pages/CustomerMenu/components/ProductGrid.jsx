@@ -1,15 +1,6 @@
 import React from 'react';
 
-function formatCurrency(value) {
-    const numericValue = Number(value ?? 0);
-
-    return new Intl.NumberFormat('pt-BR', {
-        style: 'currency',
-        currency: 'BRL',
-    }).format(numericValue);
-}
-
-export default function ProductGrid({ categories, t }) {
+export default function ProductGrid({ categories, t, formatCurrency, onAddToCart }) {
     if (!categories?.length) {
         return (
             <section className="rounded-lg border border-slate-200 bg-white p-6 text-center text-slate-600">
@@ -45,6 +36,13 @@ export default function ProductGrid({ categories, t }) {
                                 {product.description ? (
                                     <p className="mt-2 text-sm text-slate-600">{product.description}</p>
                                 ) : null}
+                                <button
+                                    type="button"
+                                    className="mt-3 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium text-white"
+                                    onClick={() => onAddToCart(product)}
+                                >
+                                    {t('digital_menu.cart.add_item')}
+                                </button>
                             </article>
                         ))}
                     </div>

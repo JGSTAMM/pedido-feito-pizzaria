@@ -449,7 +449,16 @@
             "title": "Cart",
             "empty": "Your cart is empty",
             "total": "Total",
-            "checkout_action": "Go to checkout"
+            "checkout_action": "Go to checkout",
+            "add_item": "Add to cart",
+            "open_cart": "View cart",
+            "close_cart": "Close",
+            "subtotal": "Subtotal",
+            "clear_action": "Clear cart",
+            "remove_item": "Remove",
+            "increase_quantity": "+",
+            "decrease_quantity": "-",
+            "items_count": "Items: :count"
         },
         "checkout": {
             "title": "Checkout",

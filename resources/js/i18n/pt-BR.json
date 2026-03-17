@@ -449,7 +449,16 @@
             "title": "Carrinho",
             "empty": "Seu carrinho está vazio",
             "total": "Total",
-            "checkout_action": "Ir para checkout"
+            "checkout_action": "Ir para checkout",
+            "add_item": "Adicionar ao carrinho",
+            "open_cart": "Ver carrinho",
+            "close_cart": "Fechar",
+            "subtotal": "Subtotal",
+            "clear_action": "Limpar carrinho",
+            "remove_item": "Remover",
+            "increase_quantity": "+",
+            "decrease_quantity": "-",
+            "items_count": "Itens: :count"
         },
         "checkout": {
             "title": "Checkout",

@@ -1,6 +1,9 @@
-import { Link, usePage } from '@inertiajs/react';
+import { useState } from 'react';
+import { usePage } from '@inertiajs/react';
 import useI18n from '@/hooks/useI18n';
+import CartDrawer from './components/CartDrawer';
 import ProductGrid from './components/ProductGrid';
+import { useCart } from './hooks/useCart';
 import { useDigitalMenuQuery } from './hooks/useDigitalMenuQuery';
 
 function groupProductsByCategory(products, uncategorizedLabel) {
@@ -23,14 +26,28 @@ function groupProductsByCategory(products, uncategorizedLabel) {
 }
 
 export default function Index() {
-    const { t } = useI18n();
+    const { t, formatCurrency } = useI18n();
     const { catalogEndpoint } = usePage().props;
     const { data, error, isLoading, refetch } = useDigitalMenuQuery();
+    const {
+        items,
+        addItem,
+        removeItem,
+        updateQuantity,
+        clearCart,
+        cartTotal,
+        cartItemCount,
+    } = useCart();
+    const [isCartOpen, setIsCartOpen] = useState(false);
 
     const catalogCategories = groupProductsByCategory(
         data?.products ?? [],
         t('digital_menu.catalog.uncategorized')
     );
+
+    const handleAddToCart = (product) => {
+        addItem(product, 1);
+    };
 
     return (
         <main className="min-h-screen bg-background-dark text-white p-6">
@@ -61,18 +78,41 @@ export default function Index() {
 
                 {!isLoading && !error ? (
                     <div className="mt-4">
-                        <ProductGrid categories={catalogCategories} t={t} />
+                        <ProductGrid
+                            categories={catalogCategories}
+                            t={t}
+                            formatCurrency={formatCurrency}
+                            onAddToCart={handleAddToCart}
+                        />
                     </div>
                 ) : null}
 
                 <p className="text-xs mt-4 text-text-muted">{catalogEndpoint}</p>
             </section>
 
-            <div className="max-w-4xl mx-auto mt-6">
-                <Link href="/menu/checkout" className="px-4 py-2 rounded-lg bg-primary text-white font-semibold">
-                    {t('digital_menu.cart.checkout_action')}
-                </Link>
-            </div>
+            <button
+                type="button"
+                onClick={() => setIsCartOpen(true)}
+                className="fixed bottom-6 right-6 z-40 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-white shadow-lg"
+            >
+                {t('digital_menu.cart.open_cart')}
+                <span className="ml-2 rounded-full bg-white/20 px-2 py-0.5 text-xs">
+                    {cartItemCount}
+                </span>
+            </button>
+
+            <CartDrawer
+                isOpen={isCartOpen}
+                onClose={() => setIsCartOpen(false)}
+                items={items}
+                cartTotal={cartTotal}
+                cartItemCount={cartItemCount}
+                updateQuantity={updateQuantity}
+                removeItem={removeItem}
+                clearCart={clearCart}
+                t={t}
+                formatCurrency={formatCurrency}
+            />
         </main>
     );
 }
