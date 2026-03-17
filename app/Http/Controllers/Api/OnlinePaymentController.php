@@ -2,22 +2,22 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Application\Checkout\ProcessOnlineCheckoutAction;
+use App\Application\Checkout\ProcessPaymentWebhookAction;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
-use App\Models\OrderItem;
-use App\Models\Neighborhood;
 use App\Services\PaymentGatewayService;
-use App\Services\PizzaPriceService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 class OnlinePaymentController extends Controller
 {
-    public function __construct(private readonly PaymentGatewayService $paymentGatewayService)
-    {
+    public function __construct(
+        private readonly PaymentGatewayService $paymentGatewayService,
+        private readonly ProcessOnlineCheckoutAction $processOnlineCheckoutAction,
+        private readonly ProcessPaymentWebhookAction $processPaymentWebhookAction,
+    ) {
     }
 
     /**
@@ -57,129 +57,9 @@ class OnlinePaymentController extends Controller
             ], 422);
         }
 
-        try {
-            DB::beginTransaction();
+        $result = $this->processOnlineCheckoutAction->execute($validator->validated());
 
-            // Calculate delivery fee
-            $deliveryFee = 0;
-            if ($request->type === 'delivery' && $request->neighborhood_id) {
-                $neighborhood = Neighborhood::find($request->neighborhood_id);
-                $deliveryFee = $neighborhood ? (float) $neighborhood->delivery_fee : 0;
-            }
-
-            // Create order
-            $order = Order::create([
-                'status' => Order::STATUS_AWAITING_PAYMENT,
-                'type' => $request->type,
-                'customer_name' => $request->customer_name,
-                'customer_phone' => $request->customer_phone,
-                'neighborhood_id' => $request->neighborhood_id,
-                'delivery_address' => $request->delivery_address,
-                'delivery_complement' => $request->delivery_complement,
-                'delivery_fee' => $deliveryFee,
-                'total_amount' => 0, // Will be calculated after items
-            ]);
-
-            // Create order items and calculate total
-            $total = 0;
-            $pizzaPriceService = new PizzaPriceService();
-
-            foreach ($request->items as $item) {
-                if ($item['type'] === 'pizza') {
-                    $price = $pizzaPriceService->calculateItemPrice(
-                        $item['pizza_size_id'],
-                        $item['flavor_ids']
-                    );
-                    $subtotal = $price * $item['quantity'];
-
-                    $orderItem = OrderItem::create([
-                        'order_id' => $order->id,
-                        'pizza_size_id' => $item['pizza_size_id'],
-                        'quantity' => $item['quantity'],
-                        'unit_price' => $price,
-                        'subtotal' => $subtotal,
-                        'type' => 'pizza',
-                        'notes' => $item['notes'] ?? null,
-                    ]);
-
-                    // Attach flavors
-                    $count = count($item['flavor_ids']);
-                    $fraction = "1/{$count}";
-                    $attachData = [];
-                    foreach ($item['flavor_ids'] as $fid) {
-                        $attachData[$fid] = [
-                            'id' => \Illuminate\Support\Str::uuid()->toString(),
-                            'fraction' => $fraction
-                        ];
-                    }
-                    $orderItem->flavors()->attach($attachData);
-
-                    $total += $subtotal;
-                } else {
-                    $product = \App\Models\Product::find($item['product_id']);
-                    if (!$product) continue;
-
-                    $subtotal = (float) $product->price * $item['quantity'];
-
-                    OrderItem::create([
-                        'order_id' => $order->id,
-                        'product_id' => $product->id,
-                        'quantity' => $item['quantity'],
-                        'unit_price' => $product->price,
-                        'subtotal' => $subtotal,
-                        'type' => 'product',
-                        'notes' => $item['notes'] ?? null,
-                    ]);
-
-                    $total += $subtotal;
-                }
-            }
-
-            // Add delivery fee to total
-            $total += $deliveryFee;
-            $order->update(['total_amount' => $total]);
-
-            DB::commit();
-
-            // Process payment
-            $gateway = new PaymentGatewayService();
-
-            if ($request->payment_method === 'pix') {
-                $result = $gateway->createPixPayment($order, $request->payer_email);
-            } else {
-                $result = $gateway->createCardPayment(
-                    $order,
-                    $request->card_token,
-                    $request->payer_email,
-                    $request->installments ?? 1
-                );
-            }
-
-            if (!$result['success']) {
-                // Payment creation failed — mark order for cleanup
-                $order->update(['status' => Order::STATUS_REJECTED, 'rejection_reason' => $result['error'] ?? 'Falha no pagamento']);
-                return response()->json([
-                    'success' => false,
-                    'error' => $result['error'] ?? 'Falha ao criar pagamento.',
-                    'order_id' => $order->id,
-                ], 400);
-            }
-
-            return response()->json([
-                'success' => true,
-                'order_id' => $order->id,
-                'payment' => $result['data'],
-            ], 201);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error("Error creating online order: " . $e->getMessage());
-
-            return response()->json([
-                'success' => false,
-                'error' => 'Erro ao criar pedido. Tente novamente.',
-            ], 500);
-        }
+        return response()->json($result['payload'], $result['status']);
     }
 
     /**
@@ -191,42 +71,9 @@ class OnlinePaymentController extends Controller
     {
         Log::info('Mercado Pago webhook received', $request->all());
 
-        if (!$this->paymentGatewayService->validateWebhookSignature($request)) {
-            return response()->json([
-                'received' => false,
-                'message' => __('webhook.invalid_signature'),
-            ], 403);
-        }
+        $result = $this->processPaymentWebhookAction->execute($request);
 
-        $notificationId = $this->paymentGatewayService->extractNotificationId($request);
-
-        if (!$notificationId) {
-            return response()->json([
-                'received' => false,
-                'message' => __('webhook.missing_notification_id'),
-            ], 400);
-        }
-
-        $cacheKey = "mercadopago:webhook:{$notificationId}";
-        if (!Cache::add($cacheKey, now()->toISOString(), now()->addDay())) {
-            return response()->json([
-                'received' => true,
-                'duplicate' => true,
-                'message' => __('webhook.duplicate_notification'),
-            ]);
-        }
-
-        $success = $this->paymentGatewayService->handleWebhook($request->all());
-
-        if (!$success) {
-            Cache::forget($cacheKey);
-            return response()->json([
-                'received' => false,
-                'message' => __('webhook.processing_failed'),
-            ], 400);
-        }
-
-        return response()->json(['received' => true]);
+        return response()->json($result['payload'], $result['status']);
     }
 
     /**
@@ -239,17 +86,19 @@ class OnlinePaymentController extends Controller
         $order = Order::find($orderId);
 
         if (!$order) {
-            return response()->json(['error' => 'Pedido não encontrado.'], 404);
+            return response()->json([
+                'success' => false,
+                'error' => __('digital_menu.errors.order_not_found'),
+            ], 404);
         }
 
         // Check directly with gateway if still pending
         if ($order->status === Order::STATUS_AWAITING_PAYMENT && $order->payment_gateway_id) {
-            $gateway = new PaymentGatewayService();
-            $gatewayStatus = $gateway->checkPaymentStatus($order);
+            $gatewayStatus = $this->paymentGatewayService->checkPaymentStatus($order);
 
             if ($gatewayStatus === 'approved' && $order->online_payment_status !== 'approved') {
                 // Webhook may have been delayed — process it now
-                $gateway->handleWebhook([
+                $this->paymentGatewayService->handleWebhook([
                     'type' => 'payment',
                     'data' => ['id' => $order->payment_gateway_id],
                 ]);
@@ -258,6 +107,8 @@ class OnlinePaymentController extends Controller
         }
 
         return response()->json([
+            'success' => true,
+            'message' => __('digital_menu.checkout.payment_status_loaded'),
             'order_id' => $order->id,
             'status' => $order->status,
             'payment_status' => $order->online_payment_status,

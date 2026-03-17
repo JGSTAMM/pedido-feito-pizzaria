@@ -2,18 +2,15 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Application\DigitalMenu\GetDigitalCatalogAction;
 use App\Http\Controllers\Controller;
-use App\Models\Product;
-use App\Models\PizzaFlavor;
-use App\Models\PizzaSize;
-use App\Models\Neighborhood;
-use App\Http\Resources\ProductResource;
-use App\Http\Resources\PizzaFlavorResource;
-use App\Http\Resources\PizzaSizeResource;
-use App\Http\Resources\NeighborhoodResource;
 
 class DigitalMenuController extends Controller
 {
+    public function __construct(private readonly GetDigitalCatalogAction $getDigitalCatalogAction)
+    {
+    }
+
     /**
      * Retorna todos os dados para o cardápio digital.
      * Endpoint PÚBLICO (sem autenticação).
@@ -22,21 +19,6 @@ class DigitalMenuController extends Controller
      */
     public function index()
     {
-        $flavors = PizzaFlavor::where('is_active', true)
-            ->where('show_on_digital_menu', true)
-            ->orderBy('name')
-            ->get();
-
-        $products = Product::where('show_on_digital_menu', true)
-            ->orderBy('category')
-            ->orderBy('name')
-            ->get();
-
-        return response()->json([
-            'pizza_sizes' => PizzaSizeResource::collection(PizzaSize::all()),
-            'pizza_flavors' => PizzaFlavorResource::collection($flavors),
-            'products' => ProductResource::collection($products),
-            'neighborhoods' => NeighborhoodResource::collection(Neighborhood::orderBy('name')->get()),
-        ]);
+        return response()->json($this->getDigitalCatalogAction->execute());
     }
 }
