@@ -383,5 +383,45 @@
             "operatorNotes": "Operator Notes",
             "closeSummary": "Close Summary"
         }
+    },
+    "receipt": {
+        "shared": {
+            "cnpjLabel": "CNPJ",
+            "customerLabel": "Customer",
+            "orderPrefix": "Order",
+            "tableLabelWithValue": "Table :table",
+            "counterOrderLabel": "Counter order",
+            "quantityShort": "Qty",
+            "itemLabel": "Item",
+            "productLabel": "Product",
+            "totalLabel": "Total",
+            "flavorsLabel": "Flavors",
+            "notesLabel": "Notes",
+            "currencyPrefixFallback": "$",
+            "notFiscalDocument": "NOT A TAX DOCUMENT"
+        },
+        "customer": {
+            "headerLine1Fallback": "LUCCHESE",
+            "headerLine2Fallback": "GOURMET PIZZERIA",
+            "footerMessageFallback": "Thank you for your preference!",
+            "tableConferenceTitle": "*** TABLE CHECK ***",
+            "totalToPay": "Total Due",
+            "counterOrderTitle": "COUNTER ORDER",
+            "customerLineWithName": "Customer: :name"
+        },
+        "kitchen": {
+            "counterOrDeliveryLabel": "COUNTER / DELIVERY",
+            "productionCopyWithTime": "PRODUCTION COPY - :time",
+            "endOfOrderTitle": "*** END OF ORDER ***",
+            "notesDecoratedWithValue": "*** NOTES: :note ***",
+            "flavorPrefixSymbol": "►"
+        },
+        "fallback": {
+            "defaultCustomerName": "Customer"
+        },
+        "format": {
+            "dateTimePatternHint": "MM/dd/yyyy HH:mm:ss",
+            "timePatternHint": "HH:mm:ss"
+        }
     }
 }

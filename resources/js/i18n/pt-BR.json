@@ -383,5 +383,45 @@
             "operatorNotes": "Observações do Operador",
             "closeSummary": "Fechar Resumo"
         }
+    },
+    "receipt": {
+        "shared": {
+            "cnpjLabel": "CNPJ",
+            "customerLabel": "Cliente",
+            "orderPrefix": "Pedido",
+            "tableLabelWithValue": "Mesa :table",
+            "counterOrderLabel": "Pedido de balcão",
+            "quantityShort": "Qtd",
+            "itemLabel": "Item",
+            "productLabel": "Produto",
+            "totalLabel": "Total",
+            "flavorsLabel": "Sabores",
+            "notesLabel": "OBS",
+            "currencyPrefixFallback": "R$",
+            "notFiscalDocument": "NÃO É DOCUMENTO FISCAL"
+        },
+        "customer": {
+            "headerLine1Fallback": "LUCCHESE",
+            "headerLine2Fallback": "PIZZARIA GOURMET",
+            "footerMessageFallback": "Obrigado pela preferência!",
+            "tableConferenceTitle": "*** CONFERÊNCIA DE MESA ***",
+            "totalToPay": "Total a Pagar",
+            "counterOrderTitle": "PEDIDO DE BALCÃO",
+            "customerLineWithName": "Cliente: :name"
+        },
+        "kitchen": {
+            "counterOrDeliveryLabel": "BALCÃO / DELIVERY",
+            "productionCopyWithTime": "VIA DE PRODUÇÃO - :time",
+            "endOfOrderTitle": "*** FIM DO PEDIDO ***",
+            "notesDecoratedWithValue": "*** OBS: :note ***",
+            "flavorPrefixSymbol": "►"
+        },
+        "fallback": {
+            "defaultCustomerName": "Cliente"
+        },
+        "format": {
+            "dateTimePatternHint": "dd/MM/yyyy HH:mm:ss",
+            "timePatternHint": "HH:mm:ss"
+        }
     }
 }

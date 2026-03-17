@@ -1,16 +1,29 @@
 import React from 'react';
 
 import { usePage } from '@inertiajs/react';
+import useI18n from '@/hooks/useI18n';
 
 // Estilos de impressão injetados globalmente ou via classe isolada para afetar apenas este componente
 export default function ReceiptPrint({ order }) {
     const { storeSetting } = usePage().props;
+    const { t, formatCurrency, locale } = useI18n();
     if (!order) return null;
 
-    const header1 = storeSetting?.receipt_header_1 || storeSetting?.store_name || "LUCCHESE";
-    const header2 = storeSetting?.receipt_header_2 || "PIZZARIA GOURMET";
-    const footerMsg = storeSetting?.receipt_footer || "Obrigado pela preferência!";
+    const header1 =
+        storeSetting?.receipt_header_1 ||
+        storeSetting?.store_name ||
+        t('receipt.customer.headerLine1Fallback');
+    const header2 = storeSetting?.receipt_header_2 || t('receipt.customer.headerLine2Fallback');
+    const footerMsg = storeSetting?.receipt_footer || t('receipt.customer.footerMessageFallback');
     const showCnpj = storeSetting?.receipt_show_cnpj ?? true;
+    const isNamedCustomer =
+        order.customer_name && order.customer_name !== t('receipt.fallback.defaultCustomerName');
+    const datePart = new Intl.DateTimeFormat(locale).format(new Date());
+    const timePart = new Intl.DateTimeFormat(locale, {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+    }).format(new Date());
 
     return (
         <div className="hidden print:block font-mono bg-white text-black p-0 m-0 w-[80mm] leading-snug">
@@ -19,23 +32,29 @@ export default function ReceiptPrint({ order }) {
                 <h2 className="text-xl font-bold uppercase tracking-widest mb-1">{header1}</h2>
                 <p className="text-[10px] uppercase font-bold">{header2}</p>
                 {showCnpj && storeSetting?.cnpj && (
-                    <p className="text-[10px] uppercase font-bold mt-0.5">CNPJ: {storeSetting.cnpj}</p>
+                    <p className="text-[10px] uppercase font-bold mt-0.5">
+                        {t('receipt.shared.cnpjLabel')}: {storeSetting.cnpj}
+                    </p>
                 )}
                 <p className="text-[10px] mt-1">
-                    {new Date().toLocaleDateString('pt-BR')} {new Date().toLocaleTimeString('pt-BR')}
+                    {datePart} {timePart}
                 </p>
             </div>
 
             {/* Identificacao do Pedido */}
             <div className="text-center mb-4">
                 <h3 className="text-lg font-bold mb-1">
-                    {order.table_name ? `MESA ${order.table_name}` : 'PEDIDO DE BALCÃO'}
+                    {order.table_name
+                        ? t('receipt.shared.tableLabelWithValue', { table: order.table_name })
+                        : t('receipt.customer.counterOrderTitle')}
                 </h3>
                 <p className="border border-black inline-block px-3 py-1 font-bold text-sm tracking-widest">
                     #{order.short_code || String(order.id).substring(0, 5).toUpperCase()}
                 </p>
-                {order.customer_name && order.customer_name !== 'Cliente' && (
-                    <p className="mt-2 font-bold text-sm uppercase">Cliente: {order.customer_name}</p>
+                {isNamedCustomer && (
+                    <p className="mt-2 font-bold text-sm uppercase">
+                        {t('receipt.customer.customerLineWithName', { name: order.customer_name })}
+                    </p>
                 )}
             </div>
 
@@ -45,9 +64,9 @@ export default function ReceiptPrint({ order }) {
             <table className="w-full text-left mb-2 text-[11px]">
                 <thead>
                     <tr className="border-b border-black border-dashed">
-                        <th className="py-1 w-8 font-bold">Qtd</th>
-                        <th className="py-1 font-bold">Item</th>
-                        <th className="py-1 text-right font-bold w-12">Total</th>
+                        <th className="py-1 w-8 font-bold">{t('receipt.shared.quantityShort')}</th>
+                        <th className="py-1 font-bold">{t('receipt.shared.itemLabel')}</th>
+                        <th className="py-1 text-right font-bold w-12">{t('receipt.shared.totalLabel')}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -58,17 +77,17 @@ export default function ReceiptPrint({ order }) {
                                 <span className="font-bold">{item.name}</span>
                                 {item.is_pizza && item.flavor_names?.length > 0 && (
                                     <div className="text-[9px] mt-0.5 leading-tight pl-1">
-                                        Sabores: {item.flavor_names.join(', ')}
+                                        {t('receipt.shared.flavorsLabel')}: {item.flavor_names.join(', ')}
                                     </div>
                                 )}
                                 {item.notes && (
                                     <div className="text-[9px] mt-0.5 leading-tight pl-1 font-bold uppercase">
-                                        OBS: {item.notes}
+                                        {t('receipt.shared.notesLabel')}: {item.notes}
                                     </div>
                                 )}
                             </td>
                             <td className="py-1 align-top pt-1 text-right">
-                                {Number(item.price * item.quantity).toFixed(2).replace('.', ',')}
+                                {formatCurrency(Number(item.price || 0) * Number(item.quantity || 0))}
                             </td>
                         </tr>
                     ))}
@@ -79,14 +98,14 @@ export default function ReceiptPrint({ order }) {
 
             {/* Totalizadores */}
             <div className="flex justify-between items-center text-sm font-black uppercase mb-4">
-                <span>Total a Pagar</span>
-                <span className="text-base">R$ {Number(order.total).toFixed(2).replace('.', ',')}</span>
+                <span>{t('receipt.customer.totalToPay')}</span>
+                <span className="text-base">{formatCurrency(order.total)}</span>
             </div>
 
             {/* Rodapé */}
             <div className="text-center text-[10px] mt-6 pt-4 border-t border-black border-dashed space-y-1">
-                <p className="font-bold uppercase tracking-widest">*** CONFERÊNCIA DE MESA ***</p>
-                <p>NÃO É DOCUMENTO FISCAL</p>
+                <p className="font-bold uppercase tracking-widest">{t('receipt.customer.tableConferenceTitle')}</p>
+                <p>{t('receipt.shared.notFiscalDocument')}</p>
                 {footerMsg && <p className="mt-2 text-[10px] !mt-4 whitespace-pre-wrap leading-tight">{footerMsg}</p>}
             </div>
 

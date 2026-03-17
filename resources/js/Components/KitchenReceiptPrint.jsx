@@ -1,23 +1,37 @@
 import React from 'react';
+import useI18n from '@/hooks/useI18n';
 
 export default function KitchenReceiptPrint({ order }) {
+    const { t, locale } = useI18n();
     if (!order) return null;
+
+    const isNamedCustomer =
+        order.customer_name && order.customer_name !== t('receipt.fallback.defaultCustomerName');
+    const productionTime = new Intl.DateTimeFormat(locale, {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+    }).format(new Date());
 
     return (
         <div className="hidden print:block bg-white text-black font-mono p-0 m-0 w-[80mm] leading-snug">
             {/* Cabecalho Cozinha */}
             <div className="text-center mb-4 border-b-2 border-black pb-2">
                 <h2 className="text-2xl font-black uppercase tracking-widest mb-1">
-                    {order.table_name ? `MESA ${order.table_name}` : 'BALCÃO / DELIVERY'}
+                    {order.table_name
+                        ? t('receipt.shared.tableLabelWithValue', { table: order.table_name })
+                        : t('receipt.kitchen.counterOrDeliveryLabel')}
                 </h2>
                 <h3 className="text-xl font-bold border border-black inline-block px-4 py-1 mt-1">
-                    PEDIDO #{order.short_code || String(order.id).substring(0, 5).toUpperCase()}
+                    {t('receipt.shared.orderPrefix')} #{order.short_code || String(order.id).substring(0, 5).toUpperCase()}
                 </h3>
-                {order.customer_name && order.customer_name !== 'Cliente' && (
-                    <p className="mt-2 font-bold text-sm uppercase">Cliente: {order.customer_name}</p>
+                {isNamedCustomer && (
+                    <p className="mt-2 font-bold text-sm uppercase">
+                        {t('receipt.customer.customerLineWithName', { name: order.customer_name })}
+                    </p>
                 )}
                 <p className="text-[12px] mt-2 font-bold uppercase">
-                    VIA DE PRODUÇÃO - {new Date().toLocaleTimeString('pt-BR')}
+                    {t('receipt.kitchen.productionCopyWithTime', { time: productionTime })}
                 </p>
             </div>
 
@@ -27,8 +41,8 @@ export default function KitchenReceiptPrint({ order }) {
             <table className="w-full text-left mb-2 text-sm">
                 <thead>
                     <tr className="border-b border-black">
-                        <th className="py-2 w-8 font-black text-lg">Qtd</th>
-                        <th className="py-2 font-black text-lg">Produto</th>
+                        <th className="py-2 w-8 font-black text-lg">{t('receipt.shared.quantityShort')}</th>
+                        <th className="py-2 font-black text-lg">{t('receipt.shared.productLabel')}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -39,12 +53,12 @@ export default function KitchenReceiptPrint({ order }) {
                                 <span className="font-black text-lg uppercase">{item.name}</span>
                                 {item.is_pizza && item.flavor_names?.length > 0 && (
                                     <div className="text-base mt-1 font-bold uppercase">
-                                        ► {item.flavor_names.join(', ')}
+                                        {t('receipt.kitchen.flavorPrefixSymbol')} {item.flavor_names.join(', ')}
                                     </div>
                                 )}
                                 {item.notes && (
                                     <div className="mt-2 p-1 border-2 border-black font-black text-base uppercase">
-                                        *** OBS: {item.notes} ***
+                                        {t('receipt.kitchen.notesDecoratedWithValue', { note: item.notes })}
                                     </div>
                                 )}
                             </td>
@@ -55,7 +69,7 @@ export default function KitchenReceiptPrint({ order }) {
 
             {/* Rodapé Cozinha */}
             <div className="text-center text-[12px] mt-6 pt-2 border-t-2 border-black font-black uppercase">
-                <p>*** FIM DO PEDIDO ***</p>
+                <p>{t('receipt.kitchen.endOfOrderTitle')}</p>
             </div>
 
             {/* Estilo Global exclusivo para Impressão 80mm */}
