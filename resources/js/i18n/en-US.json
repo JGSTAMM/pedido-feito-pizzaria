@@ -434,6 +434,8 @@
         },
         "catalog": {
             "search_placeholder": "Search products and flavors...",
+            "loading": "Loading digital catalog...",
+            "uncategorized": "Others",
             "empty_title": "No items found",
             "empty_description": "Try adjusting filters to view the catalog."
         },
@@ -480,6 +482,9 @@
         },
         "success": {
             "order_created": "Order created successfully"
+        },
+        "actions": {
+            "retry": "Try again"
         }
     }
 }

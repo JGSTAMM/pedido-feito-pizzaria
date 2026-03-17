@@ -434,6 +434,8 @@
         },
         "catalog": {
             "search_placeholder": "Buscar produtos e sabores...",
+            "loading": "Carregando cat\u00e1logo digital...",
+            "uncategorized": "Outros",
             "empty_title": "Nenhum item encontrado",
             "empty_description": "Tente ajustar os filtros para visualizar o catálogo."
         },
@@ -480,6 +482,9 @@
         },
         "success": {
             "order_created": "Pedido criado com sucesso"
+        },
+        "actions": {
+            "retry": "Tentar novamente"
         }
     }
 }
