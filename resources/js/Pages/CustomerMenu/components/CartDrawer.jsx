@@ -17,53 +17,53 @@ export default function CartDrawer({
     }
 
     return (
-        <div className="fixed inset-0 z-50">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm transition-opacity">
             <button
                 type="button"
-                className="absolute inset-0 bg-black/50"
+                className="absolute inset-0"
                 onClick={onClose}
                 aria-label={t('digital_menu.cart.close_cart')}
             />
 
-            <aside className="absolute right-0 top-0 h-full w-full max-w-md bg-slate-950 text-white shadow-2xl">
+            <aside className="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-gray-900 shadow-2xl ring-1 ring-white/10 flex flex-col">
                 <div className="flex h-full flex-col">
-                    <header className="flex items-center justify-between border-b border-slate-800 px-4 py-4">
+                    <header className="p-6 border-b border-gray-800 flex items-center justify-between gap-4">
                         <div>
-                            <h2 className="text-lg font-semibold">{t('digital_menu.cart.title')}</h2>
-                            <p className="text-xs text-slate-300">
+                            <h2 className="text-xl font-semibold text-white">{t('digital_menu.cart.title')}</h2>
+                            <p className="text-sm text-gray-400 mt-1">
                                 {t('digital_menu.cart.items_count', { count: cartItemCount })}
                             </p>
                         </div>
                         <button
                             type="button"
                             onClick={onClose}
-                            className="rounded-md border border-slate-600 px-3 py-1 text-sm"
+                            className="rounded-lg border border-gray-700 px-3 py-2 text-sm font-medium text-gray-200 hover:bg-gray-800 transition-colors"
                         >
                             {t('digital_menu.cart.close_cart')}
                         </button>
                     </header>
 
-                    <div className="flex-1 overflow-y-auto px-4 py-4">
+                    <div className="flex-1 overflow-y-auto p-6">
                         {items.length === 0 ? (
-                            <p className="text-sm text-slate-300">{t('digital_menu.cart.empty')}</p>
+                            <p className="text-sm text-gray-400">{t('digital_menu.cart.empty')}</p>
                         ) : (
-                            <div className="space-y-3">
+                            <div className="space-y-4">
                                 {items.map((item) => (
                                     <article
                                         key={item.id}
-                                        className="rounded-lg border border-slate-700 bg-slate-900 p-3"
+                                        className="rounded-xl border border-gray-700 bg-gray-800/80 p-4"
                                     >
                                         <div className="flex items-start justify-between gap-3">
                                             <div>
-                                                <h3 className="text-sm font-medium">{item.name}</h3>
-                                                <p className="text-xs text-slate-300">
+                                                <h3 className="text-sm font-semibold text-white">{item.name}</h3>
+                                                <p className="text-xs text-gray-400 mt-1">
                                                     {formatCurrency(item.price)}
                                                 </p>
                                             </div>
                                             <button
                                                 type="button"
                                                 onClick={() => removeItem(item.id)}
-                                                className="text-xs text-red-300"
+                                                className="text-xs text-red-300 hover:text-red-200 transition-colors"
                                             >
                                                 {t('digital_menu.cart.remove_item')}
                                             </button>
@@ -73,17 +73,17 @@ export default function CartDrawer({
                                             <button
                                                 type="button"
                                                 onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                                                className="rounded border border-slate-600 px-2 py-1 text-sm"
+                                                className="rounded-lg border border-gray-600 px-2.5 py-1.5 text-sm text-gray-200 hover:bg-gray-700 transition-colors"
                                             >
                                                 {t('digital_menu.cart.decrease_quantity')}
                                             </button>
-                                            <span className="min-w-8 text-center text-sm font-semibold">
+                                            <span className="min-w-8 text-center text-sm font-semibold text-white">
                                                 {item.quantity}
                                             </span>
                                             <button
                                                 type="button"
                                                 onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                                                className="rounded border border-slate-600 px-2 py-1 text-sm"
+                                                className="rounded-lg border border-gray-600 px-2.5 py-1.5 text-sm text-gray-200 hover:bg-gray-700 transition-colors"
                                             >
                                                 {t('digital_menu.cart.increase_quantity')}
                                             </button>
@@ -94,24 +94,24 @@ export default function CartDrawer({
                         )}
                     </div>
 
-                    <footer className="border-t border-slate-800 px-4 py-4 space-y-3">
+                    <footer className="p-6 border-t border-gray-800 space-y-4">
                         <div className="flex items-center justify-between text-sm">
-                            <span>{t('digital_menu.cart.subtotal')}</span>
-                            <strong>{formatCurrency(cartTotal)}</strong>
+                            <span className="text-gray-400">{t('digital_menu.cart.subtotal')}</span>
+                            <strong className="text-white text-base">{formatCurrency(cartTotal)}</strong>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-2">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <button
                                 type="button"
                                 onClick={clearCart}
-                                className="rounded-lg border border-slate-600 px-3 py-2 text-sm"
+                                className="h-12 rounded-xl border border-gray-700 px-4 text-sm font-semibold text-gray-200 hover:bg-gray-800 transition-colors"
                                 disabled={items.length === 0}
                             >
                                 {t('digital_menu.cart.clear_action')}
                             </button>
                             <Link
                                 href="/menu/checkout"
-                                className="rounded-lg bg-primary px-3 py-2 text-center text-sm font-semibold text-white"
+                                className="w-full h-12 inline-flex items-center justify-center rounded-xl font-bold text-white bg-indigo-600 hover:bg-indigo-500 transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
                             >
                                 {t('digital_menu.cart.checkout_action')}
                             </Link>

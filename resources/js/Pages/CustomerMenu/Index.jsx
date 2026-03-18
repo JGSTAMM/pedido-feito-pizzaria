@@ -95,10 +95,10 @@ export default function Index() {
             <button
                 type="button"
                 onClick={() => setIsCartOpen(true)}
-                className="fixed bottom-6 right-6 z-40 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-white shadow-lg"
+                className="fixed bottom-6 right-6 sm:bottom-8 sm:right-8 h-14 px-6 rounded-full shadow-lg shadow-indigo-500/30 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold flex items-center gap-3 transition-all hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900 z-40"
             >
                 {t('digital_menu.cart.open_cart')}
-                <span className="ml-2 rounded-full bg-white/20 px-2 py-0.5 text-xs">
+                <span className="bg-white text-indigo-600 rounded-full px-2.5 py-0.5 text-sm font-bold">
                     {cartItemCount}
                 </span>
             </button>
