@@ -50,45 +50,47 @@ export default function Index() {
     };
 
     return (
-        <main className="min-h-screen bg-background-dark text-white p-6">
-            <header className="max-w-4xl mx-auto mb-6">
-                <h1 className="text-3xl font-bold">{t('digital_menu.header.title')}</h1>
-                <p className="text-text-muted mt-2">{t('digital_menu.header.subtitle')}</p>
-            </header>
+        <main className="w-full min-h-screen bg-gray-900 text-gray-100">
+            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10">
+                <header className="mb-8 sm:mb-10">
+                    <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-white">{t('digital_menu.header.title')}</h1>
+                    <p className="text-gray-400 mt-3 text-base sm:text-lg">{t('digital_menu.header.subtitle')}</p>
+                </header>
 
-            <section className="max-w-4xl mx-auto rounded-xl border border-border-subtle bg-surface p-4">
-                <p className="text-sm text-text-muted">{t('digital_menu.catalog.search_placeholder')}</p>
+                <section className="rounded-2xl border border-gray-700 bg-gray-800/40 p-4 sm:p-5 lg:p-6">
+                    <p className="text-sm text-gray-400">{t('digital_menu.catalog.search_placeholder')}</p>
 
-                {isLoading ? (
-                    <p className="text-sm mt-2">{t('digital_menu.catalog.loading')}</p>
-                ) : null}
+                    {isLoading ? (
+                        <p className="text-sm mt-2 text-gray-300">{t('digital_menu.catalog.loading')}</p>
+                    ) : null}
 
-                {error ? (
-                    <div className="mt-3 space-y-2">
-                        <p className="text-sm text-red-300">{t('digital_menu.errors.catalog_load_failed')}</p>
-                        <button
-                            type="button"
-                            className="px-3 py-2 rounded-lg bg-red-600 text-white text-sm font-medium"
-                            onClick={refetch}
-                        >
-                            {t('digital_menu.actions.retry')}
-                        </button>
-                    </div>
-                ) : null}
+                    {error ? (
+                        <div className="mt-3 space-y-2">
+                            <p className="text-sm text-red-300">{t('digital_menu.errors.catalog_load_failed')}</p>
+                            <button
+                                type="button"
+                                className="px-3 py-2 rounded-lg bg-red-600 text-white text-sm font-medium"
+                                onClick={refetch}
+                            >
+                                {t('digital_menu.actions.retry')}
+                            </button>
+                        </div>
+                    ) : null}
 
-                {!isLoading && !error ? (
-                    <div className="mt-4">
-                        <ProductGrid
-                            categories={catalogCategories}
-                            t={t}
-                            formatCurrency={formatCurrency}
-                            onAddToCart={handleAddToCart}
-                        />
-                    </div>
-                ) : null}
+                    {!isLoading && !error ? (
+                        <div className="mt-5">
+                            <ProductGrid
+                                categories={catalogCategories}
+                                t={t}
+                                formatCurrency={formatCurrency}
+                                onAddToCart={handleAddToCart}
+                            />
+                        </div>
+                    ) : null}
 
-                <p className="text-xs mt-4 text-text-muted">{catalogEndpoint}</p>
-            </section>
+                    <p className="text-xs mt-5 text-gray-500">{catalogEndpoint}</p>
+                </section>
+            </div>
 
             <button
                 type="button"
