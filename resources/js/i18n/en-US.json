@@ -500,7 +500,11 @@
             "status_title": "Payment status",
             "status_subtitle": "Track your order confirmation",
             "pix_qr_title": "Pay with Pix",
+            "pix_copy_label": "Copy and paste code",
             "copy_code": "Copy Pix code",
+            "copy_success": "Pix code copied successfully.",
+            "polling_loading": "Checking payment status...",
+            "polling_error": "Unable to check status right now. Retrying...",
             "order_id": "Order #:id",
             "back_to_menu": "Back to menu"
         },

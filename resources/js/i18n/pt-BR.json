@@ -500,7 +500,11 @@
             "status_title": "Status do pagamento",
             "status_subtitle": "Acompanhe a confirmação do seu pedido",
             "pix_qr_title": "Pague com Pix",
+            "pix_copy_label": "Código copia e cola",
             "copy_code": "Copiar código Pix",
+            "copy_success": "Código Pix copiado com sucesso.",
+            "polling_loading": "Consultando status do pagamento...",
+            "polling_error": "Não foi possível consultar o status agora. Tentando novamente...",
             "order_id": "Pedido #:id",
             "back_to_menu": "Voltar ao cardápio"
         },
