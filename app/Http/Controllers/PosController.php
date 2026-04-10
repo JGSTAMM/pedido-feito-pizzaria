@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Application\CashRegister\CashRegisterLockService;
+use App\Application\Orders\OrderActionException;
 use App\Models\CashRegister;
 use App\Models\Customer;
 use App\Models\Order;
@@ -19,6 +21,12 @@ use Inertia\Inertia;
 
 class PosController extends Controller
 {
+    public function __construct(
+        private readonly PizzaPriceService $pizzaPriceService,
+        private readonly CashRegisterLockService $cashRegisterLockService,
+    ) {
+    }
+
     /**
      * Display the POS page with all catalog data.
      */
@@ -152,11 +160,10 @@ class PosController extends Controller
             throw $e;
         }
 
-        // Validate Cash Register State Before Anything Else
-        $activeRegister = \App\Models\CashRegister::where('status', 'open')->latest()->first();
-
-        if (!$activeRegister) {
-            return redirect()->back()->with('error', 'Operação bloqueada: O caixa está fechado. Peça ao gerente para abrir o caixa.');
+        try {
+            $activeRegister = $this->cashRegisterLockService->requireOpenRegister();
+        } catch (OrderActionException $exception) {
+            return redirect()->back()->with('error', $exception->getMessage());
         }
 
         try {
@@ -166,7 +173,7 @@ class PosController extends Controller
             $totalAmount = 0;
             $itemsData = [];
 
-            $priceService = new PizzaPriceService();
+            $priceService = $this->pizzaPriceService;
 
             foreach ($validated['items'] as $item) {
                 if ($item['type'] === 'product') {

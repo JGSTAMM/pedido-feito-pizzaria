@@ -35,8 +35,8 @@ export default function Login({ storeName }) {
 
 
             {/* Elementos visuais de fundo sutis (opcional, para dar mais profundidade) */}
-            <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-[#8b5cf6]/20 rounded-full blur-[120px] pointer-events-none hidden sm:block"></div>
-            <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-[#7c3aed]/10 rounded-full blur-[100px] pointer-events-none hidden sm:block"></div>
+            <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-[#06b6d4]/20 rounded-full blur-[120px] pointer-events-none hidden sm:block"></div>
+            <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-[#0891b2]/10 rounded-full blur-[100px] pointer-events-none hidden sm:block"></div>
 
             {/* Container Responsivo: Fullscreen no Mobile (sem borda/fundo), Card Glassmorphism real no Desktop */}
             <div className="w-full sm:max-w-[440px] h-screen sm:h-auto z-10 

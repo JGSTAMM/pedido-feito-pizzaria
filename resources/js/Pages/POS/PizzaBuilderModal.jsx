@@ -434,7 +434,7 @@ export default function PizzaBuilderModal({ isOpen, onClose, onConfirm, pizzaFla
                         {step === 2 && selectedFlavors.length > 0 && (
                             <button
                                 onClick={() => setStep(3)}
-                                className="px-6 py-3 rounded-xl bg-primary hover:bg-[#7C3AED] text-white font-bold text-sm shadow-[0_0_15px_rgba(139,92,246,0.2)] transition-all flex items-center gap-2"
+                                className="px-6 py-3 rounded-xl bg-primary hover:bg-[#0891b2] text-white font-bold text-sm shadow-[0_0_15px_rgba(139,92,246,0.2)] transition-all flex items-center gap-2"
                             >
                                 Avançar
                                 <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
@@ -443,7 +443,7 @@ export default function PizzaBuilderModal({ isOpen, onClose, onConfirm, pizzaFla
                         {step === 3 && (
                             <button
                                 onClick={handleConfirm}
-                                className="px-6 py-3.5 rounded-xl bg-primary hover:bg-[#7C3AED] text-white font-bold text-sm shadow-[0_0_15px_rgba(139,92,246,0.3)] transition-all flex items-center gap-2"
+                                className="px-6 py-3.5 rounded-xl bg-primary hover:bg-[#0891b2] text-white font-bold text-sm shadow-[0_0_15px_rgba(139,92,246,0.3)] transition-all flex items-center gap-2"
                             >
                                 <span className="material-symbols-outlined text-[20px]">add_shopping_cart</span>
                                 Adicionar
@@ -508,7 +508,7 @@ export default function PizzaBuilderModal({ isOpen, onClose, onConfirm, pizzaFla
                             )}
                         </div>
                         <div className="p-4 border-t border-border-subtle bg-surface shrink-0">
-                            <button onClick={confirmFlavorCustomization} className="w-full py-4 bg-primary hover:bg-[#7C3AED] text-white font-bold rounded-xl transition-all shadow-[0_0_15px_rgba(139,92,246,0.3)] flex items-center justify-center gap-2">
+                            <button onClick={confirmFlavorCustomization} className="w-full py-4 bg-primary hover:bg-[#0891b2] text-white font-bold rounded-xl transition-all shadow-[0_0_15px_rgba(139,92,246,0.3)] flex items-center justify-center gap-2">
                                 <span className="material-symbols-outlined text-[20px]">check_circle</span>
                                 Confirmar Sabor
                             </button>

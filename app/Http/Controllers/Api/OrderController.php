@@ -106,9 +106,9 @@ class OrderController extends Controller
         $orders = Order::with(['table', 'items.product', 'items.pizzaSize', 'items.flavors'])
             ->whereDate('created_at', now()->toDateString())
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->paginate(50);
 
-        $result = $orders->map(function ($order) {
+        $result = $orders->getCollection()->map(function ($order) {
             return [
                 'id' => $order->id,
                 'short_code' => $order->short_code,
@@ -143,6 +143,11 @@ class OrderController extends Controller
 
         return response()->json([
             'orders' => $result,
+            'meta' => [
+                'current_page' => $orders->currentPage(),
+                'last_page' => $orders->lastPage(),
+                'total' => $orders->total(),
+            ]
         ]);
     }
 

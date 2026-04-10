@@ -29,37 +29,55 @@ class OnlinePaymentController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'customer_name' => 'required|string|max:255',
-            'customer_phone' => 'required|string|max:20',
-            'payer_email' => 'required|email',
-            'type' => 'required|in:pickup,delivery',
-            'payment_method' => 'required|in:pix,credit_card',
-            'items' => 'required|array|min:1',
-            'items.*.type' => 'required|in:product,pizza',
-            'items.*.product_id' => 'required_if:items.*.type,product|nullable|string',
-            'items.*.quantity' => 'required|integer|min:1',
+            'customer_name'   => 'required|string|max:255',
+            'customer_phone'  => 'required|string|max:20',
+            'payer_email'     => 'required|email',
+            'type'            => 'required|in:pickup,delivery,dine_in',
+            'payment_method'  => 'required|in:pix,credit_card',
+            'items'           => 'required|array|min:1',
+            'items.*.type'    => 'required|in:product,pizza',
+            'items.*.product_id'   => 'required_if:items.*.type,product|nullable|string',
+            'items.*.quantity'     => 'required|integer|min:1',
             'items.*.pizza_size_id' => 'required_if:items.*.type,pizza|nullable|string',
-            'items.*.flavor_ids' => 'required_if:items.*.type,pizza|nullable|array',
-            'items.*.notes' => 'nullable|string|max:500',
-            // Delivery fields
-            'neighborhood_id' => 'required_if:type,delivery|nullable|string|exists:neighborhoods,id',
-            'delivery_address' => 'required_if:type,delivery|nullable|string|max:500',
-            'delivery_complement' => 'nullable|string|max:255',
+            'items.*.flavor_ids'   => 'required_if:items.*.type,pizza|nullable|array',
+            'items.*.notes'        => 'nullable|string|max:500',
+            // Delivery — either a registered neighborhood OR a custom one typed by the customer
+            'neighborhood_id'      => 'nullable|string|exists:neighborhoods,id',
+            'custom_neighborhood'  => 'nullable|string|max:100',
+            'delivery_address'     => 'required_if:type,delivery|nullable|string|max:500',
+            'delivery_complement'  => 'nullable|string|max:255',
+            // Dine-in fields
+            'table_id'    => 'required_if:type,dine_in|nullable|string|exists:tables,id',
+            'table_code'  => 'required_if:type,dine_in|nullable|string|max:50',
             // Card fields
-            'card_token' => 'required_if:payment_method,credit_card|nullable|string',
+            'card_token'   => 'required_if:payment_method,credit_card|nullable|string',
             'installments' => 'nullable|integer|min:1|max:12',
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'errors' => $validator->errors(),
+                'errors'  => $validator->errors(),
             ], 422);
         }
 
-        $result = $this->processOnlineCheckoutAction->execute($validator->validated());
+        $validated = $validator->validated();
 
-        return response()->json($result['payload'], $result['status']);
+        // Cross-field validation: delivery requires at least one of neighborhood_id or custom_neighborhood
+        if (($validated['type'] ?? null) === 'delivery'
+            && empty($validated['neighborhood_id'])
+            && empty(trim($validated['custom_neighborhood'] ?? ''))
+        ) {
+            return response()->json([
+                'success' => false,
+                'errors'  => ['neighborhood_id' => [__('digital_menu.checkout.errors.neighborhood_required')]],
+            ], 422);
+        }
+
+        $result = $this->processOnlineCheckoutAction->execute($validated);
+
+        return response()->json($result['payload'], $result['status'])
+            ->cookie('customer_phone', $validated['customer_phone'], 60 * 24 * 365);
     }
 
     /**
@@ -110,10 +128,13 @@ class OnlinePaymentController extends Controller
             'success' => true,
             'message' => __('digital_menu.checkout.payment_status_loaded'),
             'order_id' => $order->id,
+            'order_code' => $order->short_code,
             'status' => $order->status,
             'payment_status' => $order->online_payment_status,
             'is_paid' => $order->isPaidOnline(),
             'is_accepted' => $order->status === Order::STATUS_ACCEPTED,
+            'pix_qr_code' => $order->pix_qr_code,
+            'pix_qr_code_base64' => $order->pix_qr_code_base64,
         ]);
     }
 }

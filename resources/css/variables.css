@@ -1,0 +1,163 @@
+:root {
+    /* Core colors - Stitch Electric Violet */
+    --pf-color-primary-50: #f4e8ff;
+    --pf-color-primary-100: #e7cfff;
+    --pf-color-primary-200: #d4a8ff;
+    --pf-color-primary-300: #b57df3;
+    --pf-color-primary-400: #974df2;
+    --pf-color-primary-500: #7f0df2;
+    --pf-color-primary-600: #6500c4;
+    --pf-color-primary-700: #5500a6;
+    --pf-color-primary-800: #460087;
+    --pf-color-primary-900: #3c0075;
+
+    --pf-color-secondary-50: #f0fdfa;
+    --pf-color-secondary-100: #ccfbf1;
+    --pf-color-secondary-200: #99f6e4;
+    --pf-color-secondary-300: #5eead4;
+    --pf-color-secondary-400: #2dd4bf;
+    --pf-color-secondary-500: #14b8a6;
+    --pf-color-secondary-600: #0d9488;
+    --pf-color-secondary-700: #0f766e;
+    --pf-color-secondary-800: #115e59;
+    --pf-color-secondary-900: #134e4a;
+
+    --pf-color-neutral-50: #f8fafc;
+    --pf-color-neutral-100: #f1f5f9;
+    --pf-color-neutral-200: #e2e8f0;
+    --pf-color-neutral-300: #cbd5e1;
+    --pf-color-neutral-400: #94a3b8;
+    --pf-color-neutral-500: #64748b;
+    --pf-color-neutral-600: #475569;
+    --pf-color-neutral-700: #334155;
+    --pf-color-neutral-800: #1e293b;
+    --pf-color-neutral-900: #0f172a;
+
+    --pf-color-feedback-success-50: #f0fdf4;
+    --pf-color-feedback-success-100: #dcfce7;
+    --pf-color-feedback-success-200: #bbf7d0;
+    --pf-color-feedback-success-300: #86efac;
+    --pf-color-feedback-success-400: #4ade80;
+    --pf-color-feedback-success-500: #22c55e;
+    --pf-color-feedback-success-600: #16a34a;
+    --pf-color-feedback-success-700: #15803d;
+    --pf-color-feedback-success-800: #166534;
+    --pf-color-feedback-success-900: #14532d;
+
+    --pf-color-feedback-warning-50: #fffbeb;
+    --pf-color-feedback-warning-100: #fef3c7;
+    --pf-color-feedback-warning-200: #fde68a;
+    --pf-color-feedback-warning-300: #fcd34d;
+    --pf-color-feedback-warning-400: #fbbf24;
+    --pf-color-feedback-warning-500: #f59e0b;
+    --pf-color-feedback-warning-600: #d97706;
+    --pf-color-feedback-warning-700: #b45309;
+    --pf-color-feedback-warning-800: #92400e;
+    --pf-color-feedback-warning-900: #78350f;
+
+    --pf-color-feedback-error-50: #fef2f2;
+    --pf-color-feedback-error-100: #fee2e2;
+    --pf-color-feedback-error-200: #fecaca;
+    --pf-color-feedback-error-300: #fca5a5;
+    --pf-color-feedback-error-400: #f87171;
+    --pf-color-feedback-error-500: #ef4444;
+    --pf-color-feedback-error-600: #dc2626;
+    --pf-color-feedback-error-700: #b91c1c;
+    --pf-color-feedback-error-800: #991b1b;
+    --pf-color-feedback-error-900: #7f1d1d;
+
+    --pf-color-feedback-info-50: #eff6ff;
+    --pf-color-feedback-info-100: #dbeafe;
+    --pf-color-feedback-info-200: #bfdbfe;
+    --pf-color-feedback-info-300: #93c5fd;
+    --pf-color-feedback-info-400: #60a5fa;
+    --pf-color-feedback-info-500: #7f0df2;
+    --pf-color-feedback-info-600: #2563eb;
+    --pf-color-feedback-info-700: #1d4ed8;
+    --pf-color-feedback-info-800: #1e40af;
+    --pf-color-feedback-info-900: #1e3a8a;
+
+    --pf-color-surface-base: #191022;
+    --pf-color-surface-raised: #1f142b;
+    /* Equivalent to #191022 mixed with primary/5 */
+    --pf-color-surface-overlay: #251636;
+    /* Equivalent to primary/10 */
+    --pf-color-text-primary: #f8fafc;
+    --pf-color-text-secondary: #cbd5e1;
+    --pf-color-text-muted: #94a3b8;
+    --pf-color-border-subtle: #3a2254;
+    /* Equivalent to primary/20 */
+    --pf-color-border-strong: #4d2d71;
+
+    /* Card Mapping */
+    --pf-card-background: rgba(255, 255, 255, 0.03);
+    --pf-card-background-strong: rgba(255, 255, 255, 0.05);
+    --pf-card-border: rgba(255, 255, 255, 0.1);
+
+    /* Typography */
+    --pf-font-family-base: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    --pf-font-family-heading: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    --pf-font-family-mono: 'Fira Code', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+    --pf-font-size-xs: 0.75rem;
+    --pf-font-size-sm: 0.875rem;
+    --pf-font-size-md: 1rem;
+    --pf-font-size-lg: 1.125rem;
+    --pf-font-size-xl: 1.25rem;
+    --pf-font-size-2xl: 1.5rem;
+    --pf-font-size-3xl: 1.875rem;
+
+    --pf-font-weight-regular: 400;
+    --pf-font-weight-medium: 500;
+    --pf-font-weight-semibold: 600;
+    --pf-font-weight-bold: 700;
+
+    --pf-line-height-tight: 1.25;
+    --pf-line-height-normal: 1.5;
+    --pf-line-height-relaxed: 1.7;
+
+    /* Spacing and grid */
+    --pf-space-0: 0;
+    --pf-space-1: 0.25rem;
+    --pf-space-2: 0.5rem;
+    --pf-space-3: 0.75rem;
+    --pf-space-4: 1rem;
+    --pf-space-5: 1.25rem;
+    --pf-space-6: 1.5rem;
+    --pf-space-8: 2rem;
+    --pf-space-10: 2.5rem;
+    --pf-space-12: 3rem;
+    --pf-space-16: 4rem;
+    --pf-space-20: 5rem;
+    --pf-space-24: 6rem;
+
+    --pf-grid-columns: 12;
+    --pf-grid-gutter: 1rem;
+    --pf-grid-margin-inline: 1rem;
+    --pf-container-max-width: 80rem;
+
+    /* Radius - Aligned with Stitch */
+    --pf-radius-none: 0;
+    --pf-radius-sm: 0.5rem;
+    --pf-radius-md: 0.75rem;
+    --pf-radius-lg: 1rem;
+    --pf-radius-xl: 1.5rem;
+    --pf-radius-2xl: 2rem;
+    --pf-radius-pill: 9999px;
+}
+
+[data-tenant="default"] {
+    --pf-color-primary-300: #b57df3;
+    --pf-color-primary-400: #974df2;
+    --pf-color-primary-500: #7f0df2;
+    --pf-color-primary-600: #6500c4;
+    --pf-color-secondary-400: #10B981;
+    --pf-color-secondary-500: #059669;
+}
+
+[data-tenant='lucchese'] {
+    --pf-color-primary-500: #b45309;
+    --pf-color-secondary-500: #065f46;
+    --pf-font-family-heading: 'Playfair Display', serif;
+    --pf-radius-md: 0.625rem;
+}

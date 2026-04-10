@@ -1,6 +1,5 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:go_router/go_router.dart';
 import '../providers/auth_provider.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -56,7 +55,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
 
       if (mounted) {
         if (success) {
-          context.go('/waiter/home');
+          // O Provider do auth será atualizado e o main.dart trocará a tela sozinho
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(

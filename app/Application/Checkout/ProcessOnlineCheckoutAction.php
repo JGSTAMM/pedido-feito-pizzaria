@@ -6,6 +6,7 @@ use App\Models\Neighborhood;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\Models\Table;
 use App\Services\PaymentGatewayService;
 use App\Services\PizzaPriceService;
 use Illuminate\Support\Facades\DB;
@@ -24,66 +25,83 @@ class ProcessOnlineCheckoutAction
     public function execute(array $validated): array
     {
         try {
-            DB::beginTransaction();
+            [$tableId, $tableError] = $this->resolveDineInTable($validated);
 
-            $deliveryFee = $this->resolveDeliveryFee($validated);
-
-            $order = Order::create([
-                'status' => Order::STATUS_AWAITING_PAYMENT,
-                'type' => $validated['type'],
-                'customer_name' => $validated['customer_name'],
-                'customer_phone' => $validated['customer_phone'],
-                'neighborhood_id' => $validated['neighborhood_id'] ?? null,
-                'delivery_address' => $validated['delivery_address'] ?? null,
-                'delivery_complement' => $validated['delivery_complement'] ?? null,
-                'delivery_fee' => $deliveryFee,
-                'total_amount' => 0,
-            ]);
-
-            $itemsTotal = $this->createOrderItems($order, $validated['items']);
-            $total = $itemsTotal + $deliveryFee;
-            $order->update(['total_amount' => $total]);
-
-            DB::commit();
-
-            $paymentResult = $this->startPayment($order, $validated);
-            if (!$paymentResult['success']) {
-                $order->update([
-                    'status' => Order::STATUS_REJECTED,
-                    'rejection_reason' => $paymentResult['error'] ?? __('digital_menu.checkout.payment_creation_failed'),
-                ]);
-
+            if ($tableError !== null) {
                 return [
-                    'status' => 400,
+                    'status' => 422,
                     'payload' => [
                         'success' => false,
-                        'error' => $paymentResult['error'] ?? __('digital_menu.checkout.payment_creation_failed'),
-                        'order_id' => $order->id,
+                        'errors' => [
+                            'table_code' => [$tableError],
+                        ],
                     ],
                 ];
             }
 
+            DB::beginTransaction();
+
+            $deliveryFee = $this->resolveDeliveryFee($validated);
+            $orderType   = ($validated['type'] ?? null) === 'dine_in' ? 'salon' : $validated['type'];
+
+            // Use forceFill for fields intentionally excluded from $fillable (status, total_amount)
+            $order = new Order();
+            $order->forceFill([
+                'status'               => Order::STATUS_AWAITING_PAYMENT,
+                'type'                 => $orderType,
+                'table_id'             => $tableId,
+                'customer_name'        => $validated['customer_name'],
+                'customer_phone'       => $validated['customer_phone'],
+                'neighborhood_id'      => $validated['neighborhood_id'] ?? null,
+                'delivery_address'     => $validated['delivery_address'] ?? null,
+                'delivery_complement'  => $validated['delivery_complement'] ?? null,
+                'delivery_fee'         => $deliveryFee,
+                'total_amount'         => 0,
+            ]);
+            $order->save();
+
+            $itemsTotal = $this->createOrderItems($order, $validated['items']);
+            $total = $itemsTotal + $deliveryFee;
+            $order->forceFill(['total_amount' => $total])->save();
+
+            // Start payment BEFORE committing so we can rollback on gateway failure
+            $paymentResult = $this->startPayment($order, $validated);
+
+            if (!$paymentResult['success']) {
+                DB::rollBack();
+
+                return [
+                    'status'  => 400,
+                    'payload' => [
+                        'success' => false,
+                        'error'   => $paymentResult['error'] ?? __('digital_menu.checkout.payment_creation_failed'),
+                    ],
+                ];
+            }
+
+            DB::commit();
+
             return [
-                'status' => 201,
+                'status'  => 201,
                 'payload' => [
-                    'success' => true,
-                    'message' => __('digital_menu.checkout.order_created'),
+                    'success'  => true,
+                    'message'  => __('digital_menu.checkout.order_created'),
                     'order_id' => $order->id,
-                    'payment' => $paymentResult['data'],
+                    'payment'  => $paymentResult['data'],
                 ],
             ];
         } catch (Throwable $exception) {
             DB::rollBack();
             Log::error('Error creating online order', [
-                'message' => $exception->getMessage(),
+                'message'   => $exception->getMessage(),
                 'exception' => $exception,
             ]);
 
             return [
-                'status' => 500,
+                'status'  => 500,
                 'payload' => [
                     'success' => false,
-                    'error' => __('digital_menu.errors.checkout_process_failed'),
+                    'error'   => __('digital_menu.errors.checkout_process_failed'),
                 ],
             ];
         }
@@ -185,5 +203,36 @@ class ProcessOnlineCheckoutAction
             $validated['payer_email'],
             $validated['installments'] ?? 1,
         );
+    }
+
+    private function resolveDineInTable(array $validated): array
+    {
+        if (($validated['type'] ?? null) !== 'dine_in') {
+            return [null, null];
+        }
+
+        if (!empty($validated['table_id'])) {
+            $table = Table::find($validated['table_id']);
+
+            if ($table) {
+                return [$table->id, null];
+            }
+        }
+
+        $tableCode = trim((string) ($validated['table_code'] ?? ''));
+
+        if ($tableCode === '') {
+            return [null, __('digital_menu.checkout.errors.table_code_required')];
+        }
+
+        $table = Table::query()
+            ->whereRaw('LOWER(name) = ?', [strtolower($tableCode)])
+            ->first();
+
+        if (!$table) {
+            return [null, __('digital_menu.checkout.errors.table_not_found')];
+        }
+
+        return [$table->id, null];
     }
 }

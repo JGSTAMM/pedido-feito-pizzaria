@@ -11,12 +11,44 @@ export default defineConfig({
             '@': path.resolve(__dirname, 'resources/js'),
         },
     },
+    build: {
+        rollupOptions: {
+            output: {
+                manualChunks(id) {
+                    if (!id.includes('node_modules')) {
+                        if (id.includes('/resources/js/Pages/CustomerMenu/')) {
+                            return 'customer-menu';
+                        }
+
+                        return undefined;
+                    }
+
+                    if (
+                        id.includes('/node_modules/react/')
+                        || id.includes('/node_modules/react-dom/')
+                        || id.includes('/node_modules/scheduler/')
+                    ) {
+                        return 'vendor-react-core';
+                    }
+
+                    if (id.includes('/node_modules/@inertiajs/')) {
+                        return 'vendor-inertia';
+                    }
+
+                    if (id.includes('/node_modules/three/') || id.includes('/node_modules/@react-three/')) {
+                        return 'vendor-three';
+                    }
+
+                    return 'vendor-misc';
+                },
+            },
+        },
+    },
     plugins: [
         laravel({
             input: [
                 'resources/css/app.css',
                 'resources/js/app.jsx',
-                'resources/css/filament/admin/theme.css'
             ],
             refresh: true,
         }),

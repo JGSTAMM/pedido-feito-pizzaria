@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/order_provider.dart';
 
 class CartTab extends StatelessWidget {
-  final int tableId;
+  final String tableId;
   final VoidCallback onSuccess;
 
   const CartTab({

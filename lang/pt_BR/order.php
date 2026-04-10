@@ -6,6 +6,9 @@ return [
         'cash_register_closed' => 'Operacao bloqueada: O caixa esta fechado. Peca ao gerente para abrir o caixa.',
         'error' => 'Erro ao criar o pedido.',
     ],
+    'cash_register' => [
+        'close_blocked_pending' => 'Operacao bloqueada: Existem :count pedido(s) em aberto ou sem pagamento. Finalize ou cancele todas as contas antes de fechar o caixa.',
+    ],
     'payment' => [
         'no_active_orders' => 'Nenhum pedido ativo.',
         'insufficient_amount' => 'Valor pago insuficiente.',

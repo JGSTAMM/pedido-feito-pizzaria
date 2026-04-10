@@ -10,7 +10,26 @@ class Order extends Model
 {
     use HasFactory, HasUuids;
 
-    protected $guarded = [];
+    protected $fillable = [
+        'table_id',
+        'user_id',
+        'type',
+        'customer_name',
+        'customer_phone',
+        'payer_email',
+        'delivery_address',
+        'delivery_complement',
+        'neighborhood_id',
+        'custom_neighborhood',
+        'delivery_fee',
+        'change_amount',
+        'cash_register_id',
+        'short_code',
+        'online_payment_status',
+        'payment_gateway_id',
+        'pix_qr_code',
+        'rejection_reason',
+    ];
 
     // Order statuses
     const STATUS_AWAITING_PAYMENT = 'awaiting_payment';
@@ -39,12 +58,18 @@ class Order extends Model
                 $order->status = self::STATUS_PENDING;
             }
 
-            // Generate short code
+            // Generate unique short code with guard against infinite loop
             if (empty($order->short_code)) {
+                $maxAttempts = 10;
+                $attempts = 0;
                 do {
                     $code = strtoupper(\Illuminate\Support\Str::random(5));
+                    $attempts++;
+                    if ($attempts >= $maxAttempts) {
+                        throw new \RuntimeException('Unable to generate a unique short_code after ' . $maxAttempts . ' attempts.');
+                    }
                 } while (self::where('short_code', $code)->exists());
-                
+
                 $order->short_code = $code;
             }
         });
@@ -67,10 +92,7 @@ class Order extends Model
         return $this->belongsTo(Table::class);
     }
 
-    public function customer()
-    {
-        return $this->belongsTo(Customer::class);
-    }
+    // Removed: customer() - no Customer model in this project; use user() instead
 
     public function user()
     {

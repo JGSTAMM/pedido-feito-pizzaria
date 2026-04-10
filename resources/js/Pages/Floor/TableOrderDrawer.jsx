@@ -360,7 +360,7 @@ export default function TableOrderDrawer({
                             {(activeCategory === 'Pizzas' || activeCategory === null) && (
                                 <button
                                     onClick={() => setShowPizzaBuilder(true)}
-                                    className="w-full mb-6 flex items-center gap-4 p-4 bg-gradient-to-r from-primary/10 to-[#7C3AED]/10 border border-primary/30 rounded-2xl hover:border-primary/50 hover:from-primary/20 hover:to-[#7C3AED]/20 transition-all group shadow-[0_0_20px_rgba(139,92,246,0.05)]"
+                                    className="w-full mb-6 flex items-center gap-4 p-4 bg-gradient-to-r from-primary/10 to-[#06b6d4]/10 border border-primary/30 rounded-2xl hover:border-primary/50 hover:from-primary/20 hover:to-[#06b6d4]/20 transition-all group shadow-[0_0_20px_rgba(139,92,246,0.05)]"
                                 >
                                     <div className="size-12 bg-primary/20 rounded-xl flex items-center justify-center text-primary group-hover:scale-110 group-hover:bg-primary group-hover:text-white transition-all shadow-[0_0_15px_rgba(139,92,246,0.2)]">
                                         <span className="material-symbols-outlined text-[24px]">local_pizza</span>
@@ -446,7 +446,7 @@ export default function TableOrderDrawer({
                             <button
                                 onClick={handleSend}
                                 disabled={sending}
-                                className="w-full py-4 bg-gradient-to-r from-primary to-[#7C3AED] hover:from-[#7C3AED] hover:to-primary text-white font-bold rounded-xl transition-all shadow-[0_0_20px_rgba(139,92,246,0.3)] hover:shadow-[0_0_30px_rgba(139,92,246,0.5)] flex items-center justify-center gap-3 disabled:opacity-50 disabled:shadow-none"
+                                className="w-full py-4 bg-gradient-to-r from-primary to-[#06b6d4] hover:from-[#06b6d4] hover:to-primary text-white font-bold rounded-xl transition-all shadow-[0_0_20px_rgba(139,92,246,0.3)] hover:shadow-[0_0_30px_rgba(139,92,246,0.5)] flex items-center justify-center gap-3 disabled:opacity-50 disabled:shadow-none"
                             >
                                 <span className="material-symbols-outlined text-[24px]">send</span>
                                 <span className="text-base tracking-wide">{sending ? t('floor.drawer.cart.sending') : t('floor.drawer.cart.sendToKitchen')}</span>
@@ -512,7 +512,7 @@ export default function TableOrderDrawer({
                         <div className="p-4 border-t border-border-subtle bg-surface shrink-0">
                             <button
                                 onClick={confirmQuickItem}
-                                className="w-full py-4 bg-primary hover:bg-[#7C3AED] text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(139,92,246,0.2)]"
+                                className="w-full py-4 bg-primary hover:bg-[#06b6d4] text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(139,92,246,0.2)]"
                             >
                                 <span className="material-symbols-outlined text-[20px]">add_shopping_cart</span>
                                 {t('floor.drawer.quickItem.addToOrder')}
@@ -600,7 +600,7 @@ export default function TableOrderDrawer({
                                         }
                                     }}
                                     disabled={!paymentInputValue || parseFloat(paymentInputValue) <= 0}
-                                    className="px-4 py-3 bg-primary hover:bg-[#7C3AED] text-white font-bold rounded-xl transition-all disabled:opacity-50 flex items-center gap-1"
+                                    className="px-4 py-3 bg-primary hover:bg-[#06b6d4] text-white font-bold rounded-xl transition-all disabled:opacity-50 flex items-center gap-1"
                                 >
                                     <span className="material-symbols-outlined text-[20px]">add</span>
                                 </button>

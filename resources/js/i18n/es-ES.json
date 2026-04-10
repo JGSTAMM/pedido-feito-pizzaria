@@ -1,0 +1,507 @@
+{
+    "common": {
+        "currency": "BRL",
+        "unknown": "Desconocido",
+        "online": "En Línea",
+        "to": "a las",
+        "to_range": " a ",
+        "whatsapp": "WhatsApp"
+    },
+    "status": {
+        "pending": "Pendiente",
+        "preparing": "Preparando",
+        "ready": "Listo",
+        "paid": "Pagado",
+        "delivered": "Entregado"
+    },
+    "fulfillment_types": {
+        "delivery": "Domicilio",
+        "takeout": "Recoger",
+        "dine_in": "Mesa"
+    },
+    "payment_methods": {
+        "pix": "Pix",
+        "credit_card": "Tarjeta de Crédito",
+        "debit_card": "Tarjeta de Débito",
+        "cash": "Efectivo"
+    },
+    "dashboard": {
+        "title": "Panel de Control",
+        "subtitle": "Visión general del establecimiento",
+        "cashRegisterOpen": "Caja Abierta",
+        "cashRegisterClosed": "Caja Cerrada",
+        "stats": {
+            "revenueToday": "Ingresos Hoy",
+            "ordersToday": "Pedidos Hoy",
+            "inProgress": "En Curso",
+            "activeProducts": "Productos Activos"
+        },
+        "quickActions": {
+            "openPos": "Abrir PDV",
+            "viewOrders": "Ver Pedidos",
+            "kitchenKds": "Cocina (KDS)",
+            "floorMap": "Mapa de Sala"
+        },
+        "recentOrders": {
+            "title": "Pedidos Recientes",
+            "viewAll": "Ver todos ->",
+            "empty": "Sin pedidos recientes"
+        }
+    },
+    "layout": {
+        "defaultAppName": "Pedido Feito",
+        "systemAdminVersion": "System Admin v2.0",
+        "settingsSection": "Configuraciones",
+        "logoutTitle": "Cerrar sistema",
+        "defaultAdmin": "Admin"
+    },
+    "nav": {
+        "home": "Inicio",
+        "pos": "PDV",
+        "dashboard": "Panel de Control",
+        "orders": "Pedidos",
+        "kds": "Cocina (KDS)",
+        "floor": "Mapa de Sala",
+        "cashRegister": "Cajero",
+        "products": "Productos",
+        "flavors": "Sabores",
+        "sizes": "Tamaños",
+        "reports": "Reportes",
+        "team": "Equipo",
+        "settings": "Configuraciones",
+        "tables": "Mesas",
+        "tabsOrders": "Comandas",
+        "profile": "Perfil"
+    },
+    "flavors": {
+        "header": {
+            "title": "Sabores de Pizza",
+            "subtitle": "Gestione los sabores disponibles en el menú"
+        },
+        "actions": {
+            "new": "Nuevo Sabor"
+        },
+        "search": {
+            "placeholder": "Buscar sabor..."
+        },
+        "table": {
+            "name": "Nombre del Sabor",
+            "basePrice": "Precio Base",
+            "status": "Estado",
+            "actions": "Acciones",
+            "toggleStatus": "Alternar estado"
+        },
+        "empty": "No se encontraron sabores.",
+        "modal": {
+            "editTitle": "Editar Sabor",
+            "newTitle": "Nuevo Sabor"
+        },
+        "form": {
+            "name": "Nombre del Sabor",
+            "namePlaceholder": "Ej: Salchichón",
+            "basePrice": "Precio Base ($)",
+            "activeLabel": "Sabor Activo en el Menú",
+            "cancel": "Cancelar",
+            "saving": "Guardando...",
+            "save": "Guardar Sabor"
+        },
+        "messages": {
+            "confirmDelete": "¿Seguro que quieres borrar este sabor?"
+        }
+    },
+    "products": {
+        "header": {
+            "title": "Productos",
+            "subtitle": "Gestione los productos del menú"
+        },
+        "actions": {
+            "new": "Nuevo Producto"
+        },
+        "search": {
+            "placeholder": "Buscar producto..."
+        },
+        "table": {
+            "name": "Producto",
+            "category": "Categoría",
+            "price": "Precio",
+            "status": "Estado",
+            "actions": "Acciones"
+        },
+        "empty": "No se encontraron productos.",
+        "modal": {
+            "editTitle": "Editar Producto",
+            "newTitle": "Nuevo Producto"
+        },
+        "form": {
+            "name": "Nombre del Producto",
+            "namePlaceholder": "Ej: Coca-cola 2L",
+            "description": "Descripción",
+            "category": "Categoría",
+            "price": "Precio de Venta ($)",
+            "activeLabel": "Producto Activo",
+            "cancel": "Cancelar",
+            "save": "Guardar Producto"
+        }
+    },
+    "sizes": {
+        "header": {
+            "title": "Tamaños de Pizza",
+            "subtitle": "Defina tamaños y límites de sabores"
+        },
+        "actions": {
+            "new": "Nuevo Tamaño"
+        },
+        "table": {
+            "name": "Tamaño",
+            "maxFlavors": "Máx. Sabores",
+            "actions": "Acciones"
+        },
+        "empty": "No hay tamaños registrados.",
+        "modal": {
+            "editTitle": "Editar Tamaño",
+            "newTitle": "Nuevo Tamaño"
+        },
+        "form": {
+            "name": "Nombre del Tamaño",
+            "namePlaceholder": "Ej: Grande",
+            "maxFlavors": "Cantidad Máxima de Sabores",
+            "cancel": "Cancelar",
+            "save": "Guardar Tamaño"
+        }
+    },
+    "waiters": {
+        "header": {
+            "title": "Equipo",
+            "subtitle": "Gestione sus camareros y permisos"
+        },
+        "actions": {
+            "new": "Nuevo Integrante"
+        },
+        "table": {
+            "name": "Nombre",
+            "role": "Función",
+            "actions": "Acciones"
+        },
+        "empty": "No hay integrantes registrados.",
+        "form": {
+            "name": "Nombre Completo",
+            "role": "Cargo/Función",
+            "cancel": "Cancelar",
+            "save": "Guardar Integrante"
+        }
+    },
+    "settings": {
+        "header": {
+            "title": "Configuraciones",
+            "subtitle": "Ajuste las preferencias del sistema"
+        },
+        "tabs": {
+            "general": "General",
+            "opening_hours": "Horario",
+            "profile": "Perfil Tienda",
+            "branding": "Branding",
+            "receipt": "Recibo",
+            "printers": "Impresoras",
+            "neighborhoods": "Barrios / Tasas"
+        },
+        "general": {
+            "title": "Configuraciones Generales",
+            "store_status": "Estado de la Tienda",
+            "open": "Abierta",
+            "closed": "Cerrada",
+            "save": "Guardar Cambios"
+        },
+        "profile": {
+            "title": "Perfil de la Tienda",
+            "store_name": "Nombre de la Tienda",
+            "phone": "Teléfono/WhatsApp",
+            "address": "Dirección Completa",
+            "google_maps": "Enlace Google Maps (Opcional)",
+            "about": "Sobre la Tienda / Descripción",
+            "save": "Guardar Perfil"
+        },
+        "branding": {
+            "title": "Personalización Visual",
+            "logo": "Logo de la Tienda",
+            "cover": "Imagen de Portada",
+            "primary_color": "Color Principal",
+            "save": "Guardar Branding"
+        }
+    },
+    "digital_menu": {
+        "meta": {
+            "appName": "Menú Digital"
+        },
+        "status": {
+            "open": "Abierto",
+            "closed": "Cerrado",
+            "awaiting_payment": "Esperando pago",
+            "paid_online": "Pagado online",
+            "accepted": "Aceptado",
+            "rejected": "Rechazado"
+        },
+        "identity": {
+            "title_step_1": "¿Cuál es tu WhatsApp?",
+            "subtitle_step_1": "Para facilitar y agilizar tu pedido.",
+            "title_step_2": "¿Cómo podemos llamarte?",
+            "subtitle_step_2": "Para que podamos identificar tu pedido.",
+            "welcome_back": "¡Bienvenido de nuevo, :name!",
+            "registration_complete": "¡Registro completo, :name!",
+            "redirecting": "Redireccionando...",
+            "processing": "Procesando...",
+            "continue_action": "Continuar",
+            "cancel_action": "Cancelar",
+            "back_action": "Volver",
+            "placeholders": {
+                "whatsapp": "(55) 555-5555",
+                "name": "Tu Nombre"
+            },
+            "errors": {
+                "phone_required": "Por favor, introduce un teléfono válido con el código de área.",
+                "name_required": "Por favor, introduce tu nombre completo.",
+                "save_failed": "Error al guardar tus datos.",
+                "generic_error": "Ocurrió un error al procesar tu registro."
+            }
+        },
+        "profile": {
+            "title": "Mi Perfil",
+            "new_address_title": "Nueva Dirección",
+            "personal_data_section": "Datos Personales",
+            "full_name_label": "Nombre Completo",
+            "whatsapp_label": "WhatsApp",
+            "updating": "Guardando...",
+            "update_action": "Actualizar Datos",
+            "saved_addresses_section": "Direcciones Guardadas",
+            "default_badge": "Predeterminado",
+            "add_address_action": "Añadir Nueva Dirección",
+            "logout_action": "Cerrar Sesión",
+            "create_address_section": "Registrar Dirección",
+            "street_label": "Calle / Av",
+            "neighborhood_label": "Barrio",
+            "number_label": "Nº",
+            "complement_label": "Complemento",
+            "select_neighborhood_placeholder": "Selecciona tu barrio",
+            "free_delivery": "Gratis",
+            "no_neighborhoods": "No hay barrios disponibles",
+            "cancel_action": "Cancelar",
+            "save_location_action": "Guardar Lugar",
+            "update_success": "¡✓ Perfil actualizado!",
+            "placeholders": {
+                "full_name": "Ej: Juan Pérez",
+                "whatsapp": "(55) 555-5555",
+                "street": "Ej: Calle de las Flores",
+                "number": "123",
+                "complement": "Apto, Bloque, Travesía..."
+            },
+            "errors": {
+                "name_required": "Por favor, completa tu nombre.",
+                "phone_invalid": "Teléfono inválido.",
+                "street_required": "La calle es obligatoria.",
+                "neighborhood_required": "El barrio es obligatorio.",
+                "number_required": "El número es obligatorio."
+            }
+        },
+        "home": {
+            "order_again": "Pedir de nuevo",
+            "last_order": "ÚLTIMO PEDIDO",
+            "most_ordered": "Los más pedidos",
+            "popular": "Popular",
+            "hours_not_available": "Horario no disponible",
+            "pizza_custom_subtitle": "¡Elige los tamaños para armar tu pizza a tu manera!",
+            "pizza_custom_btn": "Arma tu Pizza",
+            "pizza_custom_desc": "¡Elige el tamaño, los sabores y el borde ideal para matar el hambre del grupo!",
+            "click_to_add": "Haz clic para añadir."
+        },
+        "store": {
+            "profile": "Perfil de la Tienda",
+            "default_name": "Nuestra Tienda",
+            "address_not_found": "Dirección no registrada",
+            "about_us": "Sobre Nosotros",
+            "view_on_map": "Ver en el Mapa",
+            "working_hours": "Horario de Funcionamiento",
+            "payment_methods": "Formas de Pago",
+            "location": "Ubicación",
+            "payment_online": "Pago Online",
+            "payment_delivery": "Pago al Recibir"
+        },
+        "days": {
+            "monday": "Lunes",
+            "tuesday": "Martes",
+            "wednesday": "Miércoles",
+            "thursday": "Jueves",
+            "friday": "Viernes",
+            "saturday": "Sábado",
+            "sunday": "Domingo",
+            "mon": "Lun",
+            "tue": "Mar",
+            "wed": "Mié",
+            "thu": "Jue",
+            "fri": "Vie",
+            "sat": "Sáb",
+            "sun": "Dom"
+        },
+        "header": {
+            "title": "Menú Digital",
+            "subtitle": "Elige tus favoritos y finaliza tu pedido online"
+        },
+        "catalog": {
+            "search_placeholder": "Buscar productos y sabores...",
+            "all": "Todo",
+            "loading": "Cargando menú digital...",
+            "uncategorized": "Otros",
+            "empty_title": "No se encontraron artículos",
+            "empty_description": "Intenta ajustar los filtros para ver el catálogo.",
+            "view_details": "Ver Detalles",
+            "popular_badge": "Popular",
+            "quick_add": "Añadir"
+        },
+        "pizza_builder": {
+            "title": "Arma tu pizza",
+            "montar_pizza": "ARMA TU PIZZA",
+            "preco_pizza": "PRECIO DE LA PIZZA",
+            "tamanho": "TAMAÑO",
+            "sabores_da_pizza": "SABORES DE LA PIZZA",
+            "escolher_borda": "ELEGIR BORDE",
+            "customizar_ingredientes": "PERSONALIZAR INGREDIENTES",
+            "no_ingredients_listed": "No hay ingredientes base listados para este sabor.",
+            "add_to_order": "Añadir al Pedido",
+            "size_unit_singular": "SABOR",
+            "size_unit_plural": "SABORES",
+            "without_ingredient": "Sin",
+            "border_label": "Borde",
+            "no_border": "Sin Borde",
+            "max_flavors_limit": "Límite de :count sabores alcanzado",
+            "select_flavors_required": "Selecciona al menos un sabor",
+            "select_size_required": "Selecciona un tamaño",
+            "select_size": "Selecciona el tamaño",
+            "select_flavors": "Selecciona los sabores",
+            "select_border": "Selecciona el borde"
+        },
+        "cart": {
+            "title": "Carrito",
+            "empty": "Tu carrito está vacío",
+            "total": "Total",
+            "checkout_action": "Ir a pagar",
+            "add_item": "Añadir al carrito",
+            "open_cart": "Ver carrito",
+            "close_cart": "Cerrar",
+            "subtotal": "Subtotal",
+            "clear_action": "Limpiar carrito",
+            "remove_item": "Eliminar",
+            "increase_quantity": "+",
+            "decrease_quantity": "-",
+            "items_count": "Artículos: :count"
+        },
+        "checkout": {
+            "title": "Checkout",
+            "subtitle": "Introduce los datos para completar tu pedido",
+            "contact_section_title": "Datos de Contacto",
+            "delivery_section_title": "Entrega o Recogida",
+            "payment_section_title": "Forma de Pago",
+            "form_title": "Datos del pedido",
+            "order_summary_title": "Resumen del pedido",
+            "customer_name": "Nombre del cliente",
+            "customer_phone": "Teléfono del cliente",
+            "payer_email": "Email del pagador",
+            "delivery_address": "Dirección de entrega",
+            "payment_method": "Forma de pago",
+            "submit_order": "Enviar pedido",
+            "submitting_order": "Enviando pedido...",
+            "empty_cart_message": "Añade artículos al carrito para finalizar el pedido.",
+            "order_info": "Información del Pedido",
+            "summary": "Resumen de la Cuenta",
+            "delivery_fee": "Tasa de Entrega",
+            "to_calculate": "A Calcular",
+            "free": "Gratis",
+            "partial_total": "Total Parcial",
+            "item_quantity": "Cantidad: :count",
+            "delivery_complement": "Complemento (Apto, Bloque, etc)",
+            "select_neighborhood": "Selecciona tu barrio",
+            "neighborhood_placeholder": "Ej: Centro",
+            "neighborhood_label": "Barrio",
+            "search_neighborhood": "Buscar barrio...",
+            "type_manually": "¿No lo encontraste? Escribe tu barrio aquí",
+            "back_to_list": "Volver a la lista",
+            "no_neighborhood_found": "No se encontró el barrio.",
+            "fulfillment_section_title": "¿Cómo quieres recibirlo?",
+            "back_to_menu": "Voltar al Menú",
+            "placeholders": {
+                "customer_name": "Introduce tu nombre",
+                "customer_phone": "Introduce tu teléfono",
+                "payer_email": "Introduce tu email",
+                "delivery_address": "Introduce la dirección de entrega",
+                "delivery_complement": "Apto, Bloque, Referencia...",
+                "table_code": "Ej: Mesa 01",
+                "table_list": "Selecciona una mesa"
+            },
+            "table_qr": {
+                "scan_cta": "Escanea el código QR de tu mesa para identificarte automáticamente.",
+                "manual_code": "O introduce el código de la mesa",
+                "scan_button": "Escanear Código QR",
+                "stop_scan_button": "Parar Cámara",
+                "table_list": "Mesa seleccionada",
+                "scan_success": "Mesa identificada: :name",
+                "scan_error": "No se pudo leer el código QR. Comprueba si es válido."
+            },
+            "payment_options": {
+                "pix": "Pix",
+                "credit_card": "Tarjeta de Crédito",
+                "debit_card": "Tarjeta de Débito",
+                "cash": "Efectivo al recibir"
+            },
+            "errors": {
+                "customer_name_required": "O nome do cliente é obrigatório.",
+                "customer_phone_required": "O telefone do cliente é obrigatório.",
+                "payer_email_required": "O email do pagador é obrigatório.",
+                "delivery_address_required": "O endereço de entrega é obrigatório.",
+                "payment_method_required": "A forma de pagamento é obrigatória.",
+                "empty_cart": "Seu carrinho está vazio.",
+                "validation_failed": "Verifique os campos e tente novamente.",
+                "submit_failed": "Não foi possível enviar o pedido. Tente novamente."
+            }
+        },
+        "orders": {
+            "title": "Mis Pedidos",
+            "greeting": "Hola, :name",
+            "identify_yourself": "Identificarse",
+            "identify_section_title": "Identifícate",
+            "identify_section_desc": "Para ver tu historial de pedidos, necesitamos tu WhatsApp.",
+            "login_with_whatsapp": "Loguear con WhatsApp",
+            "empty_title": "Sin Pedidos",
+            "empty_desc": "¿Qué tal si exploras nuestro menú y haces tu primer pedido?",
+            "view_menu": "Ver Menú",
+            "order_label": "Pedido",
+            "and_more_items": "y :count artículos más...",
+            "view_details": "Ver Detalles",
+            "status": {
+                "pending": "Esperando Confirmación",
+                "preparing": "En Preparación",
+                "ready": "En Camino / Listo",
+                "delivered": "Entregado / Finalizado",
+                "cancelled": "Cancelado"
+            }
+        },
+        "payment": {
+            "status_title": "Sigue tu Pedido",
+            "status_subtitle": "Actualizamos el estado automáticamente a medida que la cocina procesa tu pedido.",
+            "order_id": "Código de Pedido: #:id",
+            "polling_loading": "Actualizando estado...",
+            "polling_error": "Error al actualizar estado. Intentándolo de nuevo...",
+            "pix_qr_title": "Pago vía PIX",
+            "pix_copy_label": "Haz clic en el botón de abajo para copiar el código PIX:",
+            "copy_code": "Copiar Código PIX",
+            "copy_success": "✓ ¡Código copiado!",
+            "back_to_menu": "Volver al Inicio"
+        },
+        "errors": {
+            "generic": "Ocurrió un error inesperado.",
+            "catalog_load_failed": "Error al cargar el catálogo digital."
+        },
+        "success": {
+            "order_created": "¡Pedido creado con éxito!"
+        },
+        "actions": {
+            "retry": "Intentar de nuevo"
+        }
+    }
+}

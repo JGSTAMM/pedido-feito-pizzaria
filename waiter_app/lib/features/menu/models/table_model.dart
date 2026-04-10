@@ -1,5 +1,5 @@
 class TableModel {
-  final int id;
+  final String id;
   final String name;
   final String status; // 'available', 'occupied', etc.
 

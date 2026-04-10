@@ -55,7 +55,7 @@ class MenuProvider with ChangeNotifier {
       // rethrow; 
     }
   }
-  Future<void> closeTable(int tableId) async {
+  Future<void> closeTable(String tableId) async {
     try {
       await _apiService.dio.post('/tables/$tableId/close');
       await loadData(); // Refresh tables
@@ -64,7 +64,7 @@ class MenuProvider with ChangeNotifier {
     }
   }
 
-  Future<void> payAndCloseTable(int tableId, List<Map<String, dynamic>> payments) async {
+  Future<void> payAndCloseTable(String tableId, List<Map<String, dynamic>> payments) async {
     try {
       await _apiService.dio.post('/tables/$tableId/pay', data: {
         'payments': payments,

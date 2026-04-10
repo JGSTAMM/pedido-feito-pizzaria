@@ -18,11 +18,21 @@ Route::get('/', function () {
     return redirect('/dashboard');
 });
 
+Route::redirect('/admin', '/dashboard');
+
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
 
 Route::get('/menu', [CustomerMenuController::class, 'index'])->name('customer-menu.index');
+Route::get('/menu/reset-locale', function () {
+    return redirect('/menu')
+        ->withCookie(\Illuminate\Support\Facades\Cookie::forget('menu_locale_selected'))
+        ->withCookie(\Illuminate\Support\Facades\Cookie::forget('app_locale'));
+})->name('customer-menu.reset-locale');
 Route::get('/menu/checkout', [CustomerMenuController::class, 'checkout'])->name('customer-menu.checkout');
+Route::get('/menu/orders', [CustomerMenuController::class, 'orders'])->name('customer-menu.orders');
+Route::get('/menu/cart', [CustomerMenuController::class, 'cart'])->name('customer-menu.cart');
+Route::get('/menu/store-profile', [CustomerMenuController::class, 'storeProfile'])->name('customer-menu.store-profile');
 Route::get('/menu/order/{order}/status', [CustomerMenuController::class, 'status'])->name('customer-menu.status');
 
 // ── React/Inertia Tenant Routes ──
@@ -64,10 +74,13 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/settings/status', [\App\Http\Controllers\SettingsController::class, 'updateStoreStatus']);
         Route::post('/settings/hours', [\App\Http\Controllers\SettingsController::class, 'updateOpeningHours']);
         Route::post('/settings/profile', [\App\Http\Controllers\SettingsController::class, 'updateProfile']);
+        Route::post('/settings/branding', [\App\Http\Controllers\SettingsController::class, 'updateBranding']);
         Route::post('/settings/receipt', [\App\Http\Controllers\SettingsController::class, 'updateReceipt']);
         Route::post('/settings/printers', [\App\Http\Controllers\SettingsController::class, 'storePrinter']);
         Route::put('/settings/printers/{printer}', [\App\Http\Controllers\SettingsController::class, 'updatePrinter']);
         Route::delete('/settings/printers/{printer}', [\App\Http\Controllers\SettingsController::class, 'destroyPrinter']);
+        
+        Route::resource('/neighborhoods', \App\Http\Controllers\NeighborhoodController::class)->except(['create', 'show', 'edit']);
     });
 
     Route::middleware('role:admin,cashier,caixa,waiter,garcom')->group(function () {

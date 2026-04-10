@@ -1,5 +1,5 @@
 class PizzaSizeModel {
-  final int id;
+  final String id;
   final String name;
   final int slices;
   final int maxFlavors;

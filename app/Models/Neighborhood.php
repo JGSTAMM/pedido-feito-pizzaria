@@ -10,7 +10,7 @@ class Neighborhood extends Model
 {
     use HasFactory, HasUuids;
 
-    protected $fillable = ['name', 'delivery_fee'];
+    protected $fillable = ['name', 'city', 'delivery_fee', 'observation'];
 
     protected $casts = [
         'delivery_fee' => 'decimal:2',

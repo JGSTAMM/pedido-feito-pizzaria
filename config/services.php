@@ -42,4 +42,8 @@ return [
         'webhook_secret' => env('MERCADOPAGO_WEBHOOK_SECRET'),
     ],
 
+    'whatsapp' => [
+        'support_number' => env('WHATSAPP_SUPPORT_NUMBER'),
+    ],
+
 ];

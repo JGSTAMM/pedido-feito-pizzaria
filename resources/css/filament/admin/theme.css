@@ -1,6 +1,6 @@
+@import url('https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 @import '../../../../vendor/filament/filament/resources/css/base.css';
-@import url('https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;500;600;700&display=swap');
 
 /* Tailwind v4 class-based dark mode support */
 @custom-variant dark (&:where(.dark, .dark *));

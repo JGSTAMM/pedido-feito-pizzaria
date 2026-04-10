@@ -1,5 +1,5 @@
 class PizzaFlavorModel {
-  final int id;
+  final String id;
   final String name;
   final double basePrice;
   final bool isActive;

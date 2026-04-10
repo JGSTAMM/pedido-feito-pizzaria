@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Application\CashRegister\CashRegisterLockService;
+use App\Application\Orders\OrderActionException;
 use App\Models\CashRegister;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -18,6 +20,12 @@ use Inertia\Inertia;
 
 class FloorController extends Controller
 {
+    public function __construct(
+        private readonly PizzaPriceService $pizzaPriceService,
+        private readonly CashRegisterLockService $cashRegisterLockService,
+    ) {
+    }
+
     public function index()
     {
         $tables = Table::with(['activeOrders.items.product', 'activeOrders.items.pizzaSize', 'activeOrders.items.flavors'])
@@ -129,10 +137,10 @@ class FloorController extends Controller
      */
     public function addItems(Table $table, Request $request)
     {
-        // Validate Cash Register State Before Anything Else
-        $activeRegister = \App\Models\CashRegister::where('status', 'open')->latest()->first();
-        if (!$activeRegister) {
-            return redirect()->back()->withErrors(['error' => 'Operação bloqueada: O caixa está fechado. Peça ao gerente para abrir o caixa.']);
+        try {
+            $activeRegister = $this->cashRegisterLockService->requireOpenRegister();
+        } catch (OrderActionException $exception) {
+            return redirect()->back()->withErrors(['error' => $exception->getMessage()]);
         }
 
         $validated = $request->validate([
@@ -152,7 +160,7 @@ class FloorController extends Controller
 
             $totalAmount = 0;
             $itemsData = [];
-            $priceService = new PizzaPriceService();
+            $priceService = $this->pizzaPriceService;
 
             foreach ($validated['items'] as $item) {
                 if ($item['type'] === 'product') {
@@ -306,20 +314,21 @@ class FloorController extends Controller
             ->get();
 
         if ($orders->isEmpty()) {
-            return redirect()->back()->with('error', 'Nenhum pedido ativo');
+            return redirect()->back()->with('error', __('order.payment.no_active_orders'));
         }
 
         $totalAmount = $orders->sum('total_amount');
         $totalPaid = collect($validated['payments'])->sum('amount');
 
         if ($totalPaid < $totalAmount - 0.01) {
-             return redirect()->back()->with('error', 'Valor pago insuficiente');
+             return redirect()->back()->with('error', __('order.payment.insufficient_amount'));
         }
 
-        // Find the store's active cash register
-        $activeRegister = \App\Models\CashRegister::where('status', 'open')
-            ->latest()
-            ->first();
+        try {
+            $activeRegister = $this->cashRegisterLockService->requireOpenRegister();
+        } catch (OrderActionException $exception) {
+            return redirect()->back()->with('error', $exception->getMessage());
+        }
 
         DB::beginTransaction();
         try {
@@ -382,7 +391,7 @@ class FloorController extends Controller
 
             DB::commit();
             
-            return redirect()->back()->with('success', 'Mesa fechada com sucesso!');
+            return redirect()->back()->with('success', __('order.payment.success'));
 
         } catch (\Exception $e) {
             DB::rollBack();

@@ -4,7 +4,7 @@ import '../css/app.css';
 
 createInertiaApp({
     resolve: name => {
-        const pages = import.meta.glob('./Pages/**/*.jsx', { eager: true });
+        const pages = import.meta.glob(['./Pages/**/*.jsx', '!./Pages/**/__tests__/**'], { eager: true });
         return pages[`./Pages/${name}.jsx`];
     },
     setup({ el, App, props }) {

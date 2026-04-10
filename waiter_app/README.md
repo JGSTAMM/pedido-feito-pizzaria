@@ -1,16 +1,17 @@
 # waiter_app
 
-A new Flutter project.
+Waiter application for Pedido Feito 2.0.
 
-## Getting Started
+## Run
 
-This project is a starting point for a Flutter application.
+From the `waiter_app` directory:
 
-A few resources to get you started if this is your first Flutter project:
+- `flutter pub get`
+- `flutter run -d web-server --web-hostname=127.0.0.1 --web-port=3000`
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+The default Flutter entrypoint (`lib/main.dart`) now boots the waiter app.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Notes
+
+- The old customer digital menu flow was removed from this Flutter app.
+- For production mobile targets, keep using the waiter entrypoint currently wired by `lib/main.dart`.

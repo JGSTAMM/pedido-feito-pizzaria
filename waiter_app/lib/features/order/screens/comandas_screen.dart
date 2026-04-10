@@ -24,10 +24,25 @@ class _ComandasScreenState extends State<ComandasScreen> {
     'delivered': 'Entregue',
   };
 
+  int currentPage = 1;
+  bool hasMorePages = true;
+  final ScrollController _scrollController = ScrollController();
+
   @override
   void initState() {
     super.initState();
     _loadOrders();
+    _scrollController.addListener(() {
+      if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+        _loadOrders(loadMore: true);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   // Helper to safely parse numbers
@@ -54,19 +69,42 @@ class _ComandasScreenState extends State<ComandasScreen> {
     });
   }
 
-  Future<void> _loadOrders() async {
+  Future<void> _loadOrders({bool loadMore = false}) async {
+    if (isLoading || (loadMore && !hasMorePages)) return;
+
     setState(() {
       isLoading = true;
-      error = null;
+      if (!loadMore) {
+        error = null;
+        currentPage = 1;
+        hasMorePages = true;
+      }
     });
 
     try {
-      final response = await _apiService.dio.get('/orders/active');
+      final response = await _apiService.dio.get('/orders/active', queryParameters: {
+        'page': currentPage,
+      });
 
       if (response.statusCode == 200) {
         final data = response.data;
         setState(() {
-          allOrders = data['orders'] ?? [];
+          final newOrders = data['orders'] ?? [];
+          if (loadMore) {
+            allOrders.addAll(newOrders);
+          } else {
+            allOrders = newOrders;
+          }
+          
+          if (data['meta'] != null) {
+            final meta = data['meta'];
+            currentPage = meta['current_page'] ?? 1;
+            hasMorePages = currentPage < (meta['last_page'] ?? 1);
+            if (hasMorePages) currentPage++;
+          } else {
+            hasMorePages = false;
+          }
+          
           _applyFilter(selectedFilter);
           isLoading = false;
         });
@@ -78,7 +116,7 @@ class _ComandasScreenState extends State<ComandasScreen> {
       }
     } catch (e) {
       setState(() {
-        error = 'Erro de conexão: $e';
+        if (!loadMore) error = 'Erro de conexão: $e';
         isLoading = false;
       });
     }
@@ -216,9 +254,16 @@ class _ComandasScreenState extends State<ComandasScreen> {
                         : RefreshIndicator(
                             onRefresh: _loadOrders,
                             child: ListView.builder(
+                              controller: _scrollController,
                               padding: const EdgeInsets.all(16),
-                              itemCount: filteredOrders.length,
+                              itemCount: filteredOrders.length + (isLoading && allOrders.isNotEmpty ? 1 : 0),
                               itemBuilder: (context, index) {
+                                if (index == filteredOrders.length) {
+                                  return const Center(child: Padding(
+                                    padding: EdgeInsets.all(16.0),
+                                    child: CircularProgressIndicator(),
+                                  ));
+                                }
                                 final order = filteredOrders[index];
                                 final items = order['items'] as List;
                                 

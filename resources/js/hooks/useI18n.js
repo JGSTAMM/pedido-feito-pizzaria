@@ -1,6 +1,7 @@
 import { usePage } from '@inertiajs/react';
 import enUS from '@/i18n/en-US.json';
 import ptBR from '@/i18n/pt-BR.json';
+import esES from '@/i18n/es-ES.json';
 
 const dictionaries = {
     'pt-BR': ptBR,
@@ -8,6 +9,9 @@ const dictionaries = {
     'en-US': enUS,
     en_US: enUS,
     en: enUS,
+    'es-ES': esES,
+    'es_ES': esES,
+    es: esES,
 };
 
 function normalizeLocale(locale) {

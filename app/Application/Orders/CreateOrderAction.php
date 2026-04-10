@@ -2,35 +2,36 @@
 
 namespace App\Application\Orders;
 
-use App\Models\CashRegister;
+use App\Application\CashRegister\CashRegisterLockService;
+use App\Events\OrderCreatedForPrinting;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\Table;
 use App\Models\User;
 use App\Services\PizzaPriceService;
-use App\Services\PrintService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Throwable;
 
 class CreateOrderAction
 {
-    public function __construct(private readonly PizzaPriceService $priceService)
-    {
+    public function __construct(
+        private readonly PizzaPriceService $priceService,
+        private readonly CashRegisterLockService $cashRegisterLockService,
+    ) {
     }
 
     public function execute(array $validated, User $user): Order
     {
-        if (!CashRegister::where('status', 'open')->exists()) {
-            throw new OrderActionException('order.create.cash_register_closed', 403);
-        }
+        $activeRegister = $this->cashRegisterLockService->requireOpenRegister();
 
         DB::beginTransaction();
 
         try {
             $order = Order::create([
                 'table_id' => $validated['table_id'],
+                'cash_register_id' => $activeRegister->id,
                 'user_id' => $user->id,
                 'status' => 'preparing',
                 'type' => 'salon',
@@ -93,11 +94,10 @@ class CreateOrderAction
             }
 
             $order->update(['total_amount' => $totalAmount]);
+            DB::afterCommit(function () use ($order): void {
+                event(new OrderCreatedForPrinting($order->id));
+            });
             DB::commit();
-
-            if (config('printing.auto_print_kitchen')) {
-                app(PrintService::class)->printKitchenTicket($order);
-            }
 
             return $order;
         } catch (Throwable $exception) {

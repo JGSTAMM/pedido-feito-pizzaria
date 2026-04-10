@@ -8,9 +8,9 @@ import 'features/auth/screens/login_screen.dart';
 import 'features/menu/screens/tables_screen.dart';
 import 'core/theme/app_theme.dart';
 
-/// Entry point do App do Garçom.
-/// Roda separado do Cardápio Digital (main.dart).
-/// 
+/// Waiter application entrypoint.
+/// Legacy digital menu startup flow was removed from this app.
+///
 /// Dev:   flutter run -t lib/main_waiter.dart -d chrome --web-port=8081
 /// Build: flutter build apk -t lib/main_waiter.dart   (Android)
 ///        flutter build ios -t lib/main_waiter.dart    (iOS)

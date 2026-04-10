@@ -10,7 +10,18 @@ class CashRegister extends Model
 {
     use HasFactory, HasUuids;
 
-    protected $guarded = [];
+    protected $fillable = [
+        'user_id',
+        'status',
+        'opened_at',
+        'closed_at',
+        'opening_balance',
+        'closing_balance',
+        'calculated_balance',
+        'difference',
+        'total_sales',
+        'payment_summary',
+    ];
 
     protected $casts = [
         'opened_at' => 'datetime',

@@ -10,6 +10,7 @@ use App\Models\Neighborhood;
 use App\Models\PizzaFlavor;
 use App\Models\PizzaSize;
 use App\Models\Product;
+use App\Models\Table;
 
 class GetDigitalCatalogAction
 {
@@ -27,13 +28,30 @@ class GetDigitalCatalogAction
             ->orderBy('name')
             ->get();
 
+        $tables = Table::query()
+            ->withCount('activeOrders')
+            ->orderBy('name')
+            ->get()
+            ->map(static function (Table $table) {
+                $isFree = (int) $table->active_orders_count === 0;
+
+                return [
+                    'id' => $table->id,
+                    'name' => $table->name,
+                    'status' => $isFree ? 'free' : 'occupied',
+                    'is_available_for_dine_in' => $isFree,
+                ];
+            });
+
         return [
+            'storeSetting' => \App\Models\StoreSetting::first(),
             'pizza_sizes' => PizzaSizeResource::collection(PizzaSize::all()),
             'pizza_flavors' => PizzaFlavorResource::collection($flavors),
             'products' => ProductResource::collection($products),
             'neighborhoods' => NeighborhoodResource::collection(
-                Neighborhood::query()->orderBy('name')->get()
+                Neighborhood::query()->orderBy('city')->orderBy('name')->get()
             ),
+            'tables' => $tables,
         ];
     }
 }

@@ -58,9 +58,61 @@ class SettingsController extends Controller
         $request->validate([
             'store_name' => 'required|string|max:255',
             'cnpj' => 'required|string|max:30',
+            'phone' => 'nullable|string|max:30',
+            'full_address' => 'nullable|string|max:500',
+            'google_maps_embed_url' => 'nullable|string',
+            'google_maps_place_url' => 'nullable|string',
+            'payment_methods' => 'nullable|array',
+            'custom_info' => 'nullable|string',
         ]);
-        StoreSetting::first()->update($request->only('store_name', 'cnpj'));
-        return redirect()->back()->with('success', 'Perfil atualizado.');
+        StoreSetting::first()->update($request->only(
+            'store_name', 
+            'cnpj', 
+            'phone', 
+            'full_address', 
+            'google_maps_embed_url', 
+            'google_maps_place_url', 
+            'payment_methods', 
+            'custom_info'
+        ));
+        return redirect()->back()->with('success', 'Perfil da loja atualizado.');
+    }
+
+    // -- Branding (Cover, Logo, Description) --
+    public function updateBranding(Request $request)
+    {
+        $request->validate([
+            'cover_image' => 'nullable|file|mimes:jpeg,png,jpg,gif,svg,webp|max:5120',
+            'logo_image' => 'nullable|file|mimes:jpeg,png,jpg,gif,svg,webp|max:5120',
+            'description' => 'nullable|string|max:500',
+            'remove_logo' => 'nullable|boolean',
+            'remove_cover' => 'nullable|boolean',
+        ]);
+
+        $settings = StoreSetting::first();
+        $data = [];
+
+        if ($request->hasFile('cover_image')) {
+            $data['cover_image'] = $request->file('cover_image')->store('branding', 'public');
+        } elseif ($request->boolean('remove_cover')) {
+            $data['cover_image'] = null;
+        }
+
+        if ($request->hasFile('logo_image')) {
+            $data['logo_image'] = $request->file('logo_image')->store('branding', 'public');
+        } elseif ($request->boolean('remove_logo')) {
+            $data['logo_image'] = null;
+        }
+
+        if ($request->has('description')) {
+            $data['description'] = $request->description;
+        }
+
+        if (count($data) > 0) {
+            $settings->update($data);
+        }
+
+        return redirect()->back()->with('success', 'Branding atualizado.');
     }
 
     // ── Receipt ──

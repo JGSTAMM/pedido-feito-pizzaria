@@ -7,3 +7,7 @@
 6. All final user-facing text MUST use i18n translation keys (pt-BR and en-US).
 7. Use your `edit` and `vscode` tools to create and modify files autonomously.
 8. Once coded, use the `execute` (terminal) tool to run unit tests locally. Refactor immediately if tests fail.
+
+### ⚠️ MANDATORY MCP USAGE (CRITICAL) ⚠️
+- **Execution Context:** You MUST ALWAYS run the `context7` MCP tool to verify file paths, legacy rules, and dependencies before modifying files.
+- **Pixel-Perfect UI:** For ANY frontend implementation, you MUST ALWAYS run the `stitch-design` MCP tool to ensure the code matches the project's specific design system. NEVER guess Tailwind classes.

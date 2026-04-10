@@ -113,7 +113,7 @@ class OrderProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<bool> sendOrder(int tableId) async {
+  Future<bool> sendOrder(String tableId) async {
     if (_cartItems.isEmpty) return false;
 
     _isSending = true;

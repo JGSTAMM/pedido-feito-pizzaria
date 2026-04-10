@@ -180,7 +180,7 @@ function OrderCard({ order, columnStatus, onShowDetails, onPrint }) {
     };
 
     const actionConfig = {
-        pending: { label: 'INICIAR', className: 'bg-gradient-to-r from-primary to-[#7C3AED] hover:from-[#7C3AED] hover:to-primary text-white shadow-lg shadow-primary/20' },
+        pending: { label: 'INICIAR', className: 'bg-gradient-to-r from-primary to-[#0891b2] hover:from-[#0891b2] hover:to-primary text-white shadow-lg shadow-primary/20' },
         preparing: { label: 'PRONTO', className: 'bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 border border-emerald-600/30' },
         ready: { label: 'ENTREGUE', className: 'text-text-muted hover:text-white' },
     };

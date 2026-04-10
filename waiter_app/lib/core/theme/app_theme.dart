@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 class AppTheme {
   // Pizzeria Brand Colors
-  static const Color primaryColor = Color(0xFF8B5CF6); // Electric Violet (Light)
-  static const Color primaryColorDark = Color(0xFF8B5CF6); // Electric Violet (Dark)
+  static const Color primaryColor = Color(0xFF5A5AF6); // Lucchese Violet (Light)
+  static const Color primaryColorDark = Color(0xFF4141D4); // Lucchese Violet (Dark)
   
   // Zinc Grays
   static const Color darkBackground = Color(0xFF0A0A0B);

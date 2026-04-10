@@ -3,8 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Application\CashRegister\BuildCashRegisterHistoryAction;
+use App\Application\CashRegister\CashRegisterLockService;
 use App\Application\CashRegister\BuildCashRegisterSummaryAction;
-use App\Application\CashRegister\EnsureNoPendingOrdersForCloseAction;
+use App\Application\Orders\OrderActionException;
 use App\Models\CashRegister;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -15,7 +16,7 @@ class CashRegisterController extends Controller
     public function __construct(
         private readonly BuildCashRegisterSummaryAction $buildCashRegisterSummaryAction,
         private readonly BuildCashRegisterHistoryAction $buildCashRegisterHistoryAction,
-        private readonly EnsureNoPendingOrdersForCloseAction $ensureNoPendingOrdersForCloseAction,
+        private readonly CashRegisterLockService $cashRegisterLockService,
     ) {
     }
 
@@ -65,11 +66,11 @@ class CashRegisterController extends Controller
             ->latest()
             ->firstOrFail();
 
-          $pendingOrdersCount = $this->ensureNoPendingOrdersForCloseAction->execute($register);
-
-        if ($pendingOrdersCount > 0) {
+        try {
+            $this->cashRegisterLockService->assertCanCloseRegister($register);
+        } catch (OrderActionException $exception) {
             return redirect()->back()->withErrors([
-                'error' => "Operação bloqueada: Existem {$pendingOrdersCount} pedido(s) em aberto ou sem pagamento. Finalize ou cancele todas as contas antes de fechar o caixa."
+                'error' => $exception->getMessage(),
             ]);
         }
 

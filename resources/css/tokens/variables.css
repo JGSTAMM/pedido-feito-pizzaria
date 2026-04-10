@@ -1,0 +1,126 @@
+:root {
+    /* Core - primary */
+    --pf-color-primary-50: #eff6ff;
+    --pf-color-primary-100: #dbeafe;
+    --pf-color-primary-200: #bfdbfe;
+    --pf-color-primary-300: #93c5fd;
+    --pf-color-primary-400: #60a5fa;
+    --pf-color-primary-500: #3b82f6;
+    --pf-color-primary-600: #2563eb;
+    --pf-color-primary-700: #1d4ed8;
+    --pf-color-primary-800: #1e40af;
+    --pf-color-primary-900: #1e3a8a;
+
+    /* Core - secondary */
+    --pf-color-secondary-50: #f0fdfa;
+    --pf-color-secondary-100: #ccfbf1;
+    --pf-color-secondary-200: #99f6e4;
+    --pf-color-secondary-300: #5eead4;
+    --pf-color-secondary-400: #2dd4bf;
+    --pf-color-secondary-500: #14b8a6;
+    --pf-color-secondary-600: #0d9488;
+    --pf-color-secondary-700: #0f766e;
+    --pf-color-secondary-800: #115e59;
+    --pf-color-secondary-900: #134e4a;
+
+    /* Core - neutral */
+    --pf-color-neutral-50: #f8fafc;
+    --pf-color-neutral-100: #f1f5f9;
+    --pf-color-neutral-200: #e2e8f0;
+    --pf-color-neutral-300: #cbd5e1;
+    --pf-color-neutral-400: #94a3b8;
+    --pf-color-neutral-500: #64748b;
+    --pf-color-neutral-600: #475569;
+    --pf-color-neutral-700: #334155;
+    --pf-color-neutral-800: #1e293b;
+    --pf-color-neutral-900: #0f172a;
+
+    /* Feedback */
+    --pf-color-feedback-success-500: #22c55e;
+    --pf-color-feedback-success-600: #16a34a;
+    --pf-color-feedback-warning-500: #f59e0b;
+    --pf-color-feedback-warning-600: #d97706;
+    --pf-color-feedback-error-500: #ef4444;
+    --pf-color-feedback-error-600: #dc2626;
+    --pf-color-feedback-info-500: #3b82f6;
+    --pf-color-feedback-info-600: #2563eb;
+
+    /* Surface / text / border */
+    --pf-color-surface-0: #ffffff;
+    --pf-color-surface-50: #f8fafc;
+    --pf-color-surface-100: #f1f5f9;
+    --pf-color-surface-900: #0b1220;
+    --pf-color-surface-overlay: #0f172aee;
+    --pf-color-text-primary: #e2e8f0;
+    --pf-color-text-secondary: #94a3b8;
+    --pf-color-text-inverse: #0f172a;
+    --pf-color-border-default: #334155;
+    --pf-color-border-strong: #475569;
+
+    /* Typography */
+    --pf-font-family-base: 'Work Sans', ui-sans-serif, system-ui, sans-serif;
+    --pf-font-family-heading: 'Sora', ui-sans-serif, system-ui, sans-serif;
+    --pf-font-family-mono: 'Fira Code', ui-monospace, sfmono-regular, monospace;
+    --pf-font-size-xs: 0.75rem;
+    --pf-font-size-sm: 0.875rem;
+    --pf-font-size-md: 1rem;
+    --pf-font-size-lg: 1.125rem;
+    --pf-font-size-xl: 1.25rem;
+    --pf-font-size-2xl: 1.5rem;
+    --pf-font-size-3xl: 1.875rem;
+    --pf-font-weight-regular: 400;
+    --pf-font-weight-medium: 500;
+    --pf-font-weight-semibold: 600;
+    --pf-font-weight-bold: 700;
+    --pf-line-height-tight: 1.25;
+    --pf-line-height-normal: 1.5;
+    --pf-line-height-relaxed: 1.75;
+
+    /* Spacing */
+    --pf-space-0: 0;
+    --pf-space-1: 0.25rem;
+    --pf-space-2: 0.5rem;
+    --pf-space-3: 0.75rem;
+    --pf-space-4: 1rem;
+    --pf-space-5: 1.25rem;
+    --pf-space-6: 1.5rem;
+    --pf-space-8: 2rem;
+    --pf-space-10: 2.5rem;
+    --pf-space-12: 3rem;
+    --pf-space-16: 4rem;
+    --pf-space-20: 5rem;
+    --pf-space-24: 6rem;
+
+    /* Grid */
+    --pf-grid-columns: 12;
+    --pf-grid-gutter: 1rem;
+    --pf-grid-margin-inline: 1rem;
+    --pf-container-max-width: 80rem;
+
+    /* Radius */
+    --pf-radius-none: 0;
+    --pf-radius-sm: 0.375rem;
+    --pf-radius-md: 0.5rem;
+    --pf-radius-lg: 0.75rem;
+    --pf-radius-xl: 1rem;
+    --pf-radius-pill: 9999px;
+
+    /* Semantic aliases */
+    --pf-page-background: var(--pf-color-surface-900);
+    --pf-card-background: #111827cc;
+    --pf-card-background-strong: #0f172a;
+    --pf-card-border: var(--pf-color-border-default);
+    --pf-focus-ring: var(--pf-color-primary-500);
+}
+
+[data-tenant='default'] {
+    --pf-color-primary-500: #3b82f6;
+    --pf-color-secondary-500: #14b8a6;
+}
+
+[data-tenant='lucchese'] {
+    --pf-color-primary-500: #b45309;
+    --pf-color-secondary-500: #065f46;
+    --pf-font-family-heading: 'Playfair Display', ui-serif, georgia, serif;
+    --pf-radius-md: 0.625rem;
+}

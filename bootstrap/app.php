@@ -19,9 +19,14 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => \App\Http\Middleware\EnsureUserHasRole::class,
         ]);
 
-        $middleware->web(append: [
-            \App\Http\Middleware\HandleInertiaRequests::class,
-        ]);
+        $middleware->web(
+            prepend: [
+                \App\Http\Middleware\SetRequestLocale::class,
+            ],
+            append: [
+                \App\Http\Middleware\HandleInertiaRequests::class,
+            ],
+        );
         $middleware->api(prepend: [
             \Illuminate\Http\Middleware\HandleCors::class,
         ]);

@@ -107,6 +107,12 @@ function TabPerfil({ settings }) {
     const profileForm = useForm({
         store_name: settings.store_name || '',
         cnpj: settings.cnpj || '',
+        phone: settings.phone || '',
+        full_address: settings.full_address || '',
+        google_maps_embed_url: settings.google_maps_embed_url || '',
+        google_maps_place_url: settings.google_maps_place_url || '',
+        custom_info: settings.custom_info || '',
+        payment_methods: settings.payment_methods || ['pix', 'credit_card', 'debit_card', 'cash'],
     });
 
     const hoursForm = useForm({
@@ -135,6 +141,37 @@ function TabPerfil({ settings }) {
     const saveHours = (e) => {
         e.preventDefault();
         hoursForm.post('/settings/hours', { preserveScroll: true });
+    };
+
+    const brandingForm = useForm({
+        logo_image: null,
+        cover_image: null,
+        remove_logo: false,
+        remove_cover: false,
+    });
+
+    const saveBranding = (e) => {
+        e.preventDefault();
+        brandingForm.post('/settings/branding', { preserveScroll: true, forceFormData: true, onSuccess: () => brandingForm.reset() });
+    };
+
+    const handleRemoveLogo = () => {
+        brandingForm.setData({ ...brandingForm.data, logo_image: null, remove_logo: true });
+        brandingForm.post('/settings/branding', { preserveScroll: true, forceFormData: true, onSuccess: () => brandingForm.reset() });
+    };
+
+    const handleRemoveCover = () => {
+        brandingForm.setData({ ...brandingForm.data, cover_image: null, remove_cover: true });
+        brandingForm.post('/settings/branding', { preserveScroll: true, forceFormData: true, onSuccess: () => brandingForm.reset() });
+    };
+
+    const togglePaymentMethod = (method) => {
+        const methods = [...profileForm.data.payment_methods];
+        if (methods.includes(method)) {
+            profileForm.setData('payment_methods', methods.filter(m => m !== method));
+        } else {
+            profileForm.setData('payment_methods', [...methods, method]);
+        }
     };
 
     const handleHourChange = (day, field, value) => {
@@ -168,6 +205,66 @@ function TabPerfil({ settings }) {
                 </div>
             </Card>
 
+            {/* Identidade Visual */}
+            <Card>
+                <div className="flex items-center justify-between mb-6">
+                    <div>
+                        <h3 className="text-lg font-bold text-white mb-1">Identidade Visual</h3>
+                        <p className="text-sm text-text-muted">Logo e imagem de fundo da tela de boas-vindas do seu cardápio.</p>
+                    </div>
+                </div>
+                <form onSubmit={saveBranding} className="space-y-6" encType="multipart/form-data">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <Label>Logo da Loja</Label>
+                            {settings.logo_url && !brandingForm.data.remove_logo ? (
+                                <div className="relative w-32 h-32 group rounded-xl overflow-hidden border border-border-subtle bg-background-dark flex items-center justify-center">
+                                    <img src={settings.logo_url} alt="Logo" className="w-full h-full object-cover" />
+                                    <button type="button" onClick={handleRemoveLogo} className="absolute inset-0 bg-red-500/80 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <span className="material-symbols-outlined text-white text-3xl">delete</span>
+                                    </button>
+                                </div>
+                            ) : (
+                                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-border-subtle hover:border-primary/50 rounded-xl bg-background-dark cursor-pointer transition-colors group">
+                                    <span className="material-symbols-outlined text-3xl text-text-muted group-hover:text-primary transition-colors">cloud_upload</span>
+                                    <span className="text-xs font-bold text-text-muted mt-2 group-hover:text-white transition-colors">
+                                        {brandingForm.data.logo_image ? brandingForm.data.logo_image.name : 'Clique para enviar o logo'}
+                                    </span>
+                                    <input type="file" className="hidden" accept="image/*" onChange={e => brandingForm.setData({ ...brandingForm.data, logo_image: e.target.files[0], remove_logo: false })} />
+                                </label>
+                            )}
+                            {brandingForm.errors.logo_image && <p className="text-red-400 text-xs mt-2">{brandingForm.errors.logo_image}</p>}
+                        </div>
+                        <div>
+                            <Label>Imagem de Fundo (Capa)</Label>
+                            {settings.cover_url && !brandingForm.data.remove_cover ? (
+                                <div className="relative w-full h-32 group rounded-xl overflow-hidden border border-border-subtle bg-background-dark flex items-center justify-center">
+                                    <img src={settings.cover_url} alt="Cover" className="w-full h-full object-cover" />
+                                    <button type="button" onClick={handleRemoveCover} className="absolute inset-0 bg-red-500/80 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <span className="material-symbols-outlined text-white text-3xl">delete</span>
+                                    </button>
+                                </div>
+                            ) : (
+                                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-border-subtle hover:border-primary/50 rounded-xl bg-background-dark cursor-pointer transition-colors group">
+                                    <span className="material-symbols-outlined text-3xl text-text-muted group-hover:text-primary transition-colors">wallpaper</span>
+                                    <span className="text-xs font-bold text-text-muted mt-2 group-hover:text-white transition-colors">
+                                        {brandingForm.data.cover_image ? brandingForm.data.cover_image.name : 'Clique para enviar a capa'}
+                                    </span>
+                                    <input type="file" className="hidden" accept="image/*" onChange={e => brandingForm.setData({ ...brandingForm.data, cover_image: e.target.files[0], remove_cover: false })} />
+                                </label>
+                            )}
+                            {brandingForm.errors.cover_image && <p className="text-red-400 text-xs mt-2">{brandingForm.errors.cover_image}</p>}
+                        </div>
+                    </div>
+                    <div className="flex justify-end pt-4 border-t border-border-subtle">
+                        <button type="submit" disabled={brandingForm.processing} className="px-5 py-2.5 bg-primary hover:bg-[#0891b2] text-white font-bold text-sm rounded-xl transition-all shadow-[0_0_15px_rgba(139,92,246,0.2)] disabled:opacity-50 flex items-center gap-2">
+                            <span className="material-symbols-outlined text-[18px]">save</span>
+                            {brandingForm.processing ? 'Enviando...' : 'Salvar Imagens'}
+                        </button>
+                    </div>
+                </form>
+            </Card>
+
             {/* Profile Form */}
             <Card>
                 <h3 className="text-lg font-bold text-white mb-6">Informações Básicas</h3>
@@ -178,12 +275,84 @@ function TabPerfil({ settings }) {
                             <input type="text" value={profileForm.data.store_name} onChange={e => profileForm.setData('store_name', e.target.value)} className="w-full bg-background-dark border border-border-subtle rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary/50 transition-all" />
                         </div>
                         <div>
-                            <Label>CNPJ</Label>
-                            <input type="text" value={profileForm.data.cnpj} onChange={e => profileForm.setData('cnpj', e.target.value)} className="w-full bg-background-dark border border-border-subtle rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary/50 transition-all" />
+                            <Label>Telefone / WhatsApp</Label>
+                            <input type="text" value={profileForm.data.phone} onChange={e => profileForm.setData('phone', e.target.value)} placeholder="Ex: (11) 99999-9999" className="w-full bg-background-dark border border-border-subtle rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary/50 transition-all" />
                         </div>
                     </div>
+
+                    <div>
+                        <Label>Endereço Completo</Label>
+                        <input type="text" value={profileForm.data.full_address} onChange={e => profileForm.setData('full_address', e.target.value)} placeholder="Ex: Rua das Flores, 123 - Centro, São Paulo - SP" className="w-full bg-background-dark border border-border-subtle rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary/50 transition-all mb-6" />
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-2 border-b border-border-subtle/50">
+                        <div>
+                            <Label>Link do Google Maps (Incorporar/Embed)</Label>
+                            <input
+                                type="text"
+                                value={profileForm.data.google_maps_embed_url}
+                                onChange={e => profileForm.setData('google_maps_embed_url', e.target.value)}
+                                placeholder="Cole a URL src='...' do Google Maps..."
+                                className="w-full bg-background-dark border border-border-subtle rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary/50 transition-all mb-4"
+                            />
+
+                            <Label>Link Direto da Loja (Google Maps - Ver no Mapa)</Label>
+                            <input
+                                type="text"
+                                value={profileForm.data.google_maps_place_url}
+                                onChange={e => profileForm.setData('google_maps_place_url', e.target.value)}
+                                placeholder="Cole o link direto da sua loja aqui..."
+                                className="w-full bg-background-dark border border-border-subtle rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary/50 transition-all"
+                            />
+
+                            <p className="text-xs text-text-muted mt-2">
+                                Para o <b>Link do Mapa (Embed)</b>: Vá no Google Maps, pesquise seu endereço, clique em "Compartilhar", depois "Incorporar um mapa", e cole apenas a URL de dentro do <b>src="URL AQUI"</b>.
+                            </p>
+                            <p className="text-xs text-text-muted mt-2">
+                                Para o <b>Link Direto (Ver no Mapa)</b>: Clique em "Compartilhar", e copie o "Link para enviar" (o link curto que ele gera).
+                            </p>
+                        </div>
+                        {profileForm.data.google_maps_embed_url ? (
+                            <div className="w-full h-40 rounded-xl overflow-hidden border border-border-subtle bg-background-dark">
+                                <iframe
+                                    src={profileForm.data.google_maps_embed_url}
+                                    className="w-full h-full border-0"
+                                    allowFullScreen=""
+                                    loading="lazy"
+                                    referrerPolicy="no-referrer-when-downgrade"
+                                ></iframe>
+                            </div>
+                        ) : (
+                            <div className="w-full h-40 rounded-xl border border-dashed border-border-subtle bg-background-dark/50 flex flex-col items-center justify-center text-text-muted">
+                                <span className="material-symbols-outlined text-3xl mb-1">map</span>
+                                <span className="text-xs">Nenhum preview de mapa</span>
+                            </div>
+                        )}
+                    </div>
+
+                    <div>
+                        <Label>Descrição / Informações Customizadas</Label>
+                        <textarea rows="3" value={profileForm.data.custom_info} onChange={e => profileForm.setData('custom_info', e.target.value)} placeholder="Ex: A melhor pizzaria da região! Estacionamento no local." className="w-full bg-background-dark border border-border-subtle rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary/50 transition-all resize-none"></textarea>
+                    </div>
+
+                    <div>
+                        <Label>Formas de Pagamento</Label>
+                        <div className="flex items-center gap-4 flex-wrap">
+                            {['pix', 'credit_card', 'debit_card', 'cash'].map(method => {
+                                const labels = { pix: 'PIX', credit_card: 'Crédito', debit_card: 'Débito', cash: 'Dinheiro' };
+                                const isChecked = profileForm.data.payment_methods.includes(method);
+                                return (
+                                    <label key={method} className={`cursor-pointer flex items-center justify-center px-4 py-2 rounded-xl text-sm font-bold border transition-colors ${isChecked ? 'bg-primary/20 border-primary text-primary' : 'bg-background-dark border-border-subtle text-text-muted hover:text-white'}`}>
+                                        <input type="checkbox" className="hidden" checked={isChecked} onChange={() => togglePaymentMethod(method)} />
+                                        {labels[method]}
+                                    </label>
+                                );
+                            })}
+                        </div>
+                    </div>
+
                     <div className="flex justify-end">
-                        <button type="submit" disabled={profileForm.processing} className="px-5 py-2.5 bg-primary hover:bg-[#7C3AED] text-white font-bold text-sm rounded-xl transition-all shadow-[0_0_15px_rgba(139,92,246,0.2)] disabled:opacity-50 flex items-center gap-2">
+                        <button type="submit" disabled={profileForm.processing} className="px-5 py-2.5 bg-primary hover:bg-[#0891b2] text-white font-bold text-sm rounded-xl transition-all shadow-[0_0_15px_rgba(139,92,246,0.2)] disabled:opacity-50 flex items-center gap-2">
                             <span className="material-symbols-outlined text-[18px]">save</span>
                             {profileForm.processing ? 'Salvando...' : 'Salvar Perfil'}
                         </button>
@@ -198,7 +367,7 @@ function TabPerfil({ settings }) {
                         <h3 className="text-lg font-bold text-white mb-1">Horários de Funcionamento</h3>
                         <p className="text-sm text-text-muted">Configure o expediente padrão da pizzaria.</p>
                     </div>
-                    <button onClick={saveHours} disabled={hoursForm.processing} className="px-5 py-2.5 bg-primary hover:bg-[#7C3AED] text-white font-bold text-sm rounded-xl transition-all shadow-[0_0_15px_rgba(139,92,246,0.2)] disabled:opacity-50 flex items-center gap-2">
+                    <button onClick={saveHours} disabled={hoursForm.processing} className="px-5 py-2.5 bg-primary hover:bg-[#0891b2] text-white font-bold text-sm rounded-xl transition-all shadow-[0_0_15px_rgba(139,92,246,0.2)] disabled:opacity-50 flex items-center gap-2">
                         <span className="material-symbols-outlined text-[18px]">save</span>
                         {hoursForm.processing ? 'Salvando...' : 'Salvar Horários'}
                     </button>
@@ -265,7 +434,7 @@ function TabRecibos({ settings }) {
                         <h3 className="text-lg font-bold text-white mb-1">Impressão e Recibos</h3>
                         <p className="text-sm text-text-muted">Personalize a Via de Conferência do termo de impressão.</p>
                     </div>
-                    
+
                     <form onSubmit={submit} className="space-y-6">
                         <div className="space-y-4">
                             <div>
@@ -305,13 +474,13 @@ function TabRecibos({ settings }) {
                 {/* Lado Direito: Live Preview Bobina */}
                 <div className="hidden lg:flex flex-col items-center justify-center bg-background rounded-2xl border border-border-subtle p-6 relative overflow-hidden">
                     <div className="absolute top-0 w-full h-8 bg-gradient-to-b from-background-dark/80 to-transparent z-10"></div>
-                    
+
                     <p className="text-xs uppercase tracking-widest text-text-muted font-bold mb-4">Live Preview (80mm)</p>
-                    
+
                     <div className="bg-[#f0f0f0] text-black font-mono w-[300px] max-w-full shadow-2xl relative" style={{ minHeight: '400px' }}>
                         {/* Serrilhado Topo */}
                         <div className="absolute top-0 left-0 w-full h-[6px]" style={{ backgroundImage: 'radial-gradient(circle, transparent 3px, #f0f0f0 4px)', backgroundSize: '10px 10px', backgroundPosition: '-5px -5px' }}></div>
-                        
+
                         <div className="p-6 pt-8 pb-12 flex flex-col gap-4 text-sm leading-tight h-full">
                             <div className="text-center border-b-[2px] border-dashed border-gray-400 pb-4">
                                 <h1 className="text-2xl font-black uppercase text-balance">{data.receipt_header_1 || 'CABEÇALHO 1'}</h1>
@@ -353,7 +522,7 @@ function TabRecibos({ settings }) {
                                 {data.receipt_footer || 'Mensagem de rodapé aparecerá aqui...'}
                             </div>
                         </div>
-                        
+
                         {/* Serrilhado Bottom */}
                         <div className="absolute bottom-0 left-0 w-full h-[6px]" style={{ backgroundImage: 'radial-gradient(circle, transparent 3px, #f0f0f0 4px)', backgroundSize: '10px 10px', backgroundPosition: '-5px 5px' }}></div>
                     </div>

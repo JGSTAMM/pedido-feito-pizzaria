@@ -17,7 +17,7 @@ class PizzaPriceServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->service = new PizzaPriceService();
+        $this->service = app(PizzaPriceService::class);
     }
 
     public function test_calculate_standard_pizza_single_flavor()

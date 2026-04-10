@@ -7,11 +7,13 @@ use App\Http\Controllers\Api\DataController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\DigitalMenuController;
 use App\Http\Controllers\Api\OnlinePaymentController;
+use App\Http\Controllers\Api\CustomerIdentityController;
 
 // ═══════════════════════════════════════════
 // ROTAS PÚBLICAS (sem autenticação)
 // ═══════════════════════════════════════════
 Route::get('/digital-menu', [DigitalMenuController::class, 'index']);
+Route::post('/customers/identify', [CustomerIdentityController::class, 'identify']);
 
 Route::post('/login', [AuthController::class, 'login']);
 

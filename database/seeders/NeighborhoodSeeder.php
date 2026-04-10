@@ -2,72 +2,88 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\Neighborhood;
+use Illuminate\Database\Seeder;
 
 class NeighborhoodSeeder extends Seeder
 {
+    /**
+     * Run the database seeds.
+     */
     public function run(): void
     {
-        // Clear existing neighborhoods
-        Neighborhood::truncate();
-
-        $neighborhoods = [
-            // Torres
-            ['name' => 'Centro', 'delivery_fee' => 12],
-            ['name' => 'Beira Mar', 'delivery_fee' => 12],
-            ['name' => 'Predial', 'delivery_fee' => 12],
-            ['name' => 'Centenário', 'delivery_fee' => 15],
-            ['name' => 'Curtume', 'delivery_fee' => 12],
-            ['name' => 'Campo Bonito', 'delivery_fee' => 40],
-            ['name' => 'Dunas', 'delivery_fee' => 12],
-            ['name' => 'Engenho Velho', 'delivery_fee' => 15],
-            ['name' => 'Faxinal', 'delivery_fee' => 20],
-            ['name' => 'Faxinal Zena', 'delivery_fee' => 25],
-            ['name' => 'Faxinal Pele', 'delivery_fee' => 35],
-            ['name' => 'Faxinal Motel', 'delivery_fee' => 30],
-            ['name' => 'Tamburiki', 'delivery_fee' => 45],
-            ['name' => 'Getúlio Vargas', 'delivery_fee' => 12],
-            ['name' => 'Guarita', 'delivery_fee' => 12],
-            ['name' => 'Igra Norte', 'delivery_fee' => 13],
-            ['name' => 'Igra Sul', 'delivery_fee' => 13],
-            ['name' => 'Itapeva', 'delivery_fee' => 50],
-            ['name' => 'Itapeva Sul', 'delivery_fee' => 50],
-            ['name' => 'Jacaré', 'delivery_fee' => 25],
-            ['name' => 'Balonismo', 'delivery_fee' => 12],
-            ['name' => 'Porto Alegre', 'delivery_fee' => 12],
-            ['name' => 'Riacho Doce', 'delivery_fee' => 12],
-            ['name' => 'São Jorge', 'delivery_fee' => 18],
-            ['name' => 'Salinas 1', 'delivery_fee' => 15],
-            ['name' => 'Salinas 2', 'delivery_fee' => 25],
-            ['name' => 'São Francisco', 'delivery_fee' => 12],
-            ['name' => 'São Brás', 'delivery_fee' => 60],
-            ['name' => 'Stan', 'delivery_fee' => 12],
-            ['name' => 'Vila São João', 'delivery_fee' => 25],
-            ['name' => 'Reserva das Águas', 'delivery_fee' => 25],
-            ['name' => 'Outro Condomínio', 'delivery_fee' => 20],
-
-            // Passo de Torres
-            ['name' => 'Passo de Torres - Centro', 'delivery_fee' => 15],
-            ['name' => 'Passo de Torres - Progresso', 'delivery_fee' => 15],
-            ['name' => 'Passo de Torres - Estaleiro', 'delivery_fee' => 15],
-            ['name' => 'Passo de Torres - Silveira', 'delivery_fee' => 15],
-            ['name' => 'Passo de Torres - Novo Passo', 'delivery_fee' => 20],
-            ['name' => 'Passo de Torres - Bosque', 'delivery_fee' => 25],
-            ['name' => 'Passo de Torres - Alto Feliz', 'delivery_fee' => 18],
-            ['name' => 'Passo de Torres - Passárgada', 'delivery_fee' => 18],
-            ['name' => 'Passo de Torres - Barra Velha', 'delivery_fee' => 20],
-            ['name' => 'Passo de Torres - Praia Azul', 'delivery_fee' => 25],
-            ['name' => 'Passo de Torres - Caravelle', 'delivery_fee' => 25],
-            ['name' => 'Passo de Torres - Mirratorres', 'delivery_fee' => 25],
-            ['name' => 'Passo de Torres - Jardim América', 'delivery_fee' => 25],
-            ['name' => 'Passo de Torres - Pérola', 'delivery_fee' => 35],
-            ['name' => 'Passo de Torres - Ribeiro', 'delivery_fee' => 45],
-            ['name' => 'Passo de Torres - Bella Torres', 'delivery_fee' => 50],
+        $data = [
+            "Torres" => [
+                "Centro" => 12,
+                "Beira mar" => 12,
+                "Predial" => 12,
+                "Centenário" => 15,
+                "Curtume" => 12,
+                "Campo bonito" => 40,
+                "Dunas" => 12,
+                "Engenho Velho" => 15,
+                "Faxinal" => 20,
+                "Faxinal Zena" => 25,
+                "Faxinal pele" => 35,
+                "Faxina Motel" => 30,
+                "Tamburiki" => 45,
+                "Getúlio Vargas" => 12,
+                "Guarita" => 12,
+                "Igra Norte" => 13,
+                "Igra Sul" => 13,
+                "Itapeva" => 50,
+                "Itapeva Sul" => 50,
+                "Jacaré" => ["preco" => 25, "observacao" => "início"],
+                "Balonismo" => 12,
+                "Porto Alegre" => 12,
+                "Riacho Doce" => 12,
+                "São Jorge" => 18,
+                "Salinas 1" => 15,
+                "Salinas 2" => 25,
+                "São Francisco" => 12,
+                "São Brás" => 60,
+                "Stan" => 12,
+                "Vila São João" => ["preco" => 25, "observacao" => "até Davi"],
+                "Reserva das águas" => 25,
+                "Outro condomínio" => 20
+            ],
+            "Passo de Torres" => [
+                "Centro" => 15,
+                "Progresso" => 15,
+                "Estaleiro" => 15,
+                "Silveira" => 15,
+                "Novo passo" => 20,
+                "Bosque" => 25,
+                "Alto feliz" => 18,
+                "Passárgada" => 18,
+                "Barra Velha" => 20,
+                "Praia Azul" => 25,
+                "Caravelle" => 25,
+                "Mirratorres" => 25,
+                "Jardim América" => 25,
+                "Pérola" => 35,
+                "Ribeiro" => 45,
+                "Bella Torres" => 50
+            ]
         ];
 
-        foreach ($neighborhoods as $n) {
-            Neighborhood::create($n);
+        foreach ($data as $city => $neighborhoods) {
+            foreach ($neighborhoods as $name => $info) {
+                // Determine price and observation
+                $deliveryFee = is_array($info) ? $info['preco'] : $info;
+                $observation = is_array($info) && isset($info['observacao']) ? $info['observacao'] : null;
+
+                Neighborhood::firstOrCreate(
+                    [
+                        'name' => $name,
+                        'city' => $city
+                    ],
+                    [
+                        'delivery_fee' => $deliveryFee,
+                        'observation' => $observation
+                    ]
+                );
+            }
         }
     }
 }

@@ -18,6 +18,8 @@ class NeighborhoodResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'delivery_fee' => $this->delivery_fee,
+            'city' => $this->city,
+            'observation' => $this->observation,
         ];
     }
 }

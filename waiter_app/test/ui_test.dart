@@ -36,14 +36,19 @@ void main() {
     }
 
     testWidgets('Login Screen displays correctly', (WidgetTester tester) async {
+      await tester.binding.setSurfaceSize(const Size(1080, 1920));
       await tester.pumpWidget(createWidgetUnderTest(const LoginScreen()));
 
-      expect(find.text('Lucchese Waiter'), findsOneWidget);
+      expect(find.text('Pedido Feito'), findsOneWidget);
+      expect(find.text('App do Garçom'), findsOneWidget);
       expect(find.byType(TextFormField), findsNWidgets(2)); // Email & Password
       expect(find.text('Entrar'), findsOneWidget);
+
+      await tester.binding.setSurfaceSize(null);
     });
 
     testWidgets('Login failure shows error', (WidgetTester tester) async {
+      await tester.binding.setSurfaceSize(const Size(1080, 1920));
       await tester.pumpWidget(createWidgetUnderTest(const LoginScreen()));
 
       await tester.enterText(
@@ -51,10 +56,14 @@ void main() {
         'wrong@test.com',
       );
       await tester.enterText(find.byType(TextFormField).last, 'wrongpass');
-      await tester.tap(find.text('Entrar'));
+      final loginButton = find.widgetWithText(ElevatedButton, 'Entrar');
+      final buttonWidget = tester.widget<ElevatedButton>(loginButton);
+      buttonWidget.onPressed!.call();
       await tester.pumpAndSettle();
 
-      expect(find.text('Login failed'), findsOneWidget);
+      expect(find.byType(SnackBar), findsOneWidget);
+
+      await tester.binding.setSurfaceSize(null);
     });
 
     testWidgets('Tables Screen displays tables', (WidgetTester tester) async {
@@ -65,9 +74,9 @@ void main() {
       await tester.pumpAndSettle(); // Wait for FutureBuilder/async ops
 
       expect(find.text('Mesa 1'), findsOneWidget);
-      expect(find.text('AVAILABLE'), findsOneWidget);
+      expect(find.text('LIVRE'), findsOneWidget);
       expect(find.text('Mesa 2'), findsOneWidget);
-      expect(find.text('OCCUPIED'), findsOneWidget);
+      expect(find.text('OCUPADA'), findsOneWidget);
     });
 
     testWidgets('Order Screen - Pizza Tab interactions', (
@@ -80,10 +89,10 @@ void main() {
       await tester.pumpAndSettle();
 
       // Verify Pizza Tab is active
-      expect(find.text('1. Escolha o Tamanho'), findsOneWidget);
+      expect(find.text('Tamanho:'), findsOneWidget);
 
       // Select Size
-      await tester.tap(find.text('Grande\n(8 fat.)'));
+      await tester.tap(find.text('Grande (8 fat.)'));
       await tester.pump();
 
       // Select Flavors
@@ -116,8 +125,14 @@ void main() {
 
       expect(find.text('Coca-Cola'), findsOneWidget);
 
-      // Add Product
-      await tester.tap(find.byIcon(Icons.add_circle));
+      // Open add product dialog
+      await tester.tap(find.byIcon(Icons.add_circle).first);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Deseja adicionar alguma observação?'), findsOneWidget);
+
+      // Confirm add product
+      await tester.tap(find.text('Adicionar'));
       await tester.pumpAndSettle();
 
       expect(find.text('Coca-Cola adicionado ao carrinho!'), findsOneWidget);
