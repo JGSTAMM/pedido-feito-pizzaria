@@ -75,18 +75,37 @@ function OrderDetailsModal({ order, onClose, t, statusConfig, typeConfig, format
                     <div className="grid grid-cols-2 gap-4">
                         <div className="bg-background-dark p-4 rounded-xl border border-border-subtle">
                             <span className="text-xs font-bold text-text-muted uppercase tracking-wider block mb-2">{t('orders.table.customer')}</span>
-                            <div className="flex items-center gap-3">
-                                <span className="material-symbols-outlined text-primary">person</span>
-                                <span className="text-white font-medium">{order.customer_name}</span>
+                            <div className="space-y-1">
+                                <div className="flex items-center gap-3">
+                                    <span className="material-symbols-outlined text-primary text-sm">person</span>
+                                    <span className="text-white font-medium">{order.customer_name}</span>
+                                </div>
+                                {order.customer_phone && (
+                                    <div className="flex items-center gap-3">
+                                        <span className="material-symbols-outlined text-primary text-sm">call</span>
+                                        <span className="text-text-muted text-sm">{order.customer_phone}</span>
+                                    </div>
+                                )}
                             </div>
                         </div>
                         <div className="bg-background-dark p-4 rounded-xl border border-border-subtle">
                             <span className="text-xs font-bold text-text-muted uppercase tracking-wider block mb-2">{t('orders.modal.deliveryDetails')}</span>
-                            <div className="flex items-center gap-3">
-                                <span className="material-symbols-outlined text-emerald-400">{typeInfo.icon}</span>
-                                <span className="text-white font-medium">
-                                    {typeInfo.label} {order.table_name && `- ${t('orders.table.table')} ${order.table_name}`}
-                                </span>
+                            <div className="space-y-1">
+                                <div className="flex items-center gap-3">
+                                    <span className="material-symbols-outlined text-emerald-400 text-sm">{typeInfo.icon}</span>
+                                    <span className="text-white font-medium">
+                                        {typeInfo.label} {order.table_name && `- ${t('orders.table.table')} ${order.table_name}`}
+                                    </span>
+                                </div>
+                                {order.delivery_address && (
+                                    <div className="flex items-start gap-3">
+                                        <span className="material-symbols-outlined text-emerald-400 text-sm mt-0.5">location_on</span>
+                                        <div className="text-xs text-text-muted">
+                                            <p className="font-bold text-white">{order.delivery_address}</p>
+                                            <p>{order.neighborhood} {order.delivery_complement && `- ${order.delivery_complement}`}</p>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -96,19 +115,32 @@ function OrderDetailsModal({ order, onClose, t, statusConfig, typeConfig, format
                         <h3 className="text-sm font-bold text-white mb-4">{t('orders.modal.itemsTitle', { count: order.items_count })}</h3>
                         <div className="space-y-3">
                             {order.items?.map(item => (
-                                <div key={item.id} className="flex items-center justify-between p-4 bg-background-dark rounded-xl border border-border-subtle">
-                                    <div className="flex gap-4">
-                                        <div className="w-8 h-8 rounded bg-surface border border-border-subtle flex items-center justify-center font-bold text-primary font-mono text-sm shadow-inner">
-                                            {item.quantity}x
+                                <div key={item.id} className="flex flex-col p-4 bg-background-dark rounded-xl border border-border-subtle hover:border-primary/20 transition-all">
+                                    <div className="flex items-start justify-between">
+                                        <div className="flex gap-4">
+                                            <div className="w-8 h-8 rounded bg-surface border border-border-subtle flex items-center justify-center font-bold text-primary font-mono text-sm shadow-inner">
+                                                {item.quantity}x
+                                            </div>
+                                            <div>
+                                                <p className="text-white font-medium leading-tight">{item.name}</p>
+                                                {item.description && (
+                                                    <div className="mt-2 p-2 bg-black/30 rounded-lg border border-white/5">
+                                                        <p className="text-[10px] uppercase font-black text-slate-500 tracking-widest mb-1">Customização</p>
+                                                        <p className="text-xs text-slate-300 leading-relaxed italic">{item.description}</p>
+                                                    </div>
+                                                )}
+                                                {item.notes && (
+                                                    <p className="text-xs text-amber-400/80 mt-2 flex items-center gap-1">
+                                                        <span className="material-symbols-outlined text-xs">edit_note</span>
+                                                        {t('orders.modal.notesPrefix')}: {item.notes}
+                                                    </p>
+                                                )}
+                                            </div>
                                         </div>
-                                        <div>
-                                            <p className="text-white font-medium">{item.name}</p>
-                                            {item.notes && <p className="text-xs text-amber-400/80 mt-1 italic">{t('orders.modal.notesPrefix')}: {item.notes}</p>}
+                                        <div className="text-right">
+                                            <p className="text-white font-bold font-mono">{formatCurrency(item.total_price)}</p>
+                                            {item.quantity > 1 && <p className="text-xs text-text-muted mt-1">{t('orders.modal.eachPrice', { price: formatCurrency(item.unit_price) })}</p>}
                                         </div>
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="text-white font-bold font-mono">{formatCurrency(item.total_price)}</p>
-                                        {item.quantity > 1 && <p className="text-xs text-text-muted">{t('orders.modal.eachPrice', { price: formatCurrency(item.unit_price) })}</p>}
                                     </div>
                                 </div>
                             ))}

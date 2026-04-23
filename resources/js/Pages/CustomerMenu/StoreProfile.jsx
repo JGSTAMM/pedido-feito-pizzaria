@@ -121,7 +121,7 @@ export default function StoreProfile() {
                                         <div key={day} className="flex items-center justify-between text-sm font-bold border-b border-white/5 pb-3 last:border-0 last:pb-0">
                                             <span className="text-white/80">{daysMap[day]}</span>
                                             {!h.closed ? (
-                                                <span className="text-white font-mono">{h.open} {t('common.to') || 'às'} {h.close}</span>
+                                                <span className="text-white font-mono">{h.open} – {h.close}</span>
                                             ) : (
                                                 <span className="text-red-400/80 uppercase text-[10px] tracking-widest">{t('digital_menu.status.closed')}</span>
                                             )}

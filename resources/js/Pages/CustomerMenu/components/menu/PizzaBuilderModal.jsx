@@ -2,13 +2,14 @@ import React, { useEffect, useRef, useState, useMemo } from 'react';
 import useI18n from '@/hooks/useI18n';
 import { luccheseMenuTheme } from '../../theme/luccheseMenuTheme';
 import { useCart } from '../../hooks/useCart';
+import { norm } from '@/utils/normalize';
 
 const BROTO_FIXED_FEE = 5;
 
 function parseIngredients(rawIngredients) {
     if (Array.isArray(rawIngredients)) return rawIngredients.map(v => String(v).trim()).filter(Boolean);
     if (typeof rawIngredients !== 'string') return [];
-    return rawIngredients.split(',').map(i => i.trim()).filter(Boolean);
+    return rawIngredients.split(/,\s*|\s+e\s+|\s+and\s+/i).map(i => i.trim()).filter(Boolean);
 }
 
 export default function PizzaBuilderModal({
@@ -16,20 +17,23 @@ export default function PizzaBuilderModal({
     onClose,
     pizzaSizeOptions = [],
     pizzaBorderOptions = [],
-    pizzaFlavorProducts = []
+    pizzaFlavorProducts = [],
+    preSelectedInstance = null
 }) {
-    const { t, formatCurrency } = useI18n();
+    const { t, formatCurrency, translateDynamic } = useI18n();
     const { addItem } = useCart();
     const previouslyFocusedElementRef = useRef(null);
     const closeButtonRef = useRef(null);
 
     // Local State
     const [selectedPizzaSize, setSelectedPizzaSize] = useState('');
-    const [selectedFlavorIds, setSelectedFlavorIds] = useState([]);
+    const [selectedFlavorInstances, setSelectedFlavorInstances] = useState([]);
     const [selectedBorderId, setSelectedBorderId] = useState('none');
-    const [activeFlavorId, setActiveFlavorId] = useState('');
-    const [removedIngredientsByFlavor, setRemovedIngredientsByFlavor] = useState({});
+    const [activeInstanceIndex, setActiveInstanceIndex] = useState(0);
     const [pizzaBuilderErrorKey, setPizzaBuilderErrorKey] = useState('');
+
+    // New Feature States
+    const [flavorSearchQuery, setFlavorSearchQuery] = useState('');
 
     // Derived State
     const selectedPizzaSizeOption = useMemo(() => {
@@ -42,60 +46,62 @@ export default function PizzaBuilderModal({
         return pizzaBorderOptions.find(b => String(b.id) === String(selectedBorderId)) || { id: 'none', name: t('digital_menu.pizza_builder.no_border'), price: 0 };
     }, [pizzaBorderOptions, selectedBorderId, t]);
 
-    const selectedFlavorProducts = useMemo(() => {
-        const map = new Map(pizzaFlavorProducts.map(p => [String(p.id), p]));
-        return selectedFlavorIds.map(id => map.get(String(id))).filter(Boolean);
-    }, [pizzaFlavorProducts, selectedFlavorIds]);
+    const flavorProductsMap = useMemo(() => new Map(pizzaFlavorProducts.map(p => [String(p.id), p])), [pizzaFlavorProducts]);
 
-    const activeFlavor = useMemo(() => {
-        if (!selectedFlavorProducts.length) return null;
-        return selectedFlavorProducts.find(f => String(f.id) === String(activeFlavorId)) || selectedFlavorProducts[0];
-    }, [selectedFlavorProducts, activeFlavorId]);
-
-    const activeFlavorIngredients = useMemo(() => parseIngredients(activeFlavor?.ingredients || activeFlavor?.description), [activeFlavor]);
+    const activeInstance = selectedFlavorInstances[activeInstanceIndex] || null;
 
     const pizzaBuilderPrice = useMemo(() => {
-        if (!selectedPizzaSizeOption || selectedFlavorProducts.length === 0) return 0;
+        if (!selectedPizzaSizeOption || selectedFlavorInstances.length === 0) return 0;
+
+        const maxBasePrice = selectedFlavorInstances.reduce((max, inst) => {
+            const product = flavorProductsMap.get(String(inst.flavorId));
+            return Math.max(max, Number(product?.base_price || 0));
+        }, 0);
 
         if (selectedPizzaSizeOption.is_special_broto_rule) {
-            const firstFlavorPrice = Number(selectedFlavorProducts[0]?.base_price || 0);
-            return (firstFlavorPrice / 2) + BROTO_FIXED_FEE;
+            return (maxBasePrice / 2) + BROTO_FIXED_FEE;
         }
 
-        const basePrice = selectedFlavorProducts.reduce((max, prod) => Math.max(max, Number(prod.base_price || 0)), 0);
-        return basePrice + Number(selectedBorderOption?.price || 0);
-    }, [selectedFlavorProducts, selectedPizzaSizeOption, selectedBorderOption]);
+        return maxBasePrice + Number(selectedBorderOption?.price || 0);
+    }, [selectedFlavorInstances, selectedPizzaSizeOption, selectedBorderOption, flavorProductsMap]);
+
+    const filteredPizzaFlavors = useMemo(() => {
+        if (!flavorSearchQuery.trim()) return pizzaFlavorProducts;
+        const q = norm(flavorSearchQuery);
+        return pizzaFlavorProducts.filter(f =>
+            norm(f.name).includes(q) ||
+            norm(f.ingredients).includes(q) ||
+            norm(f.description).includes(q)
+        );
+    }, [pizzaFlavorProducts, flavorSearchQuery]);
 
     // Handlers
-    const handleToggleFlavor = (productId) => {
-        const id = String(productId);
-        setSelectedFlavorIds(prev => {
-            if (prev.includes(id)) {
-                setPizzaBuilderErrorKey('');
-                return prev.filter(v => v !== id);
-            }
-            if (prev.length >= selectedSizeMaxFlavors) {
-                setPizzaBuilderErrorKey('digital_menu.pizza_builder.max_flavors_limit');
-                return prev;
-            }
-            setPizzaBuilderErrorKey('');
-            return [...prev, id];
+    const addFlavorInstance = (flavor) => {
+        if (selectedFlavorInstances.length >= selectedSizeMaxFlavors) {
+            setPizzaBuilderErrorKey('digital_menu.pizza_builder.max_flavors_limit');
+            return;
+        }
+        setPizzaBuilderErrorKey('');
+        const newInstance = { flavorId: flavor.id, removed: [] };
+        setSelectedFlavorInstances(prev => {
+            const next = [...prev, newInstance];
+            setActiveInstanceIndex(next.length - 1);
+            return next;
         });
     };
 
-    const toggleIngredient = (flavorId, ingredient) => {
-        const id = String(flavorId);
-        setRemovedIngredientsByFlavor(prev => {
-            const current = prev[id] || [];
-            if (current.includes(ingredient)) {
-                return { ...prev, [id]: current.filter(v => v !== ingredient) };
+    const handleRemoveInstance = (index) => {
+        setSelectedFlavorInstances(prev => {
+            const next = prev.filter((_, i) => i !== index);
+            if (activeInstanceIndex >= next.length && next.length > 0) {
+                setActiveInstanceIndex(next.length - 1);
             }
-            return { ...prev, [id]: [...current, ingredient] };
+            return next;
         });
     };
 
     const addCustomPizzaToCart = () => {
-        if (selectedFlavorProducts.length === 0) {
+        if (selectedFlavorInstances.length === 0) {
             setPizzaBuilderErrorKey('digital_menu.pizza_builder.select_flavors_required');
             return;
         }
@@ -104,16 +110,35 @@ export default function PizzaBuilderModal({
             return;
         }
 
-        const flavorNames = selectedFlavorProducts.map(p => p.name).join(' / ');
         const sizeLabel = selectedPizzaSizeOption.name;
-        const removedNotes = selectedFlavorProducts.map(f => {
-            const removed = removedIngredientsByFlavor[String(f.id)] || [];
-            return removed.length ? `${f.name}: ${t('digital_menu.pizza_builder.without_ingredient') || 'Sem'} ${removed.join(', ')}` : null;
-        }).filter(Boolean);
 
-        const borderNote = selectedBorderOption.id === 'none' ? null : `${t('digital_menu.pizza_builder.border_label') || 'Borda'}: ${selectedBorderOption.name}`;
-        const itemNotes = [borderNote, ...removedNotes].filter(Boolean).join(' | ');
-        const customPizzaId = `custom-pizza-${selectedPizzaSizeOption.id}-${selectedFlavorIds.slice().sort().join('-')}`;
+        const flavorCounts = {};
+        selectedFlavorInstances.forEach(inst => {
+            const p = flavorProductsMap.get(String(inst.flavorId));
+            const name = translateDynamic(p?.name);
+            const removedList = inst.removed || [];
+            const key = `${name}${removedList.length ? ` (${t('digital_menu.pizza_builder.without_ingredient')} ${removedList.map(r => translateDynamic(r)).join(', ')})` : ''}`;
+            flavorCounts[key] = (flavorCounts[key] || 0) + 1;
+        });
+
+        const flavorNames = Object.entries(flavorCounts).map(([key, count]) =>
+            count > 1 ? `${key} (${count} ${t('digital_menu.pizza_builder.size_unit_plural')})` : key
+        ).join(' / ');
+
+        const borderNote = selectedBorderId === 'none' ? null : `${t('digital_menu.pizza_builder.border_label')}: ${translateDynamic(selectedBorderOption.name)}`;
+
+        const itemNotes = borderNote;
+
+        const customizations = selectedFlavorInstances
+            .filter(inst => inst.removed && inst.removed.length > 0)
+            .map(inst => {
+                const p = flavorProductsMap.get(String(inst.flavorId));
+                const flavorName = translateDynamic(p?.name);
+                return `${flavorName}: sem ${inst.removed.map(r => translateDynamic(r)).join(', ')}`;
+            })
+            .join(' | ');
+
+        const customPizzaId = `custom-pizza-${selectedPizzaSizeOption.id}-${selectedFlavorInstances.map(i => `${i.flavorId}-${(i.removed || []).slice().sort().join('_')}`).join('|')}`;
 
         addItem({
             id: customPizzaId,
@@ -121,8 +146,9 @@ export default function PizzaBuilderModal({
             name: `Pizza ${sizeLabel} (${flavorNames})`,
             price: pizzaBuilderPrice,
             pizza_size_id: selectedPizzaSizeOption.id,
-            flavor_ids: selectedFlavorProducts.map(p => p.id),
-            notes: itemNotes || null,
+            flavor_instances: selectedFlavorInstances,
+            notes: itemNotes,
+            description: customizations || null,
             image_url: null,
         }, 1);
 
@@ -133,12 +159,33 @@ export default function PizzaBuilderModal({
     useEffect(() => {
         if (isOpen) {
             setSelectedPizzaSize(String(pizzaSizeOptions[0]?.id || ''));
-            setSelectedFlavorIds([]);
-            setSelectedBorderId('none');
-            setRemovedIngredientsByFlavor({});
-            setActiveFlavorId('');
-            setPizzaBuilderErrorKey('');
+            setFlavorSearchQuery('');
 
+            if (preSelectedInstance) {
+                setSelectedFlavorInstances([preSelectedInstance]);
+                setActiveInstanceIndex(0);
+            } else {
+                setSelectedFlavorInstances([]);
+            }
+
+            setSelectedBorderId('none');
+            setPizzaBuilderErrorKey('');
+        }
+    }, [isOpen, pizzaSizeOptions, preSelectedInstance]);
+
+    // Handle Escape key with capture to ensure priority
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (e.key === 'Escape' && isOpen) {
+                onClose();
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown, true);
+        return () => window.removeEventListener('keydown', handleKeyDown, true);
+    }, [isOpen, onClose]);
+
+    useEffect(() => {
+        if (isOpen) {
             previouslyFocusedElementRef.current = document.activeElement;
             document.body.style.overflow = 'hidden';
             window.requestAnimationFrame(() => closeButtonRef.current?.focus());
@@ -148,65 +195,61 @@ export default function PizzaBuilderModal({
                 previouslyFocusedElementRef.current.focus();
             }
         }
-    }, [isOpen, pizzaSizeOptions]);
-
-    useEffect(() => {
-        const handleKeyDown = (e) => {
-            if (e.key === 'Escape' && isOpen) onClose();
-        };
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [isOpen, onClose]);
+    }, [isOpen]);
 
     // Trim flavors if size drops
     useEffect(() => {
-        setSelectedFlavorIds(prev => prev.length <= selectedSizeMaxFlavors ? prev : prev.slice(0, selectedSizeMaxFlavors));
-    }, [selectedSizeMaxFlavors]);
-
-    // Active flavor effect
-    useEffect(() => {
-        if (selectedFlavorProducts.length === 0) {
-            setActiveFlavorId('');
-        } else if (!selectedFlavorProducts.some(f => String(f.id) === String(activeFlavorId))) {
-            setActiveFlavorId(String(selectedFlavorProducts[0]?.id || ''));
+        if (selectedFlavorInstances.length > selectedSizeMaxFlavors) {
+            setSelectedFlavorInstances(prev => prev.slice(0, selectedSizeMaxFlavors));
         }
-    }, [selectedFlavorProducts, activeFlavorId]);
+    }, [selectedSizeMaxFlavors, selectedFlavorInstances.length]);
 
     if (!isOpen) return null;
 
     const sliceAngle = 360 / selectedSizeMaxFlavors;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-sm sm:p-4 text-slate-100 animate-in fade-in duration-300">
+        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-sm sm:p-4 text-slate-100 animate-in fade-in duration-300">
             <div className="absolute inset-0" onClick={onClose} />
 
-            <div className="relative w-full max-w-lg max-h-[90vh] sm:max-h-[85vh] bg-[#111116] sm:rounded-[2rem] rounded-t-[2.5rem] border sm:border-slate-800 border-t-slate-800 shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-full sm:slide-in-from-bottom-8 duration-500">
+            <div
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="pizza-builder-title"
+                tabIndex="0"
+                autoFocus
+                onKeyDown={(e) => {
+                    if (e.key === 'Escape') {
+                        onClose();
+                    }
+                }}
+                className="relative w-full h-[100dvh] sm:h-auto sm:max-w-lg sm:max-h-[85vh] bg-[#111116] sm:rounded-[2rem] sm:border sm:border-slate-800 shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-full sm:slide-in-from-bottom-8 duration-500"
+            >
                 {/* Header */}
-                <header className="flex items-center justify-between p-6 border-b border-white/5 bg-white/5 backdrop-blur-md z-10 sticky top-0">
+                <header className="flex items-center justify-between p-6 border-b border-white/5 bg-white/5 backdrop-blur-md z-10 sticky top-0 shrink-0">
                     <div>
                         <p className="text-xs font-black uppercase tracking-[0.2em] text-primary mb-1">{t('digital_menu.pizza_builder.title')}</p>
-                        <h3 className="text-xl font-black text-white leading-none">{t('digital_menu.pizza_builder.montar_pizza')}</h3>
+                        <h3 id="pizza-builder-title" className="text-xl font-black text-white leading-none">{t('digital_menu.pizza_builder.montar_pizza')}</h3>
                     </div>
                     <button
                         ref={closeButtonRef}
                         type="button"
                         onClick={onClose}
+                        aria-label={t('digital_menu.cart.close_cart')}
                         className="h-10 w-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors text-white"
                     >
                         <span className="material-symbols-outlined">close</span>
                     </button>
                 </header>
 
-                <div className="flex-1 overflow-y-auto p-6 space-y-10 no-scrollbar pb-32">
+                <div className="flex-1 overflow-y-auto p-6 space-y-10 no-scrollbar pb-48">
 
-                    {/* Visualizer (2D Pie chart overlay mask) */}
+                    {/* Visualizer */}
                     <div className="relative w-64 h-64 mx-auto mt-2 mb-6 transition-transform duration-500 hover:scale-105 select-none touch-none">
-                        {/* Pizza Board / Base Layer */}
                         <div className="absolute inset-0 rounded-full bg-[#52301c] shadow-[0_20px_50px_rgba(0,0,0,0.5)] border-[6px] border-[#382012] overflow-hidden">
                             <div className="w-full h-full opacity-40 bg-[url('https://www.transparenttextures.com/patterns/wood-pattern.png')] mix-blend-overlay"></div>
                         </div>
 
-                        {/* Slices Layer */}
                         {Array.from({ length: selectedSizeMaxFlavors }).map((_, index) => {
                             const startAngle = index * sliceAngle;
                             const maskStyle = {
@@ -214,21 +257,23 @@ export default function PizzaBuilderModal({
                                 maskImage: `conic-gradient(from ${startAngle}deg, black 0deg, black ${sliceAngle}deg, transparent ${sliceAngle}deg)`
                             };
 
-                            const flavor = selectedFlavorProducts[index];
+                            const instance = selectedFlavorInstances[index];
+                            const flavor = instance ? flavorProductsMap.get(String(instance.flavorId)) : null;
                             const flavorImg = flavor?.image_url || 'https://images.unsplash.com/photo-1604381536136-57f99201f92e?q=80&w=800&auto=format&fit=crop';
 
                             return (
                                 <div
                                     key={`slice-${index}`}
-                                    className="absolute inset-0 rounded-full transition-all duration-700 ease-out origin-center"
+                                    className={`absolute inset-0 rounded-full transition-all duration-700 ease-out origin-center cursor-pointer ${activeInstanceIndex === index && flavor ? 'ring-4 ring-primary/50 ring-inset z-10 scale-[1.05]' : flavor ? 'hover:scale-[1.02] hover:z-20' : ''}`}
                                     style={{
                                         ...maskStyle,
                                         opacity: flavor ? 1 : 0.15,
-                                        transform: flavor ? 'scale(1)' : 'scale(0.92)'
+                                        transform: flavor ? (activeInstanceIndex === index ? 'scale(1.05)' : 'scale(1)') : 'scale(0.92)'
                                     }}
+                                    onClick={() => flavor && setActiveInstanceIndex(index)}
                                 >
                                     {flavor ? (
-                                        <img src={flavorImg} alt={flavor.name} className="w-full h-full object-cover" />
+                                        <img src={flavorImg} alt={translateDynamic(flavor.name)} className="w-full h-full object-cover" />
                                     ) : (
                                         <div className="w-full h-full bg-black/60 flex items-center justify-center">
                                             <span
@@ -243,7 +288,6 @@ export default function PizzaBuilderModal({
                             );
                         })}
 
-                        {/* Slice Dividers */}
                         {Array.from({ length: selectedSizeMaxFlavors }).map((_, index) => {
                             if (selectedSizeMaxFlavors <= 1) return null;
                             const startAngle = index * sliceAngle;
@@ -259,7 +303,6 @@ export default function PizzaBuilderModal({
                             );
                         })}
 
-                        {/* Inner shadow/lighting for 3D realism */}
                         <div className="absolute inset-0 rounded-full shadow-[inset_0_10px_30px_rgba(255,255,255,0.3),inset_0_-20px_40px_rgba(0,0,0,0.8)] pointer-events-none"></div>
                     </div>
 
@@ -270,9 +313,7 @@ export default function PizzaBuilderModal({
 
                     {/* Step 1: Size */}
                     <section className="space-y-4">
-                        <div className="flex items-center justify-between">
-                            <h4 className="font-black text-white tracking-widest text-xs uppercase">{t('digital_menu.pizza_builder.tamanho')}</h4>
-                        </div>
+                        <h4 className="font-black text-white tracking-widest text-xs uppercase">{t('digital_menu.pizza_builder.tamanho')}</h4>
                         <div className="space-y-2">
                             {pizzaSizeOptions.map((size) => (
                                 <button
@@ -280,7 +321,7 @@ export default function PizzaBuilderModal({
                                     onClick={() => setSelectedPizzaSize(String(size.id))}
                                     className={`w-full flex items-center justify-between rounded-[1rem] p-4 transition-all duration-300 border-2 ${selectedPizzaSize === String(size.id)
                                         ? 'bg-primary border-primary text-white shadow-lg shadow-primary/20 scale-[1.02]'
-                                        : `${luccheseMenuTheme.glass} border-white/5 text-slate-300 hover:bg-white/10 hover:text-white`
+                                        : `${luccheseMenuTheme.glass} border-transparent text-slate-300 hover:bg-white/10 hover:text-white`
                                         }`}
                                 >
                                     <span className="font-bold text-sm tracking-wide">{size.name}</span>
@@ -293,12 +334,105 @@ export default function PizzaBuilderModal({
                         </div>
                     </section>
 
-                    {/* Step 2: Flavors */}
+                    {/* Selection Summary */}
+                    {selectedFlavorInstances.length > 0 && (
+                        <section className="space-y-3">
+                            <div className="flex items-center justify-between">
+                                <h4 className="font-black text-white tracking-widest text-xs uppercase">{t('digital_menu.pizza_builder.sabores_da_pizza')}</h4>
+                            </div>
+                            <div className="flex flex-col gap-2">
+                                {selectedFlavorInstances.map((inst, idx) => {
+                                    const p = flavorProductsMap.get(String(inst.flavorId));
+                                    const isActive = activeInstanceIndex === idx;
+                                    const instIngredients = [...new Set(parseIngredients(p?.ingredients || p?.description))];
+
+                                    return (
+                                        <div key={`inst-${idx}`} className={`flex flex-col p-3 rounded-xl border-2 transition-all ${isActive ? 'bg-primary/10 border-primary/40 shadow-lg shadow-primary/5' : 'bg-white/5 border-transparent'}`}>
+                                            <div className="flex items-center justify-between">
+                                                <button onClick={() => setActiveInstanceIndex(idx)} className="flex-1 text-left flex items-center gap-3 group">
+                                                    <span className={`w-6 h-6 rounded-full shrink-0 text-[10px] flex items-center justify-center font-black transition-colors ${isActive ? 'bg-primary text-white' : 'bg-white/10 text-slate-400'}`}>{idx + 1}</span>
+                                                    <div className="flex-1">
+                                                        <div className="flex items-center gap-2">
+                                                            <p className={`text-sm font-bold ${isActive ? 'text-white' : 'text-slate-300 group-hover:text-white transition-colors'}`}>{translateDynamic(p?.name)}</p>
+                                                            {isActive && (
+                                                                <span className="bg-primary/20 text-primary text-[9px] px-2 py-0.5 rounded-full font-black uppercase tracking-tighter animate-pulse">
+                                                                    {t('digital_menu.pizza_builder.customizing') || 'Personalizando'}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        {inst.removed.length > 0 && !isActive && (
+                                                            <p className="text-[10px] text-amber-500 font-bold uppercase tracking-tight mt-0.5 border border-amber-500/20 bg-amber-500/10 px-2 py-0.5 rounded-full inline-block">
+                                                                {t('digital_menu.pizza_builder.with_removed_ingredients')}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                    {!isActive && (
+                                                        <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 border border-primary/30 text-[9px] uppercase font-black tracking-widest text-primary group-hover:bg-primary group-hover:text-white transition-all animate-bounce-subtle">
+                                                            <span className="material-symbols-outlined text-[12px]">edit</span>
+                                                            <span>{t('digital_menu.pizza_builder.customize')}</span>
+                                                        </div>
+                                                    )}
+                                                </button>
+                                                <button onClick={() => handleRemoveInstance(idx)} className="p-2 text-slate-500 hover:text-red-400 transition-colors">
+                                                    <span className="material-symbols-outlined text-[18px]">delete</span>
+                                                </button>
+                                            </div>
+
+                                            {isActive && (
+                                                <div className="mt-3 pt-3 border-t border-primary/20 animate-in slide-in-from-top-2 duration-300">
+                                                    <p className="text-[10px] uppercase font-black text-primary/70 tracking-widest mb-2">
+                                                        {t('digital_menu.pizza_builder.customizar_ingredientes')}
+                                                    </p>
+                                                    {instIngredients.length > 0 ? (
+                                                        <div className="flex flex-col gap-1.5">
+                                                            {instIngredients.map(ing => {
+                                                                const isRemoved = inst.removed.includes(ing);
+                                                                return (
+                                                                    <button
+                                                                        key={ing}
+                                                                        onClick={() => {
+                                                                            setSelectedFlavorInstances(prev => {
+                                                                                const next = [...prev];
+                                                                                const currRemoved = next[idx].removed;
+                                                                                next[idx].removed = currRemoved.includes(ing) 
+                                                                                    ? currRemoved.filter(i => i !== ing) 
+                                                                                    : [...currRemoved, ing];
+                                                                                return next;
+                                                                            });
+                                                                        }}
+                                                                        className={`flex items-center gap-3 p-2.5 rounded-lg text-xs font-bold transition-all border ${isRemoved
+                                                                            ? 'bg-red-500/10 border-red-500/30 text-red-400'
+                                                                            : 'bg-white/5 border-transparent text-slate-300 hover:bg-white/10 hover:text-white'
+                                                                            }`}
+                                                                    >
+                                                                        <div className={`w-4 h-4 flex items-center justify-center rounded-full shrink-0 ${isRemoved ? 'bg-red-500/20 text-red-400' : 'bg-primary/20 text-primary'}`}>
+                                                                            {isRemoved ? <span className="material-symbols-outlined text-[10px] font-black">close</span> : <span className="material-symbols-outlined text-[10px] font-black">check</span>}
+                                                                        </div>
+                                                                        <span className={`text-left ${isRemoved ? 'line-through opacity-60' : ''}`}>{translateDynamic(ing)}</span>
+                                                                    </button>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    ) : (
+                                                        <p className="text-xs text-slate-500">{t('digital_menu.pizza_builder.no_ingredients_listed')}</p>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </section>
+                    )}
+
+                    <hr className="border-white/5 mx-2" />
+
+                    {/* Step 2: Add Flavors */}
                     <section className="space-y-4">
                         <div className="flex items-center justify-between">
-                            <h4 className="font-black text-white tracking-widest text-xs uppercase">{t('digital_menu.pizza_builder.sabores_da_pizza')}</h4>
+                            <h4 className="font-black text-white tracking-widest text-xs uppercase">{t('digital_menu.pizza_builder.select_flavors')}</h4>
                             <span className="text-[10px] uppercase font-black px-3 py-1.5 bg-white/10 rounded-full text-slate-300 tracking-wider">
-                                {selectedFlavorIds.length} / {selectedSizeMaxFlavors}
+                                {selectedFlavorInstances.length} / {selectedSizeMaxFlavors}
                             </span>
                         </div>
 
@@ -309,44 +443,53 @@ export default function PizzaBuilderModal({
                             </div>
                         )}
 
-                        <div className="flex flex-col gap-2">
-                            {pizzaFlavorProducts.map((flavor) => {
-                                const isSelected = selectedFlavorIds.includes(String(flavor.id));
-                                return (
-                                    <button
-                                        key={flavor.id}
-                                        onClick={() => handleToggleFlavor(flavor.id)}
-                                        className={`flex items-center justify-between p-4 rounded-2xl border-2 transition-all duration-300 ${isSelected
-                                            ? 'bg-primary/10 border-primary shadow-lg shadow-primary/10'
-                                            : `${luccheseMenuTheme.glass} border-transparent hover:bg-white/10`
-                                            }`}
-                                    >
-                                        <div className="flex items-center gap-4">
-                                            <div className={`w-6 h-6 rounded-full flex items-center justify-center border-2 transition-colors ${isSelected ? 'border-primary bg-primary' : 'border-slate-500'
-                                                }`}>
-                                                {isSelected && <span className="material-symbols-outlined text-white text-[14px]">check</span>}
-                                            </div>
-                                            <div className="text-left">
-                                                <p className={`font-bold text-sm ${isSelected ? 'text-white' : 'text-slate-300'}`}>{flavor.name}</p>
-                                                {flavor.ingredients && <p className="text-xs text-slate-500 line-clamp-1 mt-0.5">{flavor.ingredients}</p>}
-                                            </div>
+                        <div className="relative mb-3">
+                            <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">search</span>
+                            <input
+                                type="text"
+                                value={flavorSearchQuery}
+                                onChange={(e) => setFlavorSearchQuery(e.target.value)}
+                                placeholder={t('digital_menu.pizza_builder.search_flavors')}
+                                className="w-full bg-white/5 border border-white/10 rounded-2xl py-3 pl-12 pr-4 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+                            />
+                        </div>
+
+                        <div className="flex flex-col gap-2 max-h-64 overflow-y-auto no-scrollbar pr-1">
+                            {filteredPizzaFlavors.map((flavor) => (
+                                <button
+                                    key={flavor.id}
+                                    onClick={() => addFlavorInstance(flavor)}
+                                    className={`${luccheseMenuTheme.glass} border-transparent flex items-center justify-between p-4 rounded-2xl border-2 transition-all duration-300 hover:bg-white/10`}
+                                >
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-6 h-6 rounded-full flex items-center justify-center border-2 border-slate-500 shrink-0">
+                                            <span className="material-symbols-outlined text-[14px]">add</span>
                                         </div>
-                                        <div className="text-right pl-4">
-                                            <p className={`font-black text-sm tracking-wide ${isSelected ? 'text-primary' : 'text-slate-400'}`}>
-                                                {formatCurrency(flavor.base_price)}
-                                            </p>
+                                        <div className="text-left">
+                                            <p className="font-bold text-sm text-slate-300">{translateDynamic(flavor.name)}</p>
+                                            {flavor.ingredients && <p className="text-xs text-slate-500 line-clamp-1 mt-0.5">{translateDynamic(flavor.ingredients)}</p>}
                                         </div>
-                                    </button>
-                                );
-                            })}
+                                    </div>
+                                    <div className="text-right pl-4 shrink-0">
+                                        <p className="font-black text-sm tracking-wide text-slate-400">
+                                            {formatCurrency(flavor.base_price)}
+                                        </p>
+                                    </div>
+                                </button>
+                            ))}
+                            {filteredPizzaFlavors.length === 0 && (
+                                <div className="text-center py-6 text-slate-500 text-sm font-medium">
+                                    Nenhum sabor encontrado.
+                                </div>
+                            )}
                         </div>
                     </section>
 
+                    <hr className="border-white/5 mx-2" />
+
                     {/* Step 3: Borders */}
                     <section className="space-y-4">
-                        <div className="flex items-center justify-between">
-                            <h4 className="font-black text-white tracking-widest text-xs uppercase">{t('digital_menu.pizza_builder.escolher_borda')}</h4>
-                        </div>
+                        <h4 className="font-black text-white tracking-widest text-xs uppercase">{t('digital_menu.pizza_builder.escolher_borda')}</h4>
                         <div className="space-y-2">
                             {pizzaBorderOptions.map((border) => (
                                 <button
@@ -357,80 +500,29 @@ export default function PizzaBuilderModal({
                                         : `${luccheseMenuTheme.glass} border-transparent text-slate-300 hover:bg-white/10 hover:text-white`
                                         }`}
                                 >
-                                    <span>{border.name}</span>
+                                    <span>{translateDynamic(border.name)}</span>
                                     {border.price > 0 && <span className="text-primary tracking-wide bg-primary/10 px-3 py-1 rounded-full text-xs">+ {formatCurrency(border.price)}</span>}
                                 </button>
                             ))}
                         </div>
                     </section>
-
-                    {/* Step 4: Ingredients Edit */}
-                    {selectedFlavorProducts.length > 0 && (
-                        <section className="space-y-4 pt-4 border-t border-white/5">
-                            <h4 className="font-black text-white tracking-widest text-xs uppercase">{t('digital_menu.pizza_builder.customizar_ingredientes')}</h4>
-
-                            {selectedFlavorProducts.length > 1 && (
-                                <div className="flex overflow-x-auto gap-2 pb-2 no-scrollbar">
-                                    {selectedFlavorProducts.map(flavor => (
-                                        <button
-                                            key={flavor.id}
-                                            onClick={() => setActiveFlavorId(String(flavor.id))}
-                                            className={`whitespace-nowrap px-5 py-2.5 rounded-full text-xs font-black tracking-wide transition-all ${activeFlavorId === String(flavor.id) || (!activeFlavorId && selectedFlavorProducts[0].id === flavor.id)
-                                                ? 'bg-white text-black shadow-lg'
-                                                : 'bg-white/10 text-slate-300 hover:bg-white/20'
-                                                }`}
-                                        >
-                                            {flavor.name}
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
-
-                            {activeFlavorIngredients.length > 0 ? (
-                                <div className="flex flex-col gap-2 mt-2">
-                                    {activeFlavorIngredients.map(ing => {
-                                        const flvId = activeFlavorId || String(selectedFlavorProducts[0].id);
-                                        const isRemoved = (removedIngredientsByFlavor[flvId] ?? []).includes(ing);
-                                        return (
-                                            <button
-                                                key={ing}
-                                                onClick={() => toggleIngredient(flvId, ing)}
-                                                className={`flex items-center justify-between p-3.5 rounded-xl text-sm font-bold transition-all border-2 ${isRemoved
-                                                    ? 'bg-red-500/10 border-red-500/30 text-red-400'
-                                                    : `${luccheseMenuTheme.glass} border-transparent text-white hover:bg-white/10`
-                                                    }`}
-                                            >
-                                                <div className="flex items-center gap-3">
-                                                    <div className={`w-5 h-5 flex items-center justify-center rounded-full ${isRemoved ? 'bg-red-500/20 text-red-400' : 'bg-primary/20 text-primary'}`}>
-                                                        {isRemoved ? <span className="material-symbols-outlined text-[12px]">close</span> : <span className="material-symbols-outlined text-[12px]">check</span>}
-                                                    </div>
-                                                    <span className={isRemoved ? 'line-through opacity-60' : ''}>{ing}</span>
-                                                </div>
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                            ) : (
-                                <p className="text-sm text-slate-500 mt-2 font-medium">{t('digital_menu.pizza_builder.no_ingredients_listed')}</p>
-                            )}
-                        </section>
-                    )}
                 </div>
 
                 {/* Footer sticky */}
-                <div className="absolute bottom-0 w-full p-4 sm:p-6 bg-black/80 backdrop-blur-xl border-t border-white/10">
+                <div className="absolute bottom-0 w-full p-4 sm:p-6 z-20 pointer-events-none">
                     <button
                         onClick={addCustomPizzaToCart}
-                        disabled={selectedFlavorProducts.length === 0}
-                        className={`w-full py-4 rounded-2xl flex items-center justify-center gap-3 font-black text-sm tracking-widest uppercase transition-all duration-300 shadow-2xl ${selectedFlavorProducts.length > 0
+                        disabled={selectedFlavorInstances.length === 0}
+                        className={`w-full py-4 rounded-2xl flex items-center justify-center gap-3 font-black text-sm tracking-widest uppercase transition-all duration-300 shadow-2xl pointer-events-auto ${selectedFlavorInstances.length > 0
                             ? 'bg-primary hover:bg-primary-hover text-white shadow-primary/20 transform hover:scale-[1.02] active:scale-95'
-                            : 'bg-white/5 text-white/20 cursor-not-allowed'
+                            : 'bg-[#222228] text-white/20 cursor-not-allowed border-2 border-white/5 shadow-none'
                             }`}
                     >
                         {t('digital_menu.pizza_builder.add_to_order')}
                         <span className="bg-black/20 px-3 py-1 rounded-full">{formatCurrency(pizzaBuilderPrice)}</span>
                     </button>
                 </div>
+
             </div>
         </div>
     );

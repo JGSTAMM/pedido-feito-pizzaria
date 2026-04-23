@@ -37,12 +37,22 @@ class HandleInertiaRequests extends Middleware
     {
         $storeSetting = \App\Models\StoreSetting::first();
         
+        $phone = $request->cookie('customer_phone', '');
+        $activeOrdersCount = 0;
+
+        if ($phone) {
+            $activeOrdersCount = \App\Models\Order::where('customer_phone', $phone)
+                ->whereNotIn('status', ['delivered', 'completed', 'cancelled'])
+                ->count();
+        }
+        
         return [
             ...parent::share($request),
             'appName' => $storeSetting->store_name ?? config('app.name', 'Pedido Feito'),
             'locale' => app()->getLocale(),
             'fallbackLocale' => config('app.fallback_locale'),
             'storeSetting' => $storeSetting,
+            'activeOrdersCount' => $activeOrdersCount,
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),

@@ -19,6 +19,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => \App\Http\Middleware\EnsureUserHasRole::class,
         ]);
 
+        $middleware->encryptCookies(except: [
+            'customer_phone',
+        ]);
+
         $middleware->web(
             prepend: [
                 \App\Http\Middleware\SetRequestLocale::class,

@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import useI18n from '@/hooks/useI18n';
 import AddressSelector from './AddressSelector';
+import NeighborhoodSearchSelect from '../shared/NeighborhoodSearchSelect';
+import CreditCardForm from './CreditCardForm';
 import { luccheseMenuTheme } from '../../theme/luccheseMenuTheme';
 
 const PAYMENT_OPTIONS = [
     { key: 'pix', icon: 'qr_code_2', enabled: true },
     { key: 'credit_card', icon: 'credit_card', enabled: true },
-    { key: 'cash', icon: 'payments', enabled: false },
+    { key: 'cash', icon: 'payments', enabled: true },
 ];
 
 function FieldError({ message }) {
@@ -28,7 +30,11 @@ export default function CheckoutFormPremium({
     setFulfillmentType,
     neighborhoods,
     tables,
+    storeSetting,
     handleSubmit,
+    handleCreditCardToken,
+    handleCreditCardError,
+    totalAmount,
 }) {
     const { t } = useI18n();
     const fulfillmentType = formValues.fulfillmentType || 'pickup';
@@ -38,6 +44,29 @@ export default function CheckoutFormPremium({
     const videoRef = useRef(null);
     const streamRef = useRef(null);
     const scanActiveRef = useRef(false);
+
+    const activePaymentOptions = useMemo(() => {
+        const allowedMethods = storeSetting?.payment_methods || [];
+        const normalizedMethods = allowedMethods.map(m => String(m).toLowerCase().trim());
+
+        return PAYMENT_OPTIONS.map(opt => {
+            let isEnabled = false;
+
+            if (opt.key === 'pix' && normalizedMethods.includes('pix')) {
+                isEnabled = true;
+            } else if (opt.key === 'credit_card' && (normalizedMethods.includes('cartão de crédito') || normalizedMethods.includes('credit_card') || normalizedMethods.includes('credito') || normalizedMethods.includes('crédito'))) {
+                isEnabled = true;
+            } else if (opt.key === 'debit_card' && (normalizedMethods.includes('cartão de débito') || normalizedMethods.includes('debit_card') || normalizedMethods.includes('debito') || normalizedMethods.includes('débito'))) {
+                isEnabled = true;
+            } else if (opt.key === 'cash' && (normalizedMethods.includes('dinheiro') || normalizedMethods.includes('cash'))) {
+                isEnabled = true;
+            } else if (normalizedMethods.includes(opt.key)) {
+                isEnabled = true;
+            }
+
+            return { ...opt, enabled: isEnabled };
+        });
+    }, [storeSetting]);
 
     const tableMapByName = useMemo(() => {
         const map = new Map();
@@ -170,7 +199,7 @@ export default function CheckoutFormPremium({
     }, []);
 
     return (
-        <section className={`${luccheseMenuTheme.glass} rounded-3xl p-5 sm:p-6`}>
+        <section className="w-full">
             <header className="mb-5 border-b border-white/5 pb-4">
                 <h2 className="text-xl font-bold text-white">{t('digital_menu.checkout.form_title')}</h2>
                 <p className="mt-1 text-sm text-text-muted">{t('digital_menu.checkout.subtitle')}</p>
@@ -201,7 +230,15 @@ export default function CheckoutFormPremium({
                 </div>
             ) : null}
 
-            <form id="checkout-form-premium" className="space-y-6" onSubmit={handleSubmit} aria-busy={isCatalogLoading}>
+            <div
+                className="space-y-8 mt-6"
+                onKeyDown={(e) => {
+                    if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+                        e.preventDefault();
+                        if (handleSubmit) handleSubmit(e);
+                    }
+                }}
+            >
                 <div className="space-y-3">
                     <h3 className="text-sm font-bold uppercase tracking-wider text-primary">
                         {t('digital_menu.checkout.contact_section_title')}
@@ -245,7 +282,7 @@ export default function CheckoutFormPremium({
 
                         <div>
                             <label className="mb-1.5 block text-xs font-semibold text-text-muted" htmlFor="payerEmail">
-                                {t('digital_menu.checkout.payer_email')}
+                                {t('digital_menu.checkout.payer_email')} <span className="text-[10px] font-normal opacity-70">({t('digital_menu.checkout.optional_promo_warning') || 'Opcional - Receber promoções'})</span>
                             </label>
                             <input
                                 id="payerEmail"
@@ -271,7 +308,7 @@ export default function CheckoutFormPremium({
                         <button
                             type="button"
                             onClick={() => setFulfillmentType('dine_in')}
-                            className={`h-10 rounded-full border px-4 text-[11px] font-bold uppercase tracking-wide transition-all ${fulfillmentType === 'dine_in'
+                            className={`min-h-[44px] h-auto flex flex-col items-center justify-center rounded-2xl border px-1 py-1.5 text-[10px] leading-[1.15] text-center outline-none focus:outline-none focus:ring-0 transition-all font-bold uppercase tracking-wide ${fulfillmentType === 'dine_in'
                                 ? 'border-primary/40 bg-primary/15 text-primary shadow-[0_0_16px_rgba(139,92,246,0.25)]'
                                 : 'border-white/10 bg-white/[0.02] text-white hover:bg-white/[0.08]'
                                 }`}
@@ -281,7 +318,7 @@ export default function CheckoutFormPremium({
                         <button
                             type="button"
                             onClick={() => setFulfillmentType('pickup')}
-                            className={`h-10 rounded-full border px-4 text-xs font-bold uppercase tracking-wide transition-all ${fulfillmentType === 'pickup'
+                            className={`min-h-[44px] h-auto flex flex-col items-center justify-center rounded-2xl border px-1 py-1.5 text-[10px] leading-[1.15] text-center outline-none focus:outline-none focus:ring-0 transition-all font-bold uppercase tracking-wide ${fulfillmentType === 'pickup'
                                 ? 'border-primary/40 bg-primary/15 text-primary shadow-[0_0_16px_rgba(139,92,246,0.25)]'
                                 : 'border-white/10 bg-white/[0.02] text-white hover:bg-white/[0.08]'
                                 }`}
@@ -291,7 +328,7 @@ export default function CheckoutFormPremium({
                         <button
                             type="button"
                             onClick={() => setFulfillmentType('delivery')}
-                            className={`h-10 rounded-full border px-4 text-xs font-bold uppercase tracking-wide transition-all ${fulfillmentType === 'delivery'
+                            className={`min-h-[44px] h-auto flex flex-col items-center justify-center rounded-2xl border px-1 py-1.5 text-[10px] leading-[1.15] text-center outline-none focus:outline-none focus:ring-0 transition-all font-bold uppercase tracking-wide ${fulfillmentType === 'delivery'
                                 ? 'border-primary/40 bg-primary/15 text-primary shadow-[0_0_16px_rgba(139,92,246,0.25)]'
                                 : 'border-white/10 bg-white/[0.02] text-white hover:bg-white/[0.08]'
                                 }`}
@@ -313,22 +350,18 @@ export default function CheckoutFormPremium({
                                 <label className="mb-1.5 block text-xs font-semibold text-text-muted" htmlFor="neighborhoodId">
                                     {t('digital_menu.checkout.neighborhood')}
                                 </label>
-                                <select
-                                    id="neighborhoodId"
-                                    value={formValues.neighborhoodId}
-                                    onChange={(event) => updateField('neighborhoodId', event.target.value)}
-                                    disabled={isCatalogLoading || catalogLoadFailed}
-                                    aria-invalid={Boolean(fieldErrors.neighborhoodId)}
-                                    className={fieldClassName}
-                                >
-                                    <option value="">{t('digital_menu.checkout.placeholders.neighborhood')}</option>
-                                    {(neighborhoods || []).map((neighborhood) => (
-                                        <option key={neighborhood.id} value={neighborhood.id}>
-                                            {neighborhood.name}
-                                        </option>
-                                    ))}
-                                </select>
+                                <NeighborhoodSearchSelect
+                                    neighborhoods={neighborhoods || []}
+                                    selectedId={formValues.neighborhoodId}
+                                    onChangeSelectedId={(val) => updateField('neighborhoodId', val)}
+                                    customName={formValues.customNeighborhood}
+                                    onChangeCustomName={(val) => updateField('customNeighborhood', val)}
+                                    t={t}
+                                    fieldClassName={fieldClassName}
+                                    error={Boolean(fieldErrors.neighborhoodId) || Boolean(fieldErrors.customNeighborhood)}
+                                />
                                 <FieldError message={fieldErrors.neighborhoodId} />
+                                <FieldError message={fieldErrors.customNeighborhood} />
                             </div>
 
                             <div>
@@ -463,7 +496,7 @@ export default function CheckoutFormPremium({
                     </h3>
 
                     <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                        {PAYMENT_OPTIONS.map((option) => {
+                        {activePaymentOptions.map((option) => {
                             const isActive = formValues.paymentMethod === option.key;
                             const isDisabled = !option.enabled;
 
@@ -501,7 +534,16 @@ export default function CheckoutFormPremium({
                     </div>
                     <FieldError message={fieldErrors.paymentMethod} />
                 </div>
-            </form>
+
+                {formValues.paymentMethod === 'credit_card' && (
+                    <CreditCardForm
+                        amount={totalAmount}
+                        payerEmail={formValues.payerEmail || ''}
+                        onTokenReceived={handleCreditCardToken}
+                        onTokenError={handleCreditCardError}
+                    />
+                )}
+            </div>
         </section >
     );
 }

@@ -23,6 +23,10 @@ class OrderController extends Controller
                 'type' => $order->type,
                 'is_paid' => $order->paid_at !== null,
                 'customer_name' => $order->customer_name ?? 'Cliente',
+                'customer_phone' => $order->customer_phone,
+                'delivery_address' => $order->delivery_address,
+                'delivery_complement' => $order->delivery_complement,
+                'neighborhood' => $order->neighborhood_name ?? ($order->neighborhood?->name),
                 'total_amount' => (float) $order->total_amount,
                 'items_count' => $order->items->sum('quantity'),
                 'payment_method' => $order->payments->first()?->method ?? '-',
@@ -36,6 +40,7 @@ class OrderController extends Controller
                     'unit_price' => (float) $item->unit_price,
                     'total_price' => (float) $item->subtotal,
                     'notes' => $item->notes,
+                    'description' => $item->description,
                 ]),
             ]);
 

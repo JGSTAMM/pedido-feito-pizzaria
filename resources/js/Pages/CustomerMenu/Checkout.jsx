@@ -14,22 +14,6 @@ export default function Checkout() {
 
     const { data: catalogData, isLoading: isCatalogLoading, error: catalogLoadFailed, refetch: retryLoadCatalog } = useDigitalMenuQuery();
 
-    // Merge phone and identity from localStorage automatically
-    const [initialValues, setInitialValues] = useState({});
-
-    useEffect(() => {
-        const stored = localStorage.getItem('customerIdentity');
-        if (stored) {
-            try {
-                const identity = JSON.parse(stored);
-                setInitialValues({
-                    customerName: identity.name || '',
-                    customerPhone: identity.phone || '',
-                });
-            } catch (e) { }
-        }
-    }, []);
-
     const {
         formValues,
         fieldErrors,
@@ -38,7 +22,23 @@ export default function Checkout() {
         isCartEmpty,
         updateField,
         handleSubmit,
-    } = useCheckout({ items, clearCart, t, initialValues });
+        handleCreditCardToken,
+        handleCreditCardError,
+    } = useCheckout({ items, clearCart, t });
+
+    const neighborhoods = catalogData?.neighborhoods || [];
+    let deliveryFee = 0;
+    if (formValues.fulfillmentType === 'delivery') {
+        if (formValues.neighborhoodId === 'custom') {
+            deliveryFee = 15;
+        } else if (formValues.neighborhoodId) {
+            const foundNode = neighborhoods.find(n => String(n.id) === String(formValues.neighborhoodId));
+            if (foundNode) {
+                deliveryFee = Number(foundNode.delivery_fee) || 0;
+            }
+        }
+    }
+    const grandTotal = cartTotal + deliveryFee;
 
     return (
         <main className="min-h-screen bg-[#0D0D12] text-white pb-20">
@@ -53,8 +53,8 @@ export default function Checkout() {
             </header>
 
             <div className="mx-auto max-w-lg px-4 py-8 space-y-6">
-                <div className={`${luccheseMenuTheme.glass} rounded-3xl p-6 relative overflow-hidden animate-in fade-in zoom-in-95 duration-500`}>
-                    <div className="absolute top-0 right-0 p-4 opacity-5">
+                <div className={`${luccheseMenuTheme.glass} rounded-3xl p-6 relative animate-in fade-in zoom-in-95 duration-500`}>
+                    <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
                         <span className="material-symbols-outlined text-8xl">shopping_cart_checkout</span>
                     </div>
 
@@ -73,25 +73,53 @@ export default function Checkout() {
                         setFulfillmentType={(type) => updateField('fulfillmentType', type)}
                         neighborhoods={catalogData?.neighborhoods || []}
                         tables={catalogData?.tables || []}
+                        storeSetting={catalogData?.storeSetting}
                         handleSubmit={(e) => {
                             // Ensure the submit handles the event properly
                             handleSubmit(e);
                         }}
+                        handleCreditCardToken={handleCreditCardToken}
+                        handleCreditCardError={handleCreditCardError}
+                        totalAmount={grandTotal}
                     />
                 </div>
 
                 <div className={`${luccheseMenuTheme.glass} rounded-3xl p-6 mt-8 space-y-4 animate-in slide-in-from-bottom-4 duration-500 delay-100 fill-mode-both`}>
-                    <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-primary italic mb-4">{t('digital_menu.checkout.summary')}</h3>
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-primary italic">{t('digital_menu.checkout.summary')}</h3>
+                        <Link
+                            href="/menu"
+                            className="flex items-center gap-1.5 text-[10px] font-black text-primary hover:text-primary-hover uppercase tracking-widest transition-colors"
+                        >
+                            <span className="material-symbols-outlined text-[14px]">add_circle</span>
+                            {t('digital_menu.checkout.add_more_items') || 'Mais itens'}
+                        </Link>
+                    </div>
 
-                    <div className="flex items-center justify-between text-sm font-bold text-text-muted">
-                        <span>{t('digital_menu.cart.subtotal')} ({cartItemCount} {cartItemCount === 1 ? t('orders.table.itemSingular') : t('orders.table.itemPlural')})</span>
+                    <div className="space-y-4 mb-6 pt-2">
+                        {items.map((item) => (
+                            <div key={item.id} className="flex justify-between items-start gap-3 text-sm">
+                                <span className="text-white font-semibold leading-tight">
+                                    <span className="text-primary mr-1">{item.quantity}x</span> {item.name}
+                                </span>
+                                <span className="text-text-muted whitespace-nowrap font-bold">
+                                    {formatCurrency(item.price * item.quantity)}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="flex items-center justify-between text-sm font-bold text-text-muted border-t border-white/5 pt-4">
+                        <span>{t('digital_menu.cart.subtotal')} ({t('digital_menu.cart.items_count', { count: cartItemCount })})</span>
                         <span>{formatCurrency(cartTotal)}</span>
                     </div>
 
                     <div className="flex items-center justify-between text-sm font-bold text-text-muted">
                         <span>{t('digital_menu.checkout.delivery_fee')}</span>
                         {formValues.fulfillmentType === 'delivery' ? (
-                            <span className="text-emerald-400">{t('digital_menu.checkout.to_calculate')}</span>
+                            <span className={deliveryFee > 0 ? "text-white" : "text-emerald-400"}>
+                                {deliveryFee > 0 ? formatCurrency(deliveryFee) : t('digital_menu.checkout.to_calculate')}
+                            </span>
                         ) : (
                             <span className="text-emerald-400">{t('digital_menu.checkout.free')}</span>
                         )}
@@ -100,8 +128,8 @@ export default function Checkout() {
                     <hr className="border-white/10 my-4" />
 
                     <div className="flex items-center justify-between text-lg font-black text-white">
-                        <span>{t('digital_menu.checkout.partial_total')}</span>
-                        <span>{formatCurrency(cartTotal)}</span>
+                        <span>{t('digital_menu.checkout.summary')}</span>
+                        <span>{formatCurrency(grandTotal)}</span>
                     </div>
                 </div>
 
@@ -115,11 +143,18 @@ export default function Checkout() {
                             ? t('digital_menu.checkout.submitting_order')
                             : t('digital_menu.checkout.submit_order')}
                     </button>
+
+                    <Link
+                        href="/menu"
+                        className="w-full mt-3 block text-center rounded-full bg-white/5 py-4 font-bold border border-white/10 uppercase tracking-widest text-white text-xs hover:bg-white/10 transition-colors"
+                    >
+                        {t('digital_menu.cart.continue_shopping')}
+                    </Link>
                     {!isSubmitting && isCartEmpty && (
                         <p className="text-center text-xs text-red-400 mt-4 font-bold">{t('digital_menu.checkout.empty_cart_message')}</p>
                     )}
                 </div>
             </div>
-        </main>
+        </main >
     );
 }

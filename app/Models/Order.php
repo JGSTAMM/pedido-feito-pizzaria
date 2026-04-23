@@ -14,6 +14,7 @@ class Order extends Model
         'table_id',
         'user_id',
         'type',
+        'status',
         'customer_name',
         'customer_phone',
         'payer_email',
@@ -27,8 +28,13 @@ class Order extends Model
         'short_code',
         'online_payment_status',
         'payment_gateway_id',
+        'payment_method_online',
         'pix_qr_code',
+        'pix_qr_code_base64',
         'rejection_reason',
+        'paid_at',
+        'accepted_at',
+        'rejected_at',
     ];
 
     // Order statuses

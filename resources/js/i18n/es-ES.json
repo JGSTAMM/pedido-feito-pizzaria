@@ -232,6 +232,10 @@
         "meta": {
             "appName": "Menú Digital"
         },
+        "welcome": {
+            "title": "Bienvenido al Menú Digital",
+            "subtitle": "Seleccione su idioma para continuar"
+        },
         "status": {
             "open": "Abierto",
             "closed": "Cerrado",
@@ -307,6 +311,7 @@
             "most_ordered": "Los más pedidos",
             "popular": "Popular",
             "hours_not_available": "Horario no disponible",
+            "closed_today": "Cerrado hoy",
             "pizza_custom_subtitle": "¡Elige los tamaños para armar tu pizza a tu manera!",
             "pizza_custom_btn": "Arma tu Pizza",
             "pizza_custom_desc": "¡Elige el tamaño, los sabores y el borde ideal para matar el hambre del grupo!",
@@ -322,7 +327,13 @@
             "payment_methods": "Formas de Pago",
             "location": "Ubicación",
             "payment_online": "Pago Online",
-            "payment_delivery": "Pago al Recibir"
+            "payment_delivery": "Pago en Entrega"
+        },
+        "pizza_categories": {
+            "tradicional": "Pizzas Tradicionales",
+            "especial": "Pizzas Especiales",
+            "doce": "Pizzas Dulces",
+            "salgada": "Pizzas Saladas"
         },
         "days": {
             "monday": "Lunes",
@@ -353,7 +364,20 @@
             "empty_description": "Intenta ajustar los filtros para ver el catálogo.",
             "view_details": "Ver Detalles",
             "popular_badge": "Popular",
-            "quick_add": "Añadir"
+            "quick_add": "Añadir",
+            "categories": {
+                "bebidas": "Refrescos",
+                "extras": "Extras",
+                "promocoes": "Promociones",
+                "produtos": "Productos",
+                "outros": "Otros",
+                "pizzas_tradicionais": "Pizzas Tradicionales",
+                "pizzas_especiais": "Pizzas Especiales",
+                "pizzas_doces": "Pizzas Dulces",
+                "tradicional": "Tradicional",
+                "especial": "Especial",
+                "doce": "Dulce"
+            }
         },
         "pizza_builder": {
             "title": "Arma tu pizza",
@@ -375,16 +399,169 @@
             "select_size_required": "Selecciona un tamaño",
             "select_size": "Selecciona el tamaño",
             "select_flavors": "Selecciona los sabores",
-            "select_border": "Selecciona el borde"
+            "select_border": "Selecciona el borde",
+            "search_flavors": "Buscar sabores...",
+            "confirm_flavor": "Confirmar Sabor",
+            "with_removed_ingredients": "Con ingrediente(s) eliminado(s)",
+            "customize": "Personalizar",
+            "selected": "Seleccionado",
+            "customize_hint": "Clic para Personalizar",
+            "customizing": "Personalizando..."
+        },
+        "flavor_detail": {
+            "ingredients": "Ingredientes",
+            "add_flavor": "Añadir Sabor",
+            "close": "Cerrar"
+        },
+        "dynamic": {
+            "molho_artesanal": "Salsa artesanal",
+            "queijo_mussarela_ralado": "Queso mozzarella rallado",
+            "alho": "Ajo",
+            "alho_no_azeite_de_oliva_e_oregano": "Ajo en aceite de oliva y orégano",
+            "atum": "Atún",
+            "atum_e_oregano_cebola_opcional": "Atún y orégano (cebolla opcional)",
+            "calabresa": "Calabresa",
+            "mussarela": "Mozzarella",
+            "margherita": "Margherita",
+            "portuguesa": "Portuguesa",
+            "frango_com_catupiry": "Pollo con Crema de Queso",
+            "frango_especial": "Pollo Especial",
+            "cinco_queijos": "Cinco Quesos",
+            "lombo": "Lomo",
+            "lombo_com_abacaxi": "Lomo con Piña",
+            "camarao": "Camarón",
+            "camarao_com_catupiry": "Camarón con Crema de Queso",
+            "camarao_ao_4_queijos": "Camarón a los 4 Quesos",
+            "coca_cola": "Coca-Cola",
+            "coca_cola_zero": "Coca-Cola Zero",
+            "refrigerante_2l": "Refresco 2L",
+            "refrigerante_600ml": "Refresco 600ml",
+            "refrigerante_lata": "Refresco en Lata",
+            "suco_integral": "Zumo Integral",
+            "suco_lata": "Zumo en Lata",
+            "agua_mineral": "Agua Mineral",
+            "agua_com_gas": "Agua con Gas",
+            "agua_com_sem_gas": "Agua con/sin Gas",
+            "cerveja_long_neck": "Cerveza Long Neck",
+            "cerveja_lata": "Cerveza en Lata",
+            "cerveja_latao": "Cerveza Lata Grande",
+            "cerveja_600ml": "Cerveza 600ml",
+            "cerveja_artesanal": "Cerveza Artesana",
+            "suco_natural": "Zumo Natural",
+            "provolone_gorgonzola_catupiry_cheddar_e_oregano": "Provolone, gorgonzola, crema de queso, cheddar y orégano",
+            "frango_ralado_catupiry_e_oregano": "Pollo desmenuzado, crema de queso y orégano",
+            "frango_ralado_bacon_milho_catupiry_e_oregano": "Pollo desmenuzado, bacon, maíz, crema de queso y orégano",
+            "lombo_canadense_e_oregano": "Lomo canadense y orégano",
+            "lombo_canadense_abacaxi_e_oregano": "Lomo canadense, piña y orégano",
+            "broto": "Pequeña",
+            "media": "Mediana",
+            "grande": "Grande",
+            "gigante": "Gigante",
+            "borda_de_requeijao": "Borde de Requesón",
+            "borda_de_cheddar": "Borde de Cheddar",
+            "borda_de_chocolate": "Borde de Chocolate",
+            "borda_recheada_cheddar": "Borde Relleno - Cheddar",
+            "borda_recheada_catupiry": "Borde Relleno - Crema de Queso",
+            "borda_recheada_chocolate_com_avela": "Borde Relleno - Chocolate con Avellana",
+            "provolone": "Provolone",
+            "gorgonzola": "Gorgonzola",
+            "catupiry": "Crema de Queso",
+            "cheddar": "Cheddar",
+            "oregano": "Orégano",
+            "bacon": "Bacon",
+            "milho": "Maíz",
+            "lombo_canadense": "Lomo",
+            "frango_ralado": "Pollo desmenuzado",
+            "abacaxi": "Piña",
+            "especiarias": "Especias",
+            "manjericao": "Albahaca",
+            "queijos": "Quesos",
+            "brocolis": "Brócoli",
+            "brocolis_puxado_na_manteiga": "Brócoli salteado en mantequilla",
+            "file": "Filete",
+            "file_puxado_na_manteiga": "Filete salteado en mantequilla",
+            "file_com_alho": "Filete con Ajo",
+            "file_com_cebola": "Filete con Cebolla",
+            "file_com_gorgonzola": "Filete con Gorgonzola",
+            "coracao": "Corazón",
+            "coracao_com_especiarias": "Corazón con especias",
+            "pepperoni": "Pepperoni",
+            "siciliana": "Siciliana",
+            "siri": "Cangrejo",
+            "siri_com_especiarias": "Cangrejo con especias",
+            "champignon": "Champiñón",
+            "champignon_puxado_na_manteiga": "Champiñón salteado en mantequilla",
+            "chocolate_preto": "Chocolate Negro",
+            "chocolate_branco": "Chocolate Blanco",
+            "chocolate_preto_e_branco": "Chocolate Blanco y Negro",
+            "chocolate_preto_com_morango": "Chocolate Negro con Fresa",
+            "chocolate_branco_com_morango": "Chocolate Blanco con Fresa",
+            "chocolate_preto_com_pacoca": "Chocolate Negro con Cacahuete",
+            "chocolate_branco_com_pacoca": "Chocolate Blanco con Cacahuete",
+            "chocolate_preto_com_confete": "Chocolate Negro con Lacasitos",
+            "chocolate_branco_com_confete": "Chocolate Blanco con Lacasitos",
+            "floresta_negra": "Selva Negra",
+            "banana_com_doce_de_leite": "Plátano con Dulce de Leche",
+            "chocolate_preto_com_abacaxi": "Chocolate Negro con Piña",
+            "chocolate_branco_com_abacaxi": "Chocolate Blanco con Piña",
+            "puxado_na_manteiga": "salteado en mantequilla",
+            "cebola_caramelizada": "cebolla caramelizada",
+            "cebola_caramelizado": "cebolla caramelizada",
+            "cebola_opcional": "cebolla opcional",
+            "pizza_do_dia": "Pizza del Día",
+            "tomate": "Tomate",
+            "mussarela_e_oregano": "Mozzarella y orégano",
+            "presunto_e_mussarela": "Jamón y mozzarella",
+            "azeitona_verde": "Aceituna verde",
+            "azeitona_preta": "Aceituna negra",
+            "presunto": "Jamón",
+            "ovos": "Huevos",
+            "ervilha": "Guisantes",
+            "cebola": "Cebolla",
+            "calabresa_e_cebola_opcional": "Pepperoni (cebolla opcional)",
+            "frango": "Pollo",
+            "catupiry_original": "Queso crema original",
+            "milho_verde": "Maíz dulce",
+            "brocolis_e_alho_no_azeite_de_oliva": "Brócoli y ajo en aceite de oliva",
+            "lombo_e_mussarela": "Lomo y mozzarella",
+            "coracao_de_frango": "Corazón de pollo",
+            "file_mignon": "Filet Mignon",
+            "alho_frito": "Ajo frito",
+            "bacon_e_oregano": "Tocino y orégano",
+            "palmito_milho_ervilha_e_oregano": "Palmito, maíz, guisantes y orégano",
+            "tomate_e_manjericao": "Tomate y albahaca",
+            "milho_e_oregano": "Maíz y orégano",
+            "tomate_presunto_parmesao_e_oregano": "Tomate, jamón, parmesano y orégano",
+            "presunto_ovos_azeitona_verde_pimentoes_coloridos_e_oregano": "Jamón, huevos, aceitunas verdes, pimientos de colores y orégano",
+            "champignon_puxado_na_manteiga_e_oregano": "Champiñones salteados en mantequilla y orégano",
+            "provolone_gorgonzola_catupiry_e_oregano": "Provolone, gorgonzola, queso crema y orégano",
+            "salame_italiano_pimentoes_coloridos_e_oregano": "Salami italiano, pimientos de colores y orégano",
+            "tomate_seco_oregano_e_rucula": "Tomates secos, orégano y rúcula",
+            "calabresa_ralada_ovos_azeitona_verde_pimentoes_coloridos_e_oregano": "Pepperoni rallado, huevos, aceitunas verdes, pimientos de colores y orégano",
+            "strogonoff_de_carne_e_oregano": "Strogonoff de carne y orégano",
+            "strogonoff_de_frango_e_oregano": "Strogonoff de pollo y orégano",
+            "coracao_com_especiarias_e_oregano": "Corazón de pollo sazonado y orégano",
+            "bacon_tomate_champignon_cebola_caramelizada_e_oregano": "Tocino, tomate, champiñones, cebolla caramelizada y orégano",
+            "file_puxado_na_manteiga_e_oregano": "Bistec salteado en mantequilla y orégano",
+            "file_puxado_na_manteiga_gorgonzola_e_oregano": "Bistec salteado en mantequilla, gorgonzola y orégano",
+            "file_puxado_na_manteiga_cebola_caramelizado_e_oregano": "Bistec salteado en mantequilla, cebolla caramelizada y orégano",
+            "file_puxado_na_manteiga_alho_e_oregano": "Bistec salteado en mantequilla, ajo y orégano",
+            "siri_com_especiarias_e_manjericao": "Cangrejo sazonado y albahaca",
+            "camarao_com_especiarias_e_manjericao": "Camarón sazonado y albahaca",
+            "provolone_gorgonzola_catupiry_camarao_com_especiarias_e_manjericao": "Provolone, gorgonzola, queso crema, camarón sazonado y albahaca"
         },
         "cart": {
             "title": "Carrito",
             "empty": "Tu carrito está vacío",
+            "empty_title": "Tu carrito está vacío",
+            "empty_message": "¿Qué tal si agregas algunas delicias para calmar tu hambre?",
+            "view_menu": "Ver Menú",
             "total": "Total",
             "checkout_action": "Ir a pagar",
             "add_item": "Añadir al carrito",
             "open_cart": "Ver carrito",
             "close_cart": "Cerrar",
+            "continue_shopping": "Seguir Comprando",
             "subtotal": "Subtotal",
             "clear_action": "Limpiar carrito",
             "remove_item": "Eliminar",
@@ -394,6 +571,7 @@
         },
         "checkout": {
             "title": "Checkout",
+            "greeting": "Hola, :name",
             "subtitle": "Introduce los datos para completar tu pedido",
             "contact_section_title": "Datos de Contacto",
             "delivery_section_title": "Entrega o Recogida",
@@ -409,6 +587,7 @@
             "submitting_order": "Enviando pedido...",
             "empty_cart_message": "Añade artículos al carrito para finalizar el pedido.",
             "order_info": "Información del Pedido",
+            "add_more_items": "Más artículos",
             "summary": "Resumen de la Cuenta",
             "delivery_fee": "Tasa de Entrega",
             "to_calculate": "A Calcular",
@@ -421,10 +600,20 @@
             "neighborhood_label": "Barrio",
             "search_neighborhood": "Buscar barrio...",
             "type_manually": "¿No lo encontraste? Escribe tu barrio aquí",
+            "neighborhood": "Barrio",
+            "custom_neighborhood_warning": "Se aplicará una tarifa fija de 15$ para confirmación. El restaurante puede contactarle si la tarifa real es mayor. Si es menor, se le dará el cambio.",
+            "custom_neighborhood_submit": "Confirmar Barrio",
+            "type_custom_neighborhood": "Introduce el nombre del barrio...",
             "back_to_list": "Volver a la lista",
             "no_neighborhood_found": "No se encontró el barrio.",
+            "optional_promo_warning": "Opcional - Recibir promos y cupones",
             "fulfillment_section_title": "¿Cómo quieres recibirlo?",
             "back_to_menu": "Voltar al Menú",
+            "fulfillment_options": {
+                "dine_in": "Comer en el Local",
+                "pickup": "Recoger",
+                "delivery": "Entrega"
+            },
             "placeholders": {
                 "customer_name": "Introduce tu nombre",
                 "customer_phone": "Introduce tu teléfono",
@@ -432,7 +621,9 @@
                 "delivery_address": "Introduce la dirección de entrega",
                 "delivery_complement": "Apto, Bloque, Referencia...",
                 "table_code": "Ej: Mesa 01",
-                "table_list": "Selecciona una mesa"
+                "table_list": "Selecciona una mesa",
+                "neighborhood": "Seleccionar Barrio",
+                "custom_neighborhood": "Personalizar barrio..."
             },
             "table_qr": {
                 "scan_cta": "Escanea el código QR de tu mesa para identificarte automáticamente.",
@@ -447,7 +638,8 @@
                 "pix": "Pix",
                 "credit_card": "Tarjeta de Crédito",
                 "debit_card": "Tarjeta de Débito",
-                "cash": "Efectivo al recibir"
+                "cash": "Efectivo al recibir",
+                "cash_unavailable": "No disponible"
             },
             "errors": {
                 "customer_name_required": "O nome do cliente é obrigatório.",
@@ -456,8 +648,23 @@
                 "delivery_address_required": "O endereço de entrega é obrigatório.",
                 "payment_method_required": "A forma de pagamento é obrigatória.",
                 "empty_cart": "Seu carrinho está vazio.",
-                "validation_failed": "Verifique os campos e tente novamente.",
-                "submit_failed": "Não foi possível enviar o pedido. Tente novamente."
+                "validation_failed": "Verifica los campos e inténtalo de nuevo.",
+                "submit_failed": "No se pudo enviar el pedido. Inténtalo de nuevo.",
+                "card_token_required": "Por favor, completa los datos de la tarjeta correctamente.",
+                "card_token_error": "Verifica los datos de la tarjeta e inténtalo de nuevo.",
+                "token_timeout": "El procesamiento de la tarjeta tardó demasiado. Verifica los datos e inténtalo de nuevo."
+            },
+            "card_form": {
+                "card_number": "Número de Tarjeta",
+                "expiration": "Vencimiento",
+                "security_code": "CVV",
+                "cardholder_name": "Titular de la Tarjeta",
+                "identification_type": "Tipo de Documento",
+                "identification_number": "Número de Documento",
+                "installments": "Cuotas",
+                "loading_sdk": "Preparando formulario seguro...",
+                "sdk_error": "Error al cargar el sistema de pagos.",
+                "billing_section_title": "Datos de la Tarjeta"
             }
         },
         "orders": {
@@ -502,6 +709,151 @@
         },
         "actions": {
             "retry": "Intentar de nuevo"
+        },
+        "nav": {
+            "home": "Inicio",
+            "orders": "Pedidos",
+            "profile": "Perfil"
+        }
+    },
+    "orders": {
+        "header": {
+            "title": "Pedidos",
+            "subtitle": "Gestione los pedidos del establecimiento"
+        },
+        "actions": {
+            "newOrder": "Nuevo Pedido"
+        },
+        "search": {
+            "placeholder": "Buscar por código o cliente..."
+        },
+        "stats": {
+            "ordersToday": "Pedidos Hoy",
+            "revenueToday": "Ingresos Hoy",
+            "inProgress": "En Progreso",
+            "completedToday": "Completados Hoy"
+        },
+        "filters": {
+            "all": "Todos",
+            "pending": "Pendientes",
+            "preparing": "Preparando",
+            "ready": "Listos",
+            "paid": "Pagados"
+        },
+        "table": {
+            "customer": "Cliente",
+            "type": "Tipo",
+            "items": "Artículos",
+            "total": "Total",
+            "status": "Estado",
+            "date": "Fecha/Hora",
+            "itemSingular": "artículo",
+            "itemPlural": "artículos",
+            "table": "Mesa"
+        },
+        "empty": {
+            "title": "No se encontraron pedidos",
+            "searchHint": "Intente usar otros términos de búsqueda",
+            "defaultHint": "Los pedidos recientes aparecerán aquí"
+        },
+        "footer": {
+            "showing": "Mostrando {{filtered}} de {{total}} pedidos"
+        },
+        "types": {
+            "pickup": "Retiro",
+            "delivery": "Entrega",
+            "salon": "Salón",
+            "dine_in": "Mesa"
+        },
+        "status": {
+            "pending": "Pendiente",
+            "preparing": "Preparando",
+            "ready": "Listo",
+            "paid": "Pagado",
+            "delivered": "Entregado",
+            "completed": "Completado",
+            "accepted": "Aceptado",
+            "rejected": "Rechazado",
+            "awaiting_payment": "Esperando Pago",
+            "paid_online": "Pagado Online"
+        },
+        "modal": {
+            "orderCode": "Código",
+            "deliveryDetails": "Detalles de Entrega",
+            "itemsTitle": "{{count}} artículos",
+            "notesPrefix": "Notas",
+            "eachPrice": "{{price}} c/u",
+            "totalOrder": "Total del Pedido"
+        }
+    },
+    "floor": {
+        "header": {
+            "title": "Mapa del Salón",
+            "subtitle": "Vista y gestión de mesas"
+        },
+        "actions": {
+            "editLayout": "Editar Diseño",
+            "newTable": "Nueva Mesa"
+        },
+        "search": {
+            "placeholder": "Buscar mesas..."
+        },
+        "stats": {
+            "totalTables": "Total Mesas",
+            "free": "Libres",
+            "occupied": "Ocupadas"
+        },
+        "table": {
+            "seats": "Asientos",
+            "statusFree": "Libre",
+            "statusOccupied": "Ocupada",
+            "currentOrder": "Pedido Actual",
+            "elapsedMinutes": "Tiempo",
+            "clickToOpen": "Clic para Abrir",
+            "table": "Mesa"
+        }
+    },
+    "cashRegister": {
+        "header": {
+            "title": "Caja",
+            "subtitle": "Gestión e historial de la caja",
+            "operator": "Operador",
+            "defaultOperator": "Admin"
+        },
+        "management": {
+            "title": "Gestión Actual",
+            "openBadge": "Caja Abierta"
+        },
+        "cards": {
+            "openingBalance": "Fondo Inicial",
+            "changeFund": "Fondo",
+            "cashSales": "Ventas en Efectivo",
+            "cashInflow": "Entradas",
+            "totalChange": "Cambio Total",
+            "cashOutflow": "Salidas",
+            "drawerTotal": "Total en Gaveta",
+            "expectedPhysical": "Monto Esperado"
+        },
+        "methods": {
+            "dinero": "Efectivo",
+            "debito": "Tarjeta de Débito"
+        },
+        "salesSummary": {
+            "totalSales": "Resumen de Ventas",
+            "title": "Detalles por Método"
+        },
+        "closeForm": {
+            "title": "Cerrar Caja",
+            "countedBalance": "Saldo Contado en Gaveta",
+            "currencyPlaceholder": "$ 0.00",
+            "notes": "Notas (Opcional)",
+            "notesPlaceholder": "Discrepancia o eventos del día",
+            "confirm": "Cerrar Caja"
+        },
+        "history": {
+            "title": "Historial de Caja",
+            "until": "hasta",
+            "empty": "No se encontraron registros"
         }
     }
 }

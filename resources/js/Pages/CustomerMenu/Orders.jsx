@@ -6,6 +6,110 @@ import ProfileModal from './components/identity/ProfileModal';
 import BottomNav from './components/navigation/BottomNav';
 import { luccheseMenuTheme } from './theme/luccheseMenuTheme';
 
+const TYPE_CONFIG = {
+    pickup: { label: 'Retirada no Balcão', icon: '🏪' },
+    delivery: { label: 'Delivery', icon: '🛵' },
+    salon: { label: 'Mesa (Salão)', icon: '🍽️' },
+    dine_in: { label: 'Mesa (Salão)', icon: '🍽️' },
+};
+
+const STATUS_CONFIG = {
+    pending: { label: 'Pendente', color: 'bg-amber-500/20 text-amber-400 border-amber-500/40' },
+    preparing: { label: 'Preparando', color: 'bg-blue-500/20 text-blue-400 border-blue-500/40' },
+    ready: { label: 'Pronto para Retirada', color: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40' },
+    delivered: { label: 'Entregue', color: 'bg-white/10 text-white/60 border-white/20' },
+    paid: { label: 'Pago', color: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40' },
+    paid_online: { label: 'Pago Online', color: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40' },
+    accepted: { label: 'Confirmado', color: 'bg-blue-500/20 text-blue-400 border-blue-500/40' },
+    rejected: { label: 'Recusado', color: 'bg-red-500/20 text-red-400 border-red-500/40' },
+    awaiting_payment: { label: 'Aguardando Pagamento', color: 'bg-amber-500/20 text-amber-400 border-amber-500/40' },
+    completed: { label: 'Concluído', color: 'bg-white/10 text-white/60 border-white/20' },
+    cancelled: { label: 'Cancelado', color: 'bg-red-500/20 text-red-400 border-red-500/40' },
+};
+
+function StatusBadge({ status }) {
+    const cfg = STATUS_CONFIG[status] ?? { label: status, color: 'bg-white/5 text-white/40' };
+    return (
+        <span className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${cfg.color}`}>
+            {cfg.label}
+        </span>
+    );
+}
+
+function PaymentBadge({ order }) {
+    const isCash = !order.payment_method_online;
+    if (isCash) {
+        return (
+            <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-400/80">
+                💵 Pagamento na {order.type === 'delivery' ? 'entrega' : 'retirada'}
+            </span>
+        );
+    }
+    const paid = order.online_payment_status === 'approved';
+    return (
+        <span className={`inline-flex items-center gap-1 text-[10px] font-semibold ${paid ? 'text-emerald-400' : 'text-amber-400'}`}>
+            {paid ? '✅ Pago Online' : '⏳ Pagamento Pendente'}
+        </span>
+    );
+}
+
+function OrderCard({ order, t, formatCurrency }) {
+    const typeInfo = TYPE_CONFIG[order.type] ?? { label: order.type, icon: '📦' };
+
+    return (
+        <Link
+            href={`/menu/order/${order.id}/status`}
+            className={`${luccheseMenuTheme.glass} block rounded-3xl p-5 hover:border-primary/40 hover:scale-[1.01] transition-all`}
+        >
+            {/* Header */}
+            <div className="flex items-start justify-between mb-3 gap-2">
+                <div className="min-w-0">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-text-muted">
+                        Pedido <span className="text-white text-sm">#{order.short_code}</span>
+                    </p>
+                    <p className="text-xs font-semibold text-white/40 mt-0.5">{order.created_at_formatted}</p>
+                </div>
+                <StatusBadge status={order.status} />
+            </div>
+
+            {/* Customer & Type */}
+            <div className="flex items-center gap-3 mb-3 text-sm">
+                <span className="text-base">{typeInfo.icon}</span>
+                <div className="min-w-0">
+                    <p className="font-bold text-white truncate">{order.customer_name}</p>
+                    <p className="text-[11px] text-white/40">{typeInfo.label}</p>
+                </div>
+            </div>
+
+            {/* Items */}
+            <div className="space-y-1 mb-3 border-t border-white/5 pt-3">
+                {order.items.slice(0, 3).map((item, i) => (
+                    <p key={i} className="text-sm font-bold text-white/80 flex items-start gap-2">
+                        <span className="text-[10px] font-black bg-white/10 rounded px-1.5 py-0.5 text-white shrink-0 mt-[2px]">{item.quantity}x</span>
+                        <span className="leading-snug">{item.name}</span>
+                    </p>
+                ))}
+                {order.items.length > 3 && (
+                    <p className="text-xs font-bold text-text-muted italic">+{order.items.length - 3} item(s)</p>
+                )}
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-between border-t border-white/5 pt-3">
+                <PaymentBadge order={order} />
+                <div className="text-right">
+                    <p className="text-[10px] text-white/30 font-semibold">TOTAL</p>
+                    <p className="text-lg font-black text-white">{formatCurrency(order.total_amount)}</p>
+                </div>
+            </div>
+
+            <p className="text-[10px] font-black uppercase tracking-widest text-primary mt-3 text-right">
+                Ver Detalhes →
+            </p>
+        </Link>
+    );
+}
+
 export default function Orders({ orders = [] }) {
     const { t, formatCurrency } = useI18n();
     const [isIdentityModalOpen, setIsIdentityModalOpen] = useState(false);
@@ -15,18 +119,13 @@ export default function Orders({ orders = [] }) {
     useEffect(() => {
         const stored = localStorage.getItem('customerIdentity');
         if (stored) {
-            try {
-                setIdentity(JSON.parse(stored));
-            } catch (e) {
-                console.error(e);
-            }
+            try { setIdentity(JSON.parse(stored)); } catch (e) { console.error(e); }
         }
     }, []);
 
     const handleIdentitySuccess = (customer) => {
         setIdentity(customer);
         setIsIdentityModalOpen(false);
-        // After identifying, the page needs to reload to fetch orders for the new phone.
         window.location.reload();
     };
 
@@ -34,32 +133,8 @@ export default function Orders({ orders = [] }) {
         setIsProfileModalOpen(false);
         if (updatedCustomer !== undefined) {
             setIdentity(updatedCustomer);
-            if (updatedCustomer === null) { // logged out
-                window.location.reload();
-            }
+            if (updatedCustomer === null) window.location.reload();
         }
-    };
-
-    const getStatusColor = (status) => {
-        switch (status) {
-            case 'pending': return 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30';
-            case 'preparing': return 'bg-blue-500/20 text-blue-400 border border-blue-500/30';
-            case 'ready': return 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
-            case 'delivered': return 'bg-white/10 text-white border border-white/20';
-            case 'cancelled': return 'bg-red-500/20 text-red-500 border border-red-500/30';
-            default: return 'bg-white/5 text-text-muted';
-        }
-    };
-
-    const getStatusLabel = (status) => {
-        const labels = {
-            pending: t('digital_menu.orders.status.pending'),
-            preparing: t('digital_menu.orders.status.preparing'),
-            ready: t('digital_menu.orders.status.ready'),
-            delivered: t('digital_menu.orders.status.delivered'),
-            cancelled: t('digital_menu.orders.status.cancelled')
-        };
-        return labels[status] || t('common.unknown');
     };
 
     return (
@@ -70,11 +145,11 @@ export default function Orders({ orders = [] }) {
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
                     </Link>
                     <div>
-                        <h1 className="text-xl font-black italic tracking-tight">{t('digital_menu.orders.title')}</h1>
+                        <h1 className="text-xl font-black italic tracking-tight">Meus Pedidos</h1>
                         {identity ? (
-                            <p className="text-xs font-bold text-primary tracking-widest uppercase">{t('digital_menu.orders.greeting', { name: identity.name })}</p>
+                            <p className="text-xs font-bold text-primary tracking-widest uppercase">Olá, {identity.name}</p>
                         ) : (
-                            <p className="text-xs font-bold text-text-muted tracking-widest uppercase cursor-pointer" onClick={() => setIsIdentityModalOpen(true)}>{t('digital_menu.orders.identify_yourself')}</p>
+                            <p className="text-xs font-bold text-text-muted tracking-widest uppercase cursor-pointer" onClick={() => setIsIdentityModalOpen(true)}>Identifique-se</p>
                         )}
                     </div>
                 </div>
@@ -86,15 +161,13 @@ export default function Orders({ orders = [] }) {
                         <div className="h-24 w-24 rounded-full bg-primary/10 flex items-center justify-center mb-6 ring-4 ring-primary/5">
                             <span className="material-symbols-outlined text-4xl text-primary">account_circle</span>
                         </div>
-                        <h2 className="text-2xl font-black italic tracking-tight mb-2">{t('digital_menu.orders.identify_section_title')}</h2>
-                        <p className="text-sm font-semibold text-text-muted max-w-[250px] mb-8">
-                            {t('digital_menu.orders.identify_section_desc')}
-                        </p>
+                        <h2 className="text-2xl font-black italic tracking-tight mb-2">Identifique-se</h2>
+                        <p className="text-sm font-semibold text-text-muted max-w-[250px] mb-8">Informe seu número para ver o histórico de pedidos</p>
                         <button
                             onClick={() => setIsIdentityModalOpen(true)}
                             className="rounded-full bg-primary px-8 py-4 font-black uppercase tracking-widest text-[#0D0D12] hover:bg-primary-dark hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_0_24px_rgba(90,90,246,0.3)]"
                         >
-                            {t('digital_menu.orders.login_with_whatsapp')}
+                            Entrar com WhatsApp
                         </button>
                     </div>
                 ) : orders.length === 0 ? (
@@ -102,74 +175,24 @@ export default function Orders({ orders = [] }) {
                         <div className="h-24 w-24 rounded-full bg-white/5 flex items-center justify-center mb-6">
                             <span className="material-symbols-outlined text-4xl text-white/20">receipt_long</span>
                         </div>
-                        <h2 className="text-2xl font-black italic tracking-tight mb-2">{t('digital_menu.orders.empty_title')}</h2>
-                        <p className="text-sm font-semibold text-text-muted max-w-[250px]">
-                            {t('digital_menu.orders.empty_desc')}
-                        </p>
-                        <Link
-                            href="/menu"
-                            className="mt-8 rounded-full border border-white/20 px-8 py-4 font-black uppercase tracking-widest text-white hover:bg-white/5 hover:border-white/40 transition-all"
-                        >
-                            {t('digital_menu.orders.view_menu')}
+                        <h2 className="text-2xl font-black italic tracking-tight mb-2">Nenhum pedido ainda</h2>
+                        <p className="text-sm font-semibold text-text-muted max-w-[250px]">Seus pedidos aparecerão aqui assim que você fizer um</p>
+                        <Link href="/menu" className="mt-8 rounded-full border border-white/20 px-8 py-4 font-black uppercase tracking-widest text-white hover:bg-white/5 hover:border-white/40 transition-all">
+                            Ver Cardápio
                         </Link>
                     </div>
                 ) : (
-                    <div className="space-y-6">
-                        {orders.map((order, index) => (
-                            <Link
-                                href={`/menu/order/${order.id}/status`}
-                                key={order.id}
-                                className={`${luccheseMenuTheme.glass} block rounded-3xl p-5 hover:border-primary/30 hover:scale-[1.01] transition-all animate-in slide-in-from-bottom-4 duration-300`}
-                                style={{ animationDelay: `${index * 50}ms`, animationFillMode: 'both' }}
-                            >
-                                <div className="flex items-center justify-between mb-4 border-b border-white/5 pb-4">
-                                    <div>
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-text-muted">
-                                            {t('digital_menu.orders.order_label')} <span className="text-white">#{order.order_code}</span>
-                                        </p>
-                                        <p className="text-xs font-semibold text-white/40 mt-0.5">{order.created_at_formatted}</p>
-                                    </div>
-                                    <div className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest ${getStatusColor(order.status)}`}>
-                                        {getStatusLabel(order.status)}
-                                    </div>
-                                </div>
-
-                                <div className="space-y-2 mb-4">
-                                    {order.items.slice(0, 3).map((item, i) => (
-                                        <p key={i} className="text-sm font-bold text-white/80 flex items-center gap-2">
-                                            <span className="text-[10px] font-black bg-white/10 rounded px-1.5 py-0.5 text-white">{item.quantity}x</span>
-                                            {item.name}
-                                        </p>
-                                    ))}
-                                    {order.items.length > 3 && (
-                                        <p className="text-xs font-bold text-text-muted italic">{t('digital_menu.orders.and_more_items', { count: order.items.length - 3 })}</p>
-                                    )}
-                                </div>
-
-                                <div className="flex items-center justify-between border-t border-white/5 pt-4">
-                                    <p className="text-xs font-black uppercase tracking-widest text-primary">{t('digital_menu.orders.view_details')}</p>
-                                    <p className="text-lg font-black">{formatCurrency(order.total)}</p>
-                                </div>
-                            </Link>
+                    <div className="space-y-5">
+                        {orders.map((order) => (
+                            <OrderCard key={order.id} order={order} t={t} formatCurrency={formatCurrency} />
                         ))}
                     </div>
                 )}
             </div>
 
             <BottomNav onOpenProfile={() => setIsProfileModalOpen(true)} />
-
-            <IdentityModal
-                isOpen={isIdentityModalOpen}
-                onClose={() => setIsIdentityModalOpen(false)}
-                onSuccess={handleIdentitySuccess}
-            />
-
-            <ProfileModal
-                isOpen={isProfileModalOpen}
-                onClose={() => handleProfileClose(undefined)}
-                onSuccess={handleProfileClose}
-                customer={identity}
-            />
+            <IdentityModal isOpen={isIdentityModalOpen} onClose={() => setIsIdentityModalOpen(false)} onSuccess={handleIdentitySuccess} />
+            <ProfileModal isOpen={isProfileModalOpen} onClose={() => handleProfileClose(undefined)} onSuccess={handleProfileClose} customer={identity} />
         </main>
     );
 }

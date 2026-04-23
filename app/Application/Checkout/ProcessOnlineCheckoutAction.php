@@ -44,10 +44,12 @@ class ProcessOnlineCheckoutAction
             $deliveryFee = $this->resolveDeliveryFee($validated);
             $orderType   = ($validated['type'] ?? null) === 'dine_in' ? 'salon' : $validated['type'];
 
+            $isCash = ($validated['payment_method'] ?? '') === 'cash';
+
             // Use forceFill for fields intentionally excluded from $fillable (status, total_amount)
             $order = new Order();
             $order->forceFill([
-                'status'               => Order::STATUS_AWAITING_PAYMENT,
+                'status'               => $isCash ? Order::STATUS_PENDING : Order::STATUS_AWAITING_PAYMENT,
                 'type'                 => $orderType,
                 'table_id'             => $tableId,
                 'customer_name'        => $validated['customer_name'],
@@ -151,6 +153,7 @@ class ProcessOnlineCheckoutAction
             'subtotal' => $subtotal,
             'type' => 'pizza',
             'notes' => $item['notes'] ?? null,
+            'description' => $item['description'] ?? null,
         ]);
 
         $count = count($item['flavor_ids']);
@@ -186,6 +189,7 @@ class ProcessOnlineCheckoutAction
             'subtotal' => $subtotal,
             'type' => 'product',
             'notes' => $item['notes'] ?? null,
+            'description' => $item['description'] ?? null,
         ]);
 
         return $subtotal;
@@ -193,15 +197,33 @@ class ProcessOnlineCheckoutAction
 
     private function startPayment(Order $order, array $validated): array
     {
+        if ($validated['payment_method'] === 'cash') {
+            return [
+                'success' => true,
+                'data' => [
+                    'id' => null,
+                    'status' => 'pending_cash',
+                ],
+            ];
+        }
+
         if ($validated['payment_method'] === 'pix') {
-            return $this->paymentGatewayService->createPixPayment($order, $validated['payer_email']);
+            return $this->paymentGatewayService->createPixPayment($order, $validated['payer_email'] ?? 'pagamento@pedidofeito.com');
+        }
+
+        // Credit card — card_token is mandatory
+        if (empty($validated['card_token'])) {
+            return [
+                'success' => false,
+                'error' => 'Token do cartão é obrigatório para pagamento com cartão de crédito.',
+            ];
         }
 
         return $this->paymentGatewayService->createCardPayment(
             $order,
             $validated['card_token'],
-            $validated['payer_email'],
-            $validated['installments'] ?? 1,
+            $validated['payer_email'] ?? 'pagamento@pedidofeito.com',
+            1, // Always 1 installment for food orders
         );
     }
 

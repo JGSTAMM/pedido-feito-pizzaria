@@ -31,7 +31,7 @@ export default function LanguageSwitcher({ scrolled }) {
             {isOpen && (
                 <>
                     <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
-                    <div className={`${luccheseMenuTheme.glass} absolute right-0 mt-3 w-32 overflow-hidden rounded-2xl border border-white/10 p-1.5 shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-200`}>
+                    <div className="absolute right-0 mt-3 w-32 overflow-hidden rounded-2xl border border-white/10 bg-[#1a1a24] p-1.5 shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-200">
                         {languages.map((lang) => (
                             <Link
                                 key={lang.code}

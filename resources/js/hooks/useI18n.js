@@ -48,7 +48,7 @@ function getByPath(object, path) {
     }, object);
 }
 
-export default function useI18n() {
+export function useI18n() {
     const { props } = usePage();
 
     const locale = normalizeLocale(props.locale || 'pt-BR');
@@ -65,7 +65,7 @@ export default function useI18n() {
         }
 
         if (typeof value !== 'string') {
-            return key;
+            return undefined;
         }
 
         return Object.entries(replacements).reduce((result, [replacementKey, replacementValue]) => {
@@ -74,8 +74,8 @@ export default function useI18n() {
     };
 
     const formatCurrency = (amount) => {
-        const currency = t('common.currency');
-        const localeForIntl = locale === 'pt-BR' ? 'pt-BR' : 'en-US';
+        const currency = 'BRL';
+        const localeForIntl = 'pt-BR';
 
         return new Intl.NumberFormat(localeForIntl, {
             style: 'currency',
@@ -85,9 +85,36 @@ export default function useI18n() {
         }).format(Number(amount || 0));
     };
 
+    const translateDynamic = (value) => {
+        if (!value) return '';
+        const normalized = value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
+        const key = `digital_menu.dynamic.${normalized}`;
+        const translated = t(key);
+
+        if (translated && translated !== key) return translated;
+
+        // Fallback: Translate individual ingredients if it's a list (contains commas or " e " or " and ")
+        if (value.includes(',') || /\s+e\s+/i.test(value) || /\s+and\s+/i.test(value)) {
+            const parts = value.split(/,\s*|\s+e\s+|\s+and\s+/i).map(p => p.trim()).filter(Boolean);
+            if (parts.length > 1) {
+                return parts.map(part => {
+                    const pNorm = part.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
+                    const pKey = `digital_menu.dynamic.${pNorm}`;
+                    const pTrans = t(pKey);
+                    return (pTrans && pTrans !== pKey) ? pTrans : part;
+                }).join(', ');
+            }
+        }
+
+        return value;
+    };
+
     return {
         locale,
         t,
         formatCurrency,
+        translateDynamic,
     };
 }
+
+export default useI18n;

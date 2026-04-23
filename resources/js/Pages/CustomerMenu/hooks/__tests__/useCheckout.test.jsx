@@ -62,6 +62,10 @@ describe('useCheckout', () => {
         const { result } = renderCheckout();
         const fakeEvent = { preventDefault: vi.fn() };
 
+        act(() => {
+            result.current.updateField('fulfillmentType', 'delivery');
+        });
+
         await act(async () => {
             await result.current.handleSubmit(fakeEvent);
         });
@@ -81,9 +85,9 @@ describe('useCheckout', () => {
         act(() => {
             result.current.updateField('customerName', 'João Silva');
             result.current.updateField('customerPhone', '11999999999');
-            result.current.updateField('deliveryAddress', 'Rua A, 123');
             result.current.updateField('payerEmail', 'joao@email.com');
             result.current.updateField('paymentMethod', 'pix');
+            result.current.updateField('fulfillmentType', 'pickup');
         });
 
         await act(async () => {
@@ -95,6 +99,7 @@ describe('useCheckout', () => {
                 customer_name: 'João Silva',
                 customer_phone: '11999999999',
                 payment_method: 'pix',
+                type: 'pickup',
             })
         );
         expect(clearCartMock).toHaveBeenCalled();
@@ -110,8 +115,8 @@ describe('useCheckout', () => {
         act(() => {
             result.current.updateField('customerName', 'João Silva');
             result.current.updateField('customerPhone', '11999999999');
-            result.current.updateField('deliveryAddress', 'Rua A, 123');
             result.current.updateField('payerEmail', 'joao@email.com');
+            result.current.updateField('paymentMethod', 'pix');
         });
 
         await act(async () => {

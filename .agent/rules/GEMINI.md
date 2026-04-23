@@ -103,6 +103,28 @@ When user's prompt is NOT in English:
 2. **Respond in user's language** - match their communication
 3. **Code comments/variables** remain in English
 
+### 🌍 Internationalization (i18n) — MANDATORY
+
+> 🔴 **REGRA ABSOLUTA:** TODO texto visível ao usuário DEVE ser traduzido. ZERO strings hardcoded na UI.
+
+**ALL user-facing text MUST use the `t()` function from the `useI18n` hook. No exceptions.**
+
+- **No hardcoded strings**: Every label, button, tooltip, placeholder, error message, category name, filter name, and status text MUST use `t('key')`.
+- **New features**: When creating any new component or feature, add ALL translation keys to the 3 JSON files (`pt-BR.json`, `en-US.json`, `es-ES.json`) BEFORE writing JSX.
+- **Database-sourced text**: Category names, product types, and any dynamic text from the database that appears in the UI MUST have a translation mapping (use `digital_menu.catalog.categories.*` pattern).
+- **Verification**: After ANY UI change, switch language to EN and ES to confirm all text is translated. If any raw key (e.g., `digital_menu.some.key`) or Portuguese text appears in EN/ES mode, the task is NOT complete.
+- **Translation files**: Located at `resources/js/i18n/{locale}.json`. All 3 files must stay in sync — same keys, different values.
+
+```
+❌ WRONG: <span>Adicionar ao carrinho</span>
+✅ CORRECT: <span>{t('digital_menu.cart.add_item')}</span>
+
+❌ WRONG: category.name (raw from DB)
+✅ CORRECT: translateCategoryName(category.name, t) → uses i18n mapping
+```
+
+---
+
 ### 🧹 Clean Code (Global Mandatory)
 
 **ALL code MUST follow `@[skills/clean-code]` rules. No exceptions.**

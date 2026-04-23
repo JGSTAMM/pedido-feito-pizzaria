@@ -10,7 +10,7 @@ export default function ProfileModal({ isOpen, onClose, onSuccess, customer }) {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState(false);
-    const { t } = useI18n();
+    const { t, formatCurrency } = useI18n();
 
     const { data } = useDigitalMenuQuery();
     const neighborhoods = data?.neighborhoods ?? [];
@@ -357,7 +357,7 @@ export default function ProfileModal({ isOpen, onClose, onSuccess, customer }) {
                                                             setIsNeighDropdownOpen(false);
                                                         }}
                                                     >
-                                                        {b.name} <span className="text-text-muted text-xs font-normal ml-2">{b.delivery_fee ? `(+ ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(b.delivery_fee)})` : `(${t('digital_menu.profile.free_delivery')})`}</span>
+                                                        {b.name} <span className="text-text-muted text-xs font-normal ml-2">{b.delivery_fee ? `(+ ${formatCurrency(b.delivery_fee)})` : `(${t('digital_menu.profile.free_delivery')})`}</span>
                                                     </div>
                                                 ))}
                                                 {neighborhoods.length === 0 && (

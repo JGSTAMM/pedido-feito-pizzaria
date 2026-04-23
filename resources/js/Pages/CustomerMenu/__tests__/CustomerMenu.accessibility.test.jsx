@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import CustomerMenu from '../CustomerMenu';
+import CustomerMenu from '../Index';
 
 const mockUsePage = vi.hoisted(() => vi.fn());
 
@@ -12,6 +12,7 @@ vi.mock('@/hooks/useI18n', () => ({
     default: () => ({
         t: (key) => key,
         formatCurrency: (value) => `R$ ${Number(value || 0).toFixed(2)}`,
+        translateDynamic: (value) => value,
     }),
 }));
 
@@ -44,6 +45,7 @@ vi.mock('../hooks/useCart', () => ({
 describe('CustomerMenu keyboard and focus behavior', () => {
     beforeEach(() => {
         mockUsePage.mockReturnValue({
+            url: '/menu',
             props: {
                 catalogEndpoint: '/api/menu/catalog',
                 storeSetting: {
@@ -66,7 +68,7 @@ describe('CustomerMenu keyboard and focus behavior', () => {
     it('opens pizza dialog, focuses close button and restores focus on escape', async () => {
         render(<CustomerMenu />);
 
-        const openButtons = screen.getAllByRole('button', { name: /digital_menu\.home\.build_pizza/i });
+        const openButtons = screen.getAllByRole('button', { name: /digital_menu\.home\.pizza_custom_btn/i });
         const openPizzaBuilderButton = openButtons[0];
         openPizzaBuilderButton.focus();
 
@@ -75,8 +77,8 @@ describe('CustomerMenu keyboard and focus behavior', () => {
         const dialog = screen.getByRole('dialog');
         expect(dialog).toBeInTheDocument();
 
-        const closeButtons = screen.getAllByRole('button', { name: 'digital_menu.cart.close_cart' });
-        const closeDialogButton = closeButtons.find((button) => button.textContent === 'digital_menu.cart.close_cart');
+        // The close button name might include the icon text 'close' if it's inside
+        const closeDialogButton = screen.getByRole('button', { name: /digital_menu\.cart\.close_cart/i });
 
         await waitFor(() => {
             expect(closeDialogButton).toHaveFocus();
@@ -96,11 +98,10 @@ describe('CustomerMenu keyboard and focus behavior', () => {
     it('keeps keyboard focus inside dialog when tabbing', async () => {
         render(<CustomerMenu />);
 
-        fireEvent.click(screen.getAllByRole('button', { name: /digital_menu\.home\.build_pizza/i })[0]);
+        fireEvent.click(screen.getAllByRole('button', { name: /digital_menu\.home\.pizza_custom_btn/i })[0]);
 
         const dialog = screen.getByRole('dialog');
-        const closeButtons = screen.getAllByRole('button', { name: 'digital_menu.cart.close_cart' });
-        const closeDialogButton = closeButtons.find((button) => button.textContent === 'digital_menu.cart.close_cart');
+        const closeDialogButton = screen.getByRole('button', { name: /digital_menu\.cart\.close_cart/i });
 
         await waitFor(() => {
             expect(closeDialogButton).toHaveFocus();

@@ -1,3 +1,4 @@
+import React, { useEffect } from 'react';
 import { Link } from '@inertiajs/react';
 
 export default function CartDrawer({
@@ -12,6 +13,17 @@ export default function CartDrawer({
     t,
     formatCurrency,
 }) {
+    // Handle Escape key
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (e.key === 'Escape' && isOpen) {
+                onClose();
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [isOpen, onClose]);
+
     if (!isOpen) {
         return null;
     }
@@ -25,11 +37,16 @@ export default function CartDrawer({
                 aria-label={t('digital_menu.cart.close_cart')}
             />
 
-            <aside className="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-gray-900 shadow-2xl ring-1 ring-white/10 flex flex-col">
+            <aside
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="cart-drawer-title"
+                className="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-gray-900 shadow-2xl ring-1 ring-white/10 flex flex-col"
+            >
                 <div className="flex h-full flex-col">
                     <header className="p-6 border-b border-gray-800 flex items-center justify-between gap-4">
                         <div>
-                            <h2 className="text-xl font-semibold text-white">{t('digital_menu.cart.title')}</h2>
+                            <h2 id="cart-drawer-title" className="text-xl font-semibold text-white">{t('digital_menu.cart.title')}</h2>
                             <p className="text-sm text-gray-400 mt-1">
                                 {t('digital_menu.cart.items_count', { count: cartItemCount })}
                             </p>

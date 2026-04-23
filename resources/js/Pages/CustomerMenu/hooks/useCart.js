@@ -42,7 +42,12 @@ export function useCart() {
 
         setItems((currentItems) => {
             const productId = product.id;
-            const existingItem = currentItems.find((item) => item.id === productId);
+            const isPizza = product.type === 'pizza';
+
+            // Pizzas with the same customPizzaId can stack; regular products merge by id
+            const existingItem = !isPizza
+                ? currentItems.find((item) => item.id === productId)
+                : null;
 
             if (existingItem) {
                 return currentItems.map((item) =>
@@ -55,10 +60,11 @@ export function useCart() {
             return [
                 ...currentItems,
                 {
+                    ...product,
                     id: productId,
                     name: product.name,
                     price: toNumber(product.price),
-                    imageUrl: product.image_url ?? null,
+                    imageUrl: product.image_url ?? product.imageUrl ?? null,
                     quantity: parsedQuantity,
                 },
             ];

@@ -3,20 +3,17 @@ import { getOrderPaymentStatus } from '../services/customerMenuApi';
 
 const POLLING_INTERVAL_MS = 5000;
 
-function isTerminalStatus(status, paymentStatus, isPaid) {
+function isTerminalStatus(status, paymentStatus) {
     const normalizedStatus = String(status || '').toLowerCase();
     const normalizedPaymentStatus = String(paymentStatus || '').toLowerCase();
 
-    if (isPaid) {
-        return true;
-    }
-
+    // Polling only stops when the order reaches a final state
+    // delivered: Order received by customer
+    // completed: Final administrative closure
+    // rejected: Rejected by establishment
+    // cancelled: Cancelled by user/system
     return (
-        normalizedStatus === 'paid' ||
-        normalizedStatus === 'paid_online' ||
-        normalizedStatus === 'accepted' ||
-        normalizedStatus === 'rejected' ||
-        normalizedPaymentStatus === 'approved' ||
+        ['delivered', 'completed', 'rejected', 'cancelled'].includes(normalizedStatus) ||
         normalizedPaymentStatus === 'rejected'
     );
 }
@@ -57,13 +54,17 @@ export function usePaymentStatusPolling(orderId) {
                 setStatus(nextStatus);
                 setPaymentData({
                     orderId: response?.order_id,
+                    orderCode: response?.order_code ?? null,
                     paymentStatus: nextPaymentStatus,
                     isPaid: nextIsPaid,
                     pixQrCode: response?.pix_qr_code ?? null,
                     pixQrCodeBase64: response?.pix_qr_code_base64 ?? null,
+                    paymentMethodOnline: response?.payment_method_online ?? null,
+                    type: response?.type ?? null,
+                    customerName: response?.customer_name ?? null,
                 });
 
-                if (!isTerminalStatus(nextStatus, nextPaymentStatus, nextIsPaid)) {
+                if (!isTerminalStatus(nextStatus, nextPaymentStatus)) {
                     timeoutRef.current = window.setTimeout(poll, POLLING_INTERVAL_MS);
                 }
             } catch (requestError) {

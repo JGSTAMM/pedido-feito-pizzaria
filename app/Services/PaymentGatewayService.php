@@ -91,12 +91,28 @@ class PaymentGatewayService
                 'payment_method_id' => 'pix',
                 'payer' => [
                     'email' => $payerEmail,
+                    'first_name' => 'Cliente',
+                    'last_name' => 'Pizza',
+                    'identification' => [
+                        'type' => 'CPF',
+                        'number' => '19119119100', // CPF de teste
+                    ],
                 ],
                 'external_reference' => (string) $order->id,
-                'notification_url' => config('services.mercadopago.webhook_url'),
             ];
 
-            $payment = $client->create($requestBody);
+            $webhookUrl = config('services.mercadopago.webhook_url');
+            if ($webhookUrl && str_starts_with($webhookUrl, 'https://')) {
+                $requestBody['notification_url'] = $webhookUrl;
+            }
+
+            $options = new RequestOptions();
+            $options->setCustomHeaders([
+                'X-Idempotency-Key: ' . (string) $order->id . '_' . time(),
+            ]);
+
+            Log::info("Creating PIX payment for order #{$order->id}", $requestBody);
+            $payment = $client->create($requestBody, $options);
 
             // Extract PIX data
             $pixData = $payment->point_of_interaction?->transaction_data ?? null;
@@ -127,22 +143,41 @@ class PaymentGatewayService
                 ],
             ];
         } catch (MPApiException $e) {
+            $response = $e->getApiResponse();
+            $statusCode = $response->getStatusCode();
+            $content = $response->getContent();
+
             Log::error("Mercado Pago API error creating PIX for order #{$order->id}", [
-                'status' => $e->getApiResponse()->getStatusCode(),
-                'content' => $e->getApiResponse()->getContent(),
+                'status' => $statusCode,
+                'content' => $content,
+            ]);
+
+            // Detect circuit breaker / internal errors from sandbox
+            $errorMessage = $content['message'] ?? '';
+            $isCircuitBreaker = str_contains(json_encode($content), 'circuit breaker');
+            $isInternalError = ($statusCode === 500) || str_contains($errorMessage, 'internal');
+
+            if ($isCircuitBreaker || $isInternalError) {
+                return [
+                    'success' => false,
+                    'error' => 'O serviço PIX do Mercado Pago está temporariamente indisponível (sandbox). Tente novamente em alguns minutos ou use outro método de pagamento.',
+                    'details' => $content,
+                ];
+            }
+
+            return [
+                'success' => false,
+                'error' => 'Erro ao gerar pagamento PIX: ' . ($errorMessage ?: 'Erro desconhecido (status ' . $statusCode . ')'),
+                'details' => $content,
+            ];
+        } catch (\Exception $e) {
+            Log::error("Error creating PIX payment for order #{$order->id}: " . $e->getMessage(), [
+                'exception' => $e,
             ]);
 
             return [
                 'success' => false,
-                'error' => 'Erro ao gerar pagamento PIX. Tente novamente.',
-                'details' => $e->getApiResponse()->getContent(),
-            ];
-        } catch (\Exception $e) {
-            Log::error("Error creating PIX payment for order #{$order->id}: " . $e->getMessage());
-
-            return [
-                'success' => false,
-                'error' => 'Erro interno ao processar pagamento.',
+                'error' => 'Erro interno ao processar pagamento: ' . $e->getMessage(),
             ];
         }
     }
@@ -174,8 +209,12 @@ class PaymentGatewayService
                     'email' => $payerEmail,
                 ],
                 'external_reference' => (string) $order->id,
-                'notification_url' => config('services.mercadopago.webhook_url'),
             ];
+
+            $webhookUrl = config('services.mercadopago.webhook_url');
+            if ($webhookUrl && str_starts_with($webhookUrl, 'https://')) {
+                $requestBody['notification_url'] = $webhookUrl;
+            }
 
             $payment = $client->create($requestBody);
 
@@ -215,11 +254,13 @@ class PaymentGatewayService
                 'details' => $e->getApiResponse()->getContent(),
             ];
         } catch (\Exception $e) {
-            Log::error("Error creating card payment for order #{$order->id}: " . $e->getMessage());
+            Log::error("Error creating card payment for order #{$order->id}: " . $e->getMessage(), [
+                'exception' => $e,
+            ]);
 
             return [
                 'success' => false,
-                'error' => 'Erro interno ao processar pagamento.',
+                'error' => 'Erro interno ao processar pagamento: ' . $e->getMessage(),
             ];
         }
     }
@@ -293,7 +334,7 @@ class PaymentGatewayService
     protected function markOrderAsPaidOnline(Order $order, $gatewayPaymentId): void
     {
         $order->update([
-            'status' => Order::STATUS_PAID_ONLINE,
+            'status' => Order::STATUS_PENDING,
             'online_payment_status' => Order::ONLINE_PAYMENT_APPROVED,
             'paid_at' => now(),
         ]);
@@ -320,7 +361,7 @@ class PaymentGatewayService
 
         try {
             $client = new \MercadoPago\Client\Payment\PaymentRefundClient();
-            $refund = $client->refund($order->payment_gateway_id);
+            $refund = $client->refundTotal((int) $order->payment_gateway_id);
 
             $order->update(['online_payment_status' => Order::ONLINE_PAYMENT_REFUNDED]);
 

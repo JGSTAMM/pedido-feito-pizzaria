@@ -22,16 +22,23 @@ export default function BottomNav({ onOpenProfile }) {
                         }`}
                 >
                     <span className="material-symbols-outlined text-[22px] font-light leading-none block">home</span>
-                    <span className="text-[10px] font-bold">{t('nav.home') || 'Início'}</span>
+                    <span className="text-[10px] font-bold">{t('digital_menu.nav.home') || 'Início'}</span>
                 </Link>
 
                 <Link
                     href="/menu/orders"
-                    className={`flex flex-col items-center justify-center w-full h-full gap-1 transition-colors ${isActive('/menu/orders') ? 'text-primary' : 'text-text-muted hover:text-white'
+                    className={`relative flex flex-col items-center justify-center w-full h-full gap-1 transition-colors ${isActive('/menu/orders') ? 'text-primary' : 'text-text-muted hover:text-white'
                         }`}
                 >
-                    <span className="material-symbols-outlined text-[22px] font-light leading-none block">receipt_long</span>
-                    <span className="text-[10px] font-bold">{t('nav.orders') || 'Pedidos'}</span>
+                    <div className="relative flex flex-col items-center justify-center">
+                        <span className="material-symbols-outlined text-[22px] font-light leading-none block">receipt_long</span>
+                        {usePage().props.activeOrdersCount > 0 && (
+                            <span className="absolute -top-1 -right-2.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] font-black text-black shadow-lg ring-2 ring-[#0D0D12]">
+                                {usePage().props.activeOrdersCount}
+                            </span>
+                        )}
+                    </div>
+                    <span className="text-[10px] font-bold">{t('digital_menu.nav.orders') || 'Pedidos'}</span>
                 </Link>
 
                 <Link
@@ -56,7 +63,7 @@ export default function BottomNav({ onOpenProfile }) {
                         }`}
                 >
                     <span className="material-symbols-outlined text-[22px] font-light leading-none block">person</span>
-                    <span className="text-[10px] font-bold">{t('nav.profile') || 'Perfil'}</span>
+                    <span className="text-[10px] font-bold">{t('digital_menu.nav.profile') || 'Perfil'}</span>
                 </Link>
             </nav>
         </div>
