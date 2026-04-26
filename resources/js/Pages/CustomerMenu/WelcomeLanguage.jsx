@@ -21,7 +21,7 @@ export default function WelcomeLanguage({ availableLocales = [], menuUrl = '/men
             <Head title={t('digital_menu.welcome.title')} />
 
             <main
-                className="min-h-screen bg-[#0D0D12] text-white relative flex flex-col justify-end pb-16 px-6"
+                className="min-h-screen bg-[#0D0D12] text-white relative flex flex-col justify-end md:justify-center pb-16 md:pb-0 px-6"
                 style={{
                     backgroundImage: `linear-gradient(to top, rgba(13, 13, 18, 1) 0%, rgba(13, 13, 18, 0.6) 50%, rgba(13, 13, 18, 0.1) 100%), url(${bgImage})`,
                     backgroundSize: 'cover',
@@ -34,13 +34,13 @@ export default function WelcomeLanguage({ availableLocales = [], menuUrl = '/men
                 <div className="relative z-10 animate-in fade-in zoom-in-95 duration-1000 w-full max-w-sm mx-auto">
                     <div className="flex flex-col items-center text-center mb-12">
                         {logoImage ? (
-                            <img src={logoImage} alt={storeName} className="h-32 w-32 rounded-full border-[3px] border-white/20 shadow-2xl mb-6 object-cover" />
+                            <img src={logoImage} alt={storeName} className="h-32 w-32 rounded-full border-[3px] border-white/20 shadow-2xl mb-6 object-cover transition-transform hover:scale-105 duration-500" />
                         ) : (
                             <div className="h-32 w-32 rounded-full bg-primary/20 border-[3px] border-primary/30 flex items-center justify-center mb-6 backdrop-blur-md">
                                 <span className="material-symbols-outlined text-6xl text-primary">restaurant</span>
                             </div>
                         )}
-                        <h1 className="text-3xl font-black italic tracking-tight drop-shadow-xl text-white">{storeName}</h1>
+                        <h1 className="text-4xl md:text-5xl font-black italic tracking-tight drop-shadow-xl text-white text-balance leading-none">{storeName}</h1>
                         <p className="mt-3 text-sm font-bold text-white/80 drop-shadow-md">
                             {t('digital_menu.welcome.subtitle')}
                         </p>
