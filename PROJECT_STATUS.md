@@ -31,7 +31,7 @@
 ## ⚠️ Notas Técnicas
 - **Iniciar servidor:** `php artisan serve --port=8000`
 - **Iniciar app Flutter:** `flutter run -d chrome --web-port=3000` (diretório `waiter_app/`)
-- **Banco:** SQLite em `database/database.sqlite`
+- **Banco de Dados:** MySQL 8 (primário/produção, ex: `lucchese_pizza`). O SQLite é usado exclusivamente para os pipelines de testes automatizados.
 - **Imagens:** Armazenadas em `storage/app/public/` (disk `public` configurado globalmente).
 
 ---
