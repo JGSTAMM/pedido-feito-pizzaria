@@ -10,8 +10,15 @@ class Customer extends Model
 {
     use HasFactory, HasUuids;
 
-    protected $guarded = [];
-
+    protected $fillable = [
+        'name',
+        'phone',
+        'document',
+        'neighborhood_id',
+        'address',
+        'number',
+        'complement',
+    ];
     public function orders()
     {
         return $this->hasMany(Order::class);

@@ -10,8 +10,17 @@ class OrderItem extends Model
 {
     use HasFactory, HasUuids;
 
-    protected $guarded = [];
-
+    protected $fillable = [
+        'order_id',
+        'pizza_size_id',
+        'product_id',
+        'quantity',
+        'unit_price',
+        'subtotal',
+        'type',
+        'notes',
+        'description',
+    ];
     protected $casts = [
         'subtotal' => 'decimal:2',
     ];
