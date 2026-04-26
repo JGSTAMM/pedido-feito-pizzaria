@@ -26,8 +26,11 @@ class PrintService
 
     protected function getSetting($key, $default = null)
     {
-        // Simple caching could be added here
-        return PrinterSetting::where('key', $key)->value('value') ?? $default;
+        $settings = \Illuminate\Support\Facades\Cache::remember('printer_settings', 86400, function () {
+            return PrinterSetting::pluck('value', 'key')->toArray();
+        });
+
+        return $settings[$key] ?? $default;
     }
 
     /**
