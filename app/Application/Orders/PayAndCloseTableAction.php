@@ -14,6 +14,7 @@ use Throwable;
 class PayAndCloseTableAction
 {
     public function execute(Table $table, array $payments, User $user): void
+    {
         $activeRegister = CashRegister::where('user_id', $user->id)
             ->where('status', 'open')
             ->latest()
