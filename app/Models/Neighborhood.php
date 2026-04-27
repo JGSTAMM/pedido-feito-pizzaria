@@ -12,7 +12,13 @@ class Neighborhood extends Model
 
     protected $fillable = ['name', 'city', 'delivery_fee', 'observation'];
 
-    protected $casts = [
-        'delivery_fee' => 'decimal:2',
-    ];
+    protected $casts = [];
+
+    protected function deliveryFee(): \Illuminate\Database\Eloquent\Casts\Attribute
+    {
+        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+            get: fn ($value) => $value / 100,
+            set: fn ($value) => (int) round($value * 100),
+        );
+    }
 }

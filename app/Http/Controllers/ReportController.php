@@ -12,9 +12,9 @@ class ReportController extends Controller
     {
         $last30Days = now()->subDays(30);
 
-        $totalRevenue = (float) Order::where('status', 'paid')
+        $totalRevenue = ((float) Order::where('status', 'paid')
             ->where('created_at', '>=', $last30Days)
-            ->sum('total_amount');
+            ->sum('total_amount')) / 100;
 
         $totalOrders = Order::where('status', 'paid')
             ->where('created_at', '>=', $last30Days)

@@ -26,13 +26,48 @@ class CashRegister extends Model
     protected $casts = [
         'opened_at' => 'datetime',
         'closed_at' => 'datetime',
-        'opening_balance' => 'decimal:2',
-        'closing_balance' => 'decimal:2',
-        'calculated_balance' => 'decimal:2',
-        'difference' => 'decimal:2',
-        'total_sales' => 'decimal:2',
         'payment_summary' => 'array',
     ];
+
+    protected function openingBalance(): \Illuminate\Database\Eloquent\Casts\Attribute
+    {
+        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+            get: fn ($value) => $value / 100,
+            set: fn ($value) => (int) round($value * 100),
+        );
+    }
+
+    protected function closingBalance(): \Illuminate\Database\Eloquent\Casts\Attribute
+    {
+        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+            get: fn ($value) => $value / 100,
+            set: fn ($value) => (int) round($value * 100),
+        );
+    }
+
+    protected function calculatedBalance(): \Illuminate\Database\Eloquent\Casts\Attribute
+    {
+        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+            get: fn ($value) => $value / 100,
+            set: fn ($value) => (int) round($value * 100),
+        );
+    }
+
+    protected function difference(): \Illuminate\Database\Eloquent\Casts\Attribute
+    {
+        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+            get: fn ($value) => $value / 100,
+            set: fn ($value) => (int) round($value * 100),
+        );
+    }
+
+    protected function totalSales(): \Illuminate\Database\Eloquent\Casts\Attribute
+    {
+        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+            get: fn ($value) => $value / 100,
+            set: fn ($value) => (int) round($value * 100),
+        );
+    }
 
     public function user()
     {

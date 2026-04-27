@@ -15,9 +15,16 @@ class Payment extends Model
     ];
 
     protected $casts = [
-        'amount' => 'decimal:2',
         'paid_at' => 'datetime',
     ];
+
+    protected function amount(): \Illuminate\Database\Eloquent\Casts\Attribute
+    {
+        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+            get: fn ($value) => $value / 100,
+            set: fn ($value) => (int) round($value * 100),
+        );
+    }
 
     public function order()
     {

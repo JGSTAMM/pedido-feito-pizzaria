@@ -19,8 +19,8 @@ class DashboardController extends Controller
         $yesterdayOrders = Order::whereDate('created_at', $today->copy()->subDay());
 
         $stats = [
-            'revenue_today' => (float) $todayOrders->clone()->whereNotNull('paid_at')->sum('total_amount'),
-            'revenue_yesterday' => (float) $yesterdayOrders->clone()->whereNotNull('paid_at')->sum('total_amount'),
+            'revenue_today' => ((float) $todayOrders->clone()->whereNotNull('paid_at')->sum('total_amount')) / 100,
+            'revenue_yesterday' => ((float) $yesterdayOrders->clone()->whereNotNull('paid_at')->sum('total_amount')) / 100,
             'orders_today' => $todayOrders->clone()->count(),
             'orders_yesterday' => $yesterdayOrders->clone()->count(),
             'active_orders' => Order::whereIn('status', ['pending', 'preparing', 'ready'])->count(),

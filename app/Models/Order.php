@@ -82,14 +82,35 @@ class Order extends Model
     }
 
     protected $casts = [
-        'total_amount' => 'decimal:2',
-        'delivery_fee' => 'decimal:2',
-        'change_amount' => 'decimal:2',
         'paid_at' => 'datetime',
         'ready_at' => 'datetime',
         'accepted_at' => 'datetime',
         'rejected_at' => 'datetime',
     ];
+
+    protected function totalAmount(): \Illuminate\Database\Eloquent\Casts\Attribute
+    {
+        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+            get: fn ($value) => $value / 100,
+            set: fn ($value) => (int) round($value * 100),
+        );
+    }
+
+    protected function deliveryFee(): \Illuminate\Database\Eloquent\Casts\Attribute
+    {
+        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+            get: fn ($value) => $value / 100,
+            set: fn ($value) => (int) round($value * 100),
+        );
+    }
+
+    protected function changeAmount(): \Illuminate\Database\Eloquent\Casts\Attribute
+    {
+        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+            get: fn ($value) => $value / 100,
+            set: fn ($value) => (int) round($value * 100),
+        );
+    }
 
     // ==================== Relationships ====================
 

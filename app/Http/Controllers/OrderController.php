@@ -48,7 +48,7 @@ class OrderController extends Controller
         $todayOrders = Order::whereDate('created_at', today());
         $stats = [
             'total_today' => $todayOrders->count(),
-            'revenue_today' => (float) $todayOrders->clone()->whereNotNull('paid_at')->sum('total_amount'),
+            'revenue_today' => ((float) $todayOrders->clone()->whereNotNull('paid_at')->sum('total_amount')) / 100,
             'pending_count' => Order::whereIn('status', ['pending', 'preparing', 'ready'])->count(),
             'completed_today' => $todayOrders->clone()->whereNotNull('paid_at')->count(),
         ];

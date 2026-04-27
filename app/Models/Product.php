@@ -13,12 +13,19 @@ class Product extends Model
     protected $fillable = ['name', 'price', 'category', 'is_active', 'show_on_digital_menu', 'image'];
 
     protected $casts = [
-        'price' => 'decimal:2',
         'is_active' => 'boolean',
         'show_on_digital_menu' => 'boolean',
     ];
 
     protected $appends = ['image_url'];
+
+    protected function price(): \Illuminate\Database\Eloquent\Casts\Attribute
+    {
+        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+            get: fn ($value) => $value / 100,
+            set: fn ($value) => (int) round($value * 100),
+        );
+    }
 
     protected function imageUrl(): \Illuminate\Database\Eloquent\Casts\Attribute
     {

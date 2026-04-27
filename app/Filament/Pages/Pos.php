@@ -124,9 +124,9 @@ class Pos extends Component
             PizzaSize::findOrFail($this->selectedPizzaSize);
         }
 
-        $price = (float) PizzaFlavor::query()
+        $price = ((float) PizzaFlavor::query()
             ->whereIn('id', $this->selectedFlavors)
-            ->max('base_price');
+            ->max('base_price')) / 100;
 
         $this->cart[] = [
             'name' => 'Pizza',
@@ -199,10 +199,10 @@ class Pos extends Component
             ->where('status', 'paid')
             ->get();
 
-        $cashPayments = Payment::query()
+        $cashPayments = ((float) Payment::query()
             ->whereIn('order_id', $orders->pluck('id'))
             ->where('method', 'dinheiro')
-            ->sum('amount');
+            ->sum('amount')) / 100;
 
         $totalChange = (float) $orders->sum('change_amount');
         $netCash = (float) $cashPayments - $totalChange;

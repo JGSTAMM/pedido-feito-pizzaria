@@ -21,9 +21,23 @@ class OrderItem extends Model
         'notes',
         'description',
     ];
-    protected $casts = [
-        'subtotal' => 'decimal:2',
-    ];
+    protected $casts = [];
+
+    protected function unitPrice(): \Illuminate\Database\Eloquent\Casts\Attribute
+    {
+        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+            get: fn ($value) => $value / 100,
+            set: fn ($value) => (int) round($value * 100),
+        );
+    }
+
+    protected function subtotal(): \Illuminate\Database\Eloquent\Casts\Attribute
+    {
+        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+            get: fn ($value) => $value / 100,
+            set: fn ($value) => (int) round($value * 100),
+        );
+    }
 
     public function order()
     {
