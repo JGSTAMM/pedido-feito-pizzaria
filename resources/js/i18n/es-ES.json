@@ -702,7 +702,8 @@
         },
         "errors": {
             "generic": "Ocurrió un error inesperado.",
-            "catalog_load_failed": "Error al cargar el catálogo digital."
+            "catalog_load_failed": "Error al cargar el catálogo digital.",
+            "unauthorized_order_access": "No tienes permiso para acceder a los detalles de este pedido."
         },
         "success": {
             "order_created": "¡Pedido creado con éxito!"

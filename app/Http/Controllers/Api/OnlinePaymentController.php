@@ -78,6 +78,11 @@ class OnlinePaymentController extends Controller
 
         $result = $this->processOnlineCheckoutAction->execute($validated);
 
+        // Ownership validation: Store order ID in session for polling security
+        if ($result['status'] === 201 && isset($result['payload']['order_id'])) {
+            session()->put('current_order_id', $result['payload']['order_id']);
+        }
+
         return response()->json($result['payload'], $result['status'])
             ->cookie('customer_phone', $validated['customer_phone'], 60 * 24 * 365);
     }
@@ -103,6 +108,24 @@ class OnlinePaymentController extends Controller
      */
     public function paymentStatus(string $orderId)
     {
+        // 1. Ownership Validation (Security: Prevent IDOR)
+        // For guest checkouts, we verify against the session ID stored during store()
+        $isAuthorized = (session()->get('current_order_id') === $orderId);
+
+        if (!$isAuthorized) {
+            Log::warning("Unauthorized order status access attempt (IDOR)", [
+                'requested_order_id' => $orderId,
+                'session_order_id' => session()->get('current_order_id'),
+                'ip' => request()->ip(),
+                'user_agent' => request()->userAgent()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'error' => __('digital_menu.errors.unauthorized_order_access'),
+            ], 403);
+        }
+
         $order = Order::find($orderId);
 
         if (!$order) {

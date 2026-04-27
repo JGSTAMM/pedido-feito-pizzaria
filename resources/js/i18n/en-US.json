@@ -702,7 +702,8 @@
         },
         "errors": {
             "generic": "An unexpected error occurred.",
-            "catalog_load_failed": "Failed to load digital catalog."
+            "catalog_load_failed": "Failed to load digital catalog.",
+            "unauthorized_order_access": "You are not authorized to access this order's details."
         },
         "success": {
             "order_created": "Order created successfully!"
