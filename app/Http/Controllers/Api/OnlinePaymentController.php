@@ -153,11 +153,16 @@ class OnlinePaymentController extends Controller
                     $order->refresh();
                 }
             } catch (\Throwable $e) {
-                Log::warning('Gateway status check failed during polling', [
-                    'order_id' => $orderId,
-                    'error' => $e->getMessage(),
+                Log::error('Gateway polling failed: ' . $e->getMessage(), [
+                    'order_id' => $order->id,
+                    'trace' => $e->getTraceAsString()
                 ]);
-                // Continue and return the stored status — don't crash
+
+                return response()->json([
+                    'status' => $order->status,
+                    'gateway_error' => true,
+                    'message' => 'Payment gateway unreachable.',
+                ]);
             }
         }
 
