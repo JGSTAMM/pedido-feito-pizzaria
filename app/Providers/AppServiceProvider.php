@@ -27,5 +27,7 @@ class AppServiceProvider extends ServiceProvider
     {
         Gate::policy(Order::class, OrderPolicy::class);
         Gate::policy(Table::class, TablePolicy::class);
+
+        Model::preventLazyLoading(! app()->isProduction());
     }
 }
