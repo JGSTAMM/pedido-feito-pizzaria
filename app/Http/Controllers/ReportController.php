@@ -10,15 +10,26 @@ class ReportController extends Controller
 {
     public function index()
     {
-        $totalRevenue = (float) Order::where('status', 'paid')->sum('total_amount');
-        $totalOrders = Order::where('status', 'paid')->count();
+        $last30Days = now()->subDays(30);
+
+        $totalRevenue = (float) Order::where('status', 'paid')
+            ->where('created_at', '>=', $last30Days)
+            ->sum('total_amount');
+
+        $totalOrders = Order::where('status', 'paid')
+            ->where('created_at', '>=', $last30Days)
+            ->count();
+
         $avgTicket = $totalOrders > 0 ? $totalRevenue / $totalOrders : 0;
 
-        // Top products by sales
+        // Top products by sales (last 30 days)
         $topFlavors = collect([]);
         try {
             $topFlavors = DB::table('order_items')
                 ->join('products', 'order_items.product_id', '=', 'products.id')
+                ->join('orders', 'order_items.order_id', '=', 'orders.id')
+                ->where('orders.status', 'paid')
+                ->where('orders.created_at', '>=', $last30Days)
                 ->select('products.name', DB::raw('SUM(order_items.quantity) as sales'))
                 ->groupBy('products.name')
                 ->orderByDesc('sales')
@@ -29,8 +40,9 @@ class ReportController extends Controller
             // Table may not exist yet
         }
 
-        // Order type distribution
+        // Order type distribution (last 30 days)
         $typeDistribution = Order::where('status', 'paid')
+            ->where('created_at', '>=', $last30Days)
             ->select('type', DB::raw('count(*) as count'))
             ->groupBy('type')
             ->get()
