@@ -1,1 +1,0 @@
-REDIRECT URL: http://localhost
