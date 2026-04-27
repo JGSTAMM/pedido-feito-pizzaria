@@ -28,6 +28,7 @@
 
 ## 🛡️ Segurança & Estabilidade (Sprint Zero-Bug)
 - **Proteção Anti-DDoS** — Rate limiting (Throttle) em rotas públicas de checkout e webhooks.
+- **Proteção IDOR** — Validação de propriedade via sessão no polling de status de pedidos para checkout de convidados.
 - **Integridade de Dados** — Tratamento rigoroso de Mass Assignment e validação de estoque (`findOrFail` em checkout).
 - **Concorrência (Race Conditions)** — Implementação de `lockForUpdate` em pagamentos e adição de itens para evitar cobranças duplicadas.
 - **Otimização de Performance** — Queries de relatórios com escopo temporal (30 dias) e eager loading para evitar N+1.
