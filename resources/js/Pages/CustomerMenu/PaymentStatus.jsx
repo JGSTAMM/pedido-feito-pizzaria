@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useRef, useEffect } from 'react';
 import useI18n from '@/hooks/useI18n';
 import { usePaymentStatusPolling } from './hooks/usePaymentStatusPolling';
 import { luccheseMenuTheme } from './theme/luccheseMenuTheme';
@@ -100,12 +100,22 @@ function OrderStepper({ activeStep, t }) {
 
 function PixSection({ pixQrCode, pixQrCodeBase64 }) {
     const [copied, setCopied] = useState(false);
+    const copyTimeoutRef = useRef(null);
+
+    useEffect(() => {
+        return () => {
+            if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current);
+        };
+    }, []);
+
     const handleCopy = async () => {
         if (!pixQrCode) return;
         try {
             await navigator.clipboard.writeText(pixQrCode);
             setCopied(true);
-            setTimeout(() => setCopied(false), 2000);
+            
+            if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current);
+            copyTimeoutRef.current = setTimeout(() => setCopied(false), 2000);
         } catch { /* noop */ }
     };
 

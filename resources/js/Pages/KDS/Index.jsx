@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { router } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import KitchenReceiptPrint from '@/Components/KitchenReceiptPrint';
@@ -223,10 +223,18 @@ export default function Index({ orders = [], counts = {} }) {
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
     const [printOrder, setPrintOrder] = useState(null);
+    const printTimeoutRef = useRef(null);
+
+    useEffect(() => {
+        return () => {
+            if (printTimeoutRef.current) clearTimeout(printTimeoutRef.current);
+        };
+    }, []);
 
     const handlePrintOrder = (order) => {
         setPrintOrder(order);
-        setTimeout(() => {
+        if (printTimeoutRef.current) clearTimeout(printTimeoutRef.current);
+        printTimeoutRef.current = setTimeout(() => {
             window.print();
         }, 100);
     };
