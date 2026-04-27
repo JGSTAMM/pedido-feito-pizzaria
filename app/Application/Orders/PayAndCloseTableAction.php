@@ -14,22 +14,6 @@ use Throwable;
 class PayAndCloseTableAction
 {
     public function execute(Table $table, array $payments, User $user): void
-    {
-        $orders = Order::where('table_id', $table->id)
-            ->whereNotIn('status', ['completed', 'paid', 'cancelled'])
-            ->get();
-
-        if ($orders->isEmpty()) {
-            throw new OrderActionException('order.payment.no_active_orders', 404);
-        }
-
-        $totalAmount = (float) $orders->sum('total_amount');
-        $totalPaid = (float) collect($payments)->sum('amount');
-
-        if ($totalPaid < $totalAmount - 0.01) {
-            throw new OrderActionException('order.payment.insufficient_amount', 400);
-        }
-
         $activeRegister = CashRegister::where('user_id', $user->id)
             ->where('status', 'open')
             ->latest()
@@ -38,6 +22,25 @@ class PayAndCloseTableAction
         DB::beginTransaction();
 
         try {
+            // Get active orders with lock to prevent concurrent payment processing
+            $orders = Order::where('table_id', $table->id)
+                ->whereNotIn('status', ['completed', 'paid', 'cancelled'])
+                ->lockForUpdate()
+                ->get();
+
+            if ($orders->isEmpty()) {
+                DB::rollBack();
+                throw new OrderActionException('order.payment.no_active_orders', 404);
+            }
+
+            $totalAmount = (float) $orders->sum('total_amount');
+            $totalPaid = (float) collect($payments)->sum('amount');
+
+            if ($totalPaid < $totalAmount - 0.01) {
+                DB::rollBack();
+                throw new OrderActionException('order.payment.insufficient_amount', 400);
+            }
+
             $paymentPool = collect($payments)
                 ->map(fn (array $payment) => [
                     'method' => $payment['method'],

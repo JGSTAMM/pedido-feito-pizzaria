@@ -174,10 +174,7 @@ class ProcessOnlineCheckoutAction
 
     private function createProductItem(Order $order, array $item): float
     {
-        $product = Product::find($item['product_id']);
-        if (!$product) {
-            return 0;
-        }
+        $product = Product::findOrFail($item['product_id']);
 
         $subtotal = (float) $product->price * $item['quantity'];
 

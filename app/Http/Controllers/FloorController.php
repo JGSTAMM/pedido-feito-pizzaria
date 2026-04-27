@@ -237,7 +237,7 @@ class FloorController extends Controller
             }
 
             // Find or create active order for this table
-            $order = $table->activeOrders()->first();
+            $order = $table->activeOrders()->lockForUpdate()->first();
 
             if ($order) {
                 // Append to existing order — update total
@@ -308,22 +308,6 @@ class FloorController extends Controller
             'payments.*.amount' => 'required|numeric|min:0',
         ]);
 
-        // Get active orders
-        $orders = Order::where('table_id', $table->id)
-            ->whereNotIn('status', ['completed', 'paid', 'cancelled'])
-            ->get();
-
-        if ($orders->isEmpty()) {
-            return redirect()->back()->with('error', __('order.payment.no_active_orders'));
-        }
-
-        $totalAmount = $orders->sum('total_amount');
-        $totalPaid = collect($validated['payments'])->sum('amount');
-
-        if ($totalPaid < $totalAmount - 0.01) {
-             return redirect()->back()->with('error', __('order.payment.insufficient_amount'));
-        }
-
         try {
             $activeRegister = $this->cashRegisterLockService->requireOpenRegister();
         } catch (OrderActionException $exception) {
@@ -332,6 +316,25 @@ class FloorController extends Controller
 
         DB::beginTransaction();
         try {
+            // Get active orders with lock to prevent double-charging
+            $orders = Order::where('table_id', $table->id)
+                ->whereNotIn('status', ['completed', 'paid', 'cancelled'])
+                ->lockForUpdate()
+                ->get();
+
+            if ($orders->isEmpty()) {
+                DB::rollBack();
+                return redirect()->back()->with('error', __('order.payment.no_active_orders'));
+            }
+
+            $totalAmount = $orders->sum('total_amount');
+            $totalPaid = collect($validated['payments'])->sum('amount');
+
+            if ($totalPaid < $totalAmount - 0.01) {
+                DB::rollBack();
+                return redirect()->back()->with('error', __('order.payment.insufficient_amount'));
+            }
+
             $paymentPool = collect($validated['payments'])->map(function($p) {
                 return ['method' => $p['method'], 'amount' => (float)$p['amount']];
             })->toArray();
