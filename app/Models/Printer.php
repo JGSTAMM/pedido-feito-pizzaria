@@ -14,4 +14,15 @@ class Printer extends Model
     protected $casts = [
         'is_online' => 'boolean',
     ];
+
+    protected static function booted()
+    {
+        static::saved(function ($printer) {
+            \Illuminate\Support\Facades\Cache::forget('printer_settings');
+        });
+
+        static::deleted(function ($printer) {
+            \Illuminate\Support\Facades\Cache::forget('printer_settings');
+        });
+    }
 }

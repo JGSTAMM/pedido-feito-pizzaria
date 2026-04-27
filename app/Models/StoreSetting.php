@@ -58,4 +58,15 @@ class StoreSetting extends Model
         }
         return null;
     }
+
+    protected static function booted()
+    {
+        static::saved(function ($setting) {
+            \Illuminate\Support\Facades\Cache::forget('printer_settings');
+        });
+
+        static::deleted(function ($setting) {
+            \Illuminate\Support\Facades\Cache::forget('printer_settings');
+        });
+    }
 }
