@@ -10,17 +10,23 @@ use App\Http\Controllers\Api\OnlinePaymentController;
 use App\Http\Controllers\Api\CustomerIdentityController;
 
 // ═══════════════════════════════════════════
-// ROTAS PÚBLICAS (sem autenticação)
+// ROTAS PÚBLICAS (com rate limiting)
 // ═══════════════════════════════════════════
-Route::get('/digital-menu', [DigitalMenuController::class, 'index']);
-Route::post('/customers/identify', [CustomerIdentityController::class, 'identify']);
 
-Route::post('/login', [AuthController::class, 'login']);
+Route::middleware('throttle:60,1')->group(function () {
+    Route::get('/digital-menu', [DigitalMenuController::class, 'index']);
+    Route::post('/customers/identify', [CustomerIdentityController::class, 'identify']);
+    Route::get('/orders/{order}/payment-status', [OnlinePaymentController::class, 'paymentStatus']);
+});
+
+Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
 
 // Online Payment (público — o cliente faz o pedido sem login)
-Route::post('/online-orders', [OnlinePaymentController::class, 'store']);
-Route::post('/payments/webhook', [OnlinePaymentController::class, 'webhook']);
-Route::get('/orders/{order}/payment-status', [OnlinePaymentController::class, 'paymentStatus']);
+Route::post('/online-orders', [OnlinePaymentController::class, 'store'])
+    ->middleware('throttle:10,1');
+
+Route::post('/payments/webhook', [OnlinePaymentController::class, 'webhook'])
+    ->middleware('throttle:60,1');
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', function (Request $request) {
