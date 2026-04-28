@@ -28,6 +28,8 @@ class CashRegisterTest extends TestCase
         // Seed StoreSetting for middleware/view composers
         \App\Models\StoreSetting::create([
             'store_name' => 'Pedido Feito',
+            'phone' => '123456789',
+            'full_address' => 'Test Address',
             'is_open' => true,
         ]);
     }
@@ -120,10 +122,11 @@ class CashRegisterTest extends TestCase
             ->get('/cash-register')
             ->assertInertia(fn (Assert $page) => $page
                 ->component('CashRegister/Index')
-                ->where('summary.opening_balance', 100)
-                ->where('summary.total_sales', 100)
-                ->where('summary.total_change', 10)
-                ->where('summary.total_in_drawer', 140)
+                ->where('summary.opening_balance', fn ($val) => (float) $val === 100.0)
+                ->where('summary.total_sales', fn ($val) => (float) $val === 100.0)
+                ->where('summary.total_change', fn ($val) => (float) $val === 10.0)
+                ->where('summary.total_in_drawer', fn ($val) => (float) $val === 140.0)
+                ->where('summary.order_count', 2)
             );
     }
 

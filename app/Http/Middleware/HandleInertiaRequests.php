@@ -48,7 +48,7 @@ class HandleInertiaRequests extends Middleware
         
         return [
             ...parent::share($request),
-            'appName' => $storeSetting->store_name ?? config('app.name', 'Pedido Feito'),
+            'appName' => $storeSetting?->store_name ?? config('app.name', 'Pedido Feito'),
             'locale' => app()->getLocale(),
             'fallbackLocale' => config('app.fallback_locale'),
             'storeSetting' => $storeSetting,
