@@ -3,17 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NeighborhoodSearchSelect } from '../NeighborhoodSearchSelect';
 
-const tMock = (key) => {
-    const translations = {
-        'digital_menu.checkout.placeholders.neighborhood': 'Selecionar bairro',
-        'digital_menu.checkout.search_neighborhood': 'Buscar bairro...',
-        'digital_menu.checkout.type_custom_neighborhood': 'Digite o nome do seu bairro...',
-        'digital_menu.checkout.back_to_list': 'Voltar para a lista',
-        'digital_menu.checkout.no_neighborhood_found': 'Nenhum bairro encontrado',
-        'digital_menu.checkout.type_manually': 'Digitar manualmente',
-    };
-    return translations[key] ?? key;
-};
+const tMock = (key) => key;
 
 const mockNeighborhoods = [
     { id: 1, name: 'Centro', delivery_fee: 5.00 },
@@ -40,12 +30,12 @@ describe('NeighborhoodSearchSelect', () => {
 
     it('renders the trigger button with placeholder text', () => {
         renderComponent();
-        expect(screen.getByRole('button', { name: /selecionar bairro/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /digital_menu\.checkout\.placeholders\.neighborhood/i })).toBeInTheDocument();
     });
 
     it('opens the dropdown when trigger is clicked', () => {
         renderComponent();
-        fireEvent.click(screen.getByRole('button', { name: /selecionar bairro/i }));
+        fireEvent.click(screen.getByRole('button', { name: /digital_menu\.checkout\.placeholders\.neighborhood/i }));
         expect(screen.getByRole('listbox')).toBeInTheDocument();
         expect(screen.getByText('Centro')).toBeInTheDocument();
         expect(screen.getByText('Vila Nova')).toBeInTheDocument();
@@ -53,9 +43,9 @@ describe('NeighborhoodSearchSelect', () => {
 
     it('filters neighborhoods by search query', () => {
         renderComponent();
-        fireEvent.click(screen.getByRole('button', { name: /selecionar bairro/i }));
+        fireEvent.click(screen.getByRole('button', { name: /digital_menu\.checkout\.placeholders\.neighborhood/i }));
 
-        const searchInput = screen.getByPlaceholderText('Buscar bairro...');
+        const searchInput = screen.getByPlaceholderText('digital_menu.checkout.search_neighborhood');
         fireEvent.change(searchInput, { target: { value: 'centro' } });
 
         expect(screen.getByText('Centro')).toBeInTheDocument();
@@ -66,7 +56,7 @@ describe('NeighborhoodSearchSelect', () => {
         const onChangeSelectedId = vi.fn();
         renderComponent({ onChangeSelectedId });
 
-        fireEvent.click(screen.getByRole('button', { name: /selecionar bairro/i }));
+        fireEvent.click(screen.getByRole('button', { name: /digital_menu\.checkout\.placeholders\.neighborhood/i }));
         
         // Find the button inside the listbox for "Centro"
         const option = screen.getByRole('option', { name: /centro/i });
@@ -79,8 +69,8 @@ describe('NeighborhoodSearchSelect', () => {
         const onChangeSelectedId = vi.fn();
         renderComponent({ onChangeSelectedId });
 
-        fireEvent.click(screen.getByRole('button', { name: /selecionar bairro/i }));
-        fireEvent.click(screen.getByText(/digitar manualmente/i));
+        fireEvent.click(screen.getByRole('button', { name: /digital_menu\.checkout\.placeholders\.neighborhood/i }));
+        fireEvent.click(screen.getByText(/digital_menu\.checkout\.type_manually/i));
 
         expect(onChangeSelectedId).toHaveBeenCalledWith('custom');
     });
@@ -89,7 +79,7 @@ describe('NeighborhoodSearchSelect', () => {
         const onChangeCustomName = vi.fn();
         renderComponent({ selectedId: 'custom', onChangeCustomName });
 
-        const input = screen.getByPlaceholderText(/digite o nome do seu bairro/i);
+        const input = screen.getByPlaceholderText(/digital_menu\.checkout\.type_custom_neighborhood/i);
         fireEvent.change(input, { target: { value: 'Meu Bairro Especial' } });
 
         expect(onChangeCustomName).toHaveBeenCalledWith('Meu Bairro Especial');
@@ -97,11 +87,11 @@ describe('NeighborhoodSearchSelect', () => {
 
     it('shows "no neighborhood found" when search returns no results', () => {
         renderComponent();
-        fireEvent.click(screen.getByRole('button', { name: /selecionar bairro/i }));
+        fireEvent.click(screen.getByRole('button', { name: /digital_menu\.checkout\.placeholders\.neighborhood/i }));
 
-        const searchInput = screen.getByPlaceholderText('Buscar bairro...');
+        const searchInput = screen.getByPlaceholderText('digital_menu.checkout.search_neighborhood');
         fireEvent.change(searchInput, { target: { value: 'bairro que nao existe xyz' } });
 
-        expect(screen.getByText('Nenhum bairro encontrado')).toBeInTheDocument();
+        expect(screen.getByText('digital_menu.checkout.no_neighborhood_found')).toBeInTheDocument();
     });
 });
