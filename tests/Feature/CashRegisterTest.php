@@ -43,7 +43,7 @@ class CashRegisterTest extends TestCase
 
         $this->assertDatabaseHas('cash_registers', [
             'user_id' => $this->user->id,
-            'opening_balance' => 100.00,
+            'opening_balance' => 10000,
             'status' => 'open',
         ]);
     }
@@ -86,22 +86,24 @@ class CashRegisterTest extends TestCase
         ]);
 
         // Create Order 1: Cash 50, Total 40, Change 10
-        $order1 = Order::create([
+        $order1 = new Order();
+        $order1->forceFill([
             'user_id' => $this->user->id,
             'cash_register_id' => $register->id,
             'total_amount' => 40.00,
             'change_amount' => 10.00,
             'status' => 'paid',
-        ]);
+        ])->save();
         Payment::create(['order_id' => $order1->id, 'method' => 'dinheiro', 'amount' => 50.00]);
 
         // Create Order 2: Card 60
-        $order2 = Order::create([
+        $order2 = new Order();
+        $order2->forceFill([
             'user_id' => $this->user->id,
             'cash_register_id' => $register->id,
             'total_amount' => 60.00,
             'status' => 'paid',
-        ]);
+        ])->save();
         Payment::create(['order_id' => $order2->id, 'method' => 'credito', 'amount' => 60.00]);
         
         // Test calculation in Pos (mount should calculate when register is open)

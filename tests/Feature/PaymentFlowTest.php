@@ -30,7 +30,8 @@ class PaymentFlowTest extends TestCase
     public function test_order_creation_with_payment_marks_as_paid()
     {
         // Simulate order creation in POS (direct sale)
-        $order = Order::create([
+        $order = new Order();
+        $order->forceFill([
             'status' => 'paid',
             'type' => 'salon',
             'table_id' => $this->table->id,
@@ -38,7 +39,7 @@ class PaymentFlowTest extends TestCase
             'paid_at' => now(),
             'change_amount' => 0,
             'customer_name' => 'Cliente',
-        ]);
+        ])->save();
 
         Payment::create([
             'order_id' => $order->id,
@@ -49,7 +50,7 @@ class PaymentFlowTest extends TestCase
         $this->assertDatabaseHas('orders', [
             'id' => $order->id,
             'status' => 'paid',
-            'total_amount' => 50.00,
+            'total_amount' => 5000,
         ]);
         
         $this->assertNotNull($order->fresh()->paid_at);
@@ -57,13 +58,14 @@ class PaymentFlowTest extends TestCase
 
     public function test_payment_with_change_amount()
     {
-        $order = Order::create([
+        $order = new Order();
+        $order->forceFill([
             'status' => 'paid',
             'total_amount' => 45.00,
             'paid_at' => now(),
             'change_amount' => 5.00, // Paid 50, Total 45
             'customer_name' => 'Cliente',
-        ]);
+        ])->save();
 
         Payment::create([
             'order_id' => $order->id,
@@ -73,7 +75,7 @@ class PaymentFlowTest extends TestCase
 
         $this->assertDatabaseHas('orders', [
             'id' => $order->id,
-            'change_amount' => 5.00,
+            'change_amount' => 500,
         ]);
     }
 

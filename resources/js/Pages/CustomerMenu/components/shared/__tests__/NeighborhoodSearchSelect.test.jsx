@@ -5,28 +5,29 @@ import { NeighborhoodSearchSelect } from '../NeighborhoodSearchSelect';
 
 const tMock = (key) => {
     const translations = {
-        'digital_menu.checkout.select_neighborhood': 'Selecionar bairro',
+        'digital_menu.checkout.placeholders.neighborhood': 'Selecionar bairro',
         'digital_menu.checkout.search_neighborhood': 'Buscar bairro...',
-        'digital_menu.checkout.neighborhood_placeholder': 'Digite seu bairro',
-        'digital_menu.checkout.neighborhood_label': 'Bairro',
-        'digital_menu.checkout.type_manually': 'Digitar manualmente',
+        'digital_menu.checkout.type_custom_neighborhood': 'Digite o nome do seu bairro...',
         'digital_menu.checkout.back_to_list': 'Voltar para a lista',
         'digital_menu.checkout.no_neighborhood_found': 'Nenhum bairro encontrado',
+        'digital_menu.checkout.type_manually': 'Digitar manualmente',
     };
     return translations[key] ?? key;
 };
 
 const mockNeighborhoods = [
-    { id: 1, name: 'Centro' },
-    { id: 2, name: 'Vila Nova' },
-    { id: 3, name: 'Jardim América' },
+    { id: 1, name: 'Centro', delivery_fee: 5.00 },
+    { id: 2, name: 'Vila Nova', delivery_fee: 7.00 },
+    { id: 3, name: 'Jardim América', delivery_fee: 10.00 },
 ];
 
 function renderComponent(props = {}) {
     const defaults = {
         neighborhoods: mockNeighborhoods,
-        value: '',
-        onChange: vi.fn(),
+        selectedId: '',
+        onChangeSelectedId: vi.fn(),
+        customName: '',
+        onChangeCustomName: vi.fn(),
         t: tMock,
     };
     return render(<NeighborhoodSearchSelect {...defaults} {...props} />);
@@ -61,38 +62,37 @@ describe('NeighborhoodSearchSelect', () => {
         expect(screen.queryByText('Vila Nova')).not.toBeInTheDocument();
     });
 
-    it('calls onChange with neighborhood name when an option is selected', () => {
-        const onChange = vi.fn();
-        renderComponent({ onChange });
+    it('calls onChangeSelectedId with neighborhood id when an option is selected', () => {
+        const onChangeSelectedId = vi.fn();
+        renderComponent({ onChangeSelectedId });
 
         fireEvent.click(screen.getByRole('button', { name: /selecionar bairro/i }));
-        fireEvent.click(screen.getByRole('option', { name: 'Centro' }));
+        
+        // Find the button inside the listbox for "Centro"
+        const option = screen.getByRole('option', { name: /centro/i });
+        fireEvent.click(option);
 
-        expect(onChange).toHaveBeenCalledWith('Centro');
+        expect(onChangeSelectedId).toHaveBeenCalledWith(1);
     });
 
     it('switches to manual input when "Digitar manualmente" is clicked', () => {
-        const onChange = vi.fn();
-        renderComponent({ onChange });
+        const onChangeSelectedId = vi.fn();
+        renderComponent({ onChangeSelectedId });
 
         fireEvent.click(screen.getByRole('button', { name: /selecionar bairro/i }));
-        fireEvent.click(screen.getByText('Digitar manualmente'));
+        fireEvent.click(screen.getByText(/digitar manualmente/i));
 
-        expect(screen.getByRole('textbox')).toBeInTheDocument();
-        expect(onChange).toHaveBeenCalledWith('');
+        expect(onChangeSelectedId).toHaveBeenCalledWith('custom');
     });
 
     it('allows typing in manual input mode', () => {
-        const onChange = vi.fn();
-        renderComponent({ onChange });
+        const onChangeCustomName = vi.fn();
+        renderComponent({ selectedId: 'custom', onChangeCustomName });
 
-        fireEvent.click(screen.getByRole('button', { name: /selecionar bairro/i }));
-        fireEvent.click(screen.getByText('Digitar manualmente'));
-
-        const input = screen.getByRole('textbox');
+        const input = screen.getByPlaceholderText(/digite o nome do seu bairro/i);
         fireEvent.change(input, { target: { value: 'Meu Bairro Especial' } });
 
-        expect(onChange).toHaveBeenCalledWith('Meu Bairro Especial');
+        expect(onChangeCustomName).toHaveBeenCalledWith('Meu Bairro Especial');
     });
 
     it('shows "no neighborhood found" when search returns no results', () => {

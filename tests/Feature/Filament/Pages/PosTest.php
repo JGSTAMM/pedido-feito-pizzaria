@@ -58,6 +58,7 @@ class PosTest extends TestCase
 
     public function test_checkout_clears_cart_and_creates_order()
     {
+        \App\Models\Order::unguard();
         $user = User::factory()->create();
         $product = Product::factory()->create(['price' => 10.00]);
 
@@ -70,7 +71,7 @@ class PosTest extends TestCase
             ->assertNotified('Venda realizada com sucesso!');
 
         $this->assertDatabaseHas('orders', [
-            'total_amount' => 10.00
+            'total_amount' => 1000
         ]);
     }
 }

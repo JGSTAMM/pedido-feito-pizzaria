@@ -73,6 +73,16 @@ def detect_test_framework(project_path: Path) -> dict:
         result["cmd"] = ["python", "-m", "pytest", "-v"]
         result["coverage_cmd"] = ["python", "-m", "pytest", "--cov", "--cov-report=term-missing"]
     
+    # Laravel project
+    if (project_path / "artisan").exists():
+        # If it's already node, it might be a hybrid. We can append or prioritize.
+        # For now, let's prioritize Laravel if artisan exists, or run both?
+        # The script only supports one command currently. Let's make it run artisan test.
+        result["type"] = "laravel"
+        result["framework"] = "phpunit"
+        result["cmd"] = ["php", "artisan", "test"]
+        result["coverage_cmd"] = ["php", "artisan", "test", "--coverage"]
+    
     return result
 
 

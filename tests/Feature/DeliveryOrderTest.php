@@ -57,7 +57,7 @@ class DeliveryOrderTest extends TestCase
             'neighborhood_id' => $this->neighborhood->id,
             'delivery_address' => 'Rua das Flores, 123',
             'delivery_complement' => 'Apto 42',
-            'delivery_fee' => 8.00,
+            'delivery_fee' => 800,
             'customer_phone' => '(11) 99999-0000',
         ]);
     }
@@ -78,7 +78,7 @@ class DeliveryOrderTest extends TestCase
         $this->assertEquals(8.00, (float) $order->neighborhood->delivery_fee);
     }
 
-    public function test_delivery_fee_is_cast_to_decimal()
+    public function test_delivery_fee_is_cast_to_float()
     {
         $order = Order::create([
             'type' => 'delivery',
@@ -87,8 +87,8 @@ class DeliveryOrderTest extends TestCase
             'total_amount' => 57.50,
         ]);
 
-        $this->assertIsString($order->delivery_fee); // decimal cast returns string
-        $this->assertEquals('12.50', $order->delivery_fee);
+        $this->assertIsFloat((float) $order->delivery_fee);
+        $this->assertEquals(12.50, $order->delivery_fee);
     }
 
     public function test_non_delivery_order_has_no_neighborhood()

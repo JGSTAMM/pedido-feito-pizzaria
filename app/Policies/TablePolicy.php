@@ -22,6 +22,13 @@ class TablePolicy
             : Response::deny(__('auth.unauthorized'));
     }
 
+    public function viewOrders(User $user, Table $table): Response
+    {
+        return $this->isAdminCashierOrWaiter($user)
+            ? Response::allow()
+            : Response::deny(__('auth.unauthorized'));
+    }
+
     private function isAdminOrCashier(User $user): bool
     {
         $role = $this->normalizeRole((string) ($user->role ?? ''));

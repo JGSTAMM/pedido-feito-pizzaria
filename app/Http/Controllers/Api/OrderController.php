@@ -57,6 +57,9 @@ class OrderController extends Controller
      */
     public function getByTable($tableId)
     {
+        $table = Table::findOrFail($tableId);
+        $this->authorize('viewOrders', $table);
+
         $orders = Order::with(['items.product', 'items.pizzaSize', 'items.flavors'])
             ->where('table_id', $tableId)
             ->whereNotIn('status', ['completed', 'cancelled', 'paid'])
@@ -183,6 +186,8 @@ class OrderController extends Controller
      */
     public function closeTable(Table $table)
     {
+        $this->authorize('closeWithoutPayment', $table);
+
         $activeOrders = Order::where('table_id', $table->id)
             ->whereNotIn('status', ['completed', 'paid', 'cancelled'])
             ->get();
@@ -208,6 +213,8 @@ class OrderController extends Controller
      */
     public function payAndCloseTable(Request $request, Table $table)
     {
+        $this->authorize('payAndClose', $table);
+
         $validated = $request->validate([
             'payments' => 'required|array',
             'payments.*.method' => 'required|string',

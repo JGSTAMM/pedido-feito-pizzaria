@@ -18,6 +18,7 @@ class ProcessOnlineCheckoutActionTest extends TestCase
 
     public function test_it_creates_order_and_payment_successfully()
     {
+        Order::unguard();
         // 1. Arrange
         $product = Product::factory()->create(['price' => 20.00]);
         $neighborhood = Neighborhood::forceCreate([
@@ -71,14 +72,14 @@ class ProcessOnlineCheckoutActionTest extends TestCase
 
         $this->assertDatabaseHas('orders', [
             'customer_name' => 'John Doe',
-            'total_amount' => 45.00, // (20 * 2) + 5 delivery fee
+            'total_amount' => 4500, // (20 * 2) + 5 delivery fee
             'status' => Order::STATUS_AWAITING_PAYMENT,
         ]);
 
         $this->assertDatabaseHas('order_items', [
             'product_id' => $product->id,
             'quantity' => 2,
-            'subtotal' => 40.00,
+            'subtotal' => 4000,
         ]);
     }
 

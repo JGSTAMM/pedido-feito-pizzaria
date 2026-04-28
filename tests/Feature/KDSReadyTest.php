@@ -30,16 +30,17 @@ class KDSReadyTest extends TestCase
         // Simulate KDS action logic (normally in Livewire component, but we test the model update or controller if applicable)
         // KDS component method: update(['status' => 'ready', 'ready_at' => now()])
         
-        $order = Order::create([
+        $order = new Order();
+        $order->forceFill([
             'status' => 'preparing',
             'total_amount' => 20.00,
-        ]);
+        ])->save();
 
         // Manually trigger the update logic (simulating KDS component action)
-        $order->update([
+        $order->forceFill([
             'status' => 'ready',
             'ready_at' => now(),
-        ]);
+        ])->save();
 
         $this->assertEquals('ready', $order->fresh()->status);
         $this->assertNotNull($order->fresh()->ready_at);
@@ -48,12 +49,13 @@ class KDSReadyTest extends TestCase
     public function test_api_returns_ready_orders()
     {
         // Create 1 ready order
-        $readyOrder = Order::create([
+        $readyOrder = new Order();
+        $readyOrder->forceFill([
             'status' => 'ready',
             'ready_at' => now(),
             'total_amount' => 20.00,
             'table_id' => $this->table->id,
-        ]);
+        ])->save();
         OrderItem::create([
             'order_id' => $readyOrder->id,
             'product_id' => $this->product->id,
@@ -63,18 +65,21 @@ class KDSReadyTest extends TestCase
         ]);
 
         // Create 1 preparing order (should not be returned)
-        Order::create([
+        $preparingOrder = new Order();
+        $preparingOrder->forceFill([
             'status' => 'preparing',
             'total_amount' => 20.00,
-        ]);
+        ])->save();
 
         // Create 1 old ready order (yesterday) - Endpoint filters by today()
-        Order::create([
+        $oldOrder = new Order();
+        $oldOrder->forceFill([
             'status' => 'ready',
             'ready_at' => now()->subDay(),
-            'created_at' => now()->subDay(),
             'total_amount' => 20.00,
-        ]);
+        ])->save();
+        $oldOrder->created_at = now()->subDay();
+        $oldOrder->save();
 
         $response = $this->actingAs($this->user)->getJson('/api/orders/ready');
 
