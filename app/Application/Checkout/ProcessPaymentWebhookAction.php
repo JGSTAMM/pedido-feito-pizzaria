@@ -19,7 +19,7 @@ class ProcessPaymentWebhookAction
                 'status' => 403,
                 'payload' => [
                     'received' => false,
-                    'message' => __('digital_menu.webhook.invalid_signature'),
+                    'message' => 'digital_menu.webhook.invalid_signature',
                 ],
             ];
         }
@@ -30,7 +30,7 @@ class ProcessPaymentWebhookAction
                 'status' => 400,
                 'payload' => [
                     'received' => false,
-                    'message' => __('digital_menu.webhook.missing_notification_id'),
+                    'message' => 'digital_menu.webhook.missing_notification_id',
                 ],
             ];
         }
@@ -42,7 +42,7 @@ class ProcessPaymentWebhookAction
                 'payload' => [
                     'received' => true,
                     'duplicate' => true,
-                    'message' => __('digital_menu.webhook.duplicate_notification'),
+                    'message' => 'digital_menu.webhook.duplicate_notification',
                 ],
             ];
         }
@@ -55,7 +55,7 @@ class ProcessPaymentWebhookAction
                 'status' => 400,
                 'payload' => [
                     'received' => false,
-                    'message' => __('digital_menu.webhook.processing_failed'),
+                    'message' => 'digital_menu.webhook.processing_failed',
                 ],
             ];
         }

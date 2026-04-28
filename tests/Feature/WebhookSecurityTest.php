@@ -32,7 +32,7 @@ class WebhookSecurityTest extends TestCase
         $response->assertStatus(403)
             ->assertJson([
                 'received' => false,
-                'message' => __('webhook.invalid_signature'),
+                'message' => 'digital_menu.webhook.invalid_signature',
             ]);
     }
 
@@ -88,7 +88,7 @@ class WebhookSecurityTest extends TestCase
             ->assertJson([
                 'received' => true,
                 'duplicate' => true,
-                'message' => __('webhook.duplicate_notification'),
+                'message' => 'digital_menu.webhook.duplicate_notification',
             ]);
     }
 

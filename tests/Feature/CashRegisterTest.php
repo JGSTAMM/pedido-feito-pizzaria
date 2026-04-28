@@ -24,6 +24,12 @@ class CashRegisterTest extends TestCase
         $this->user = User::factory()->create();
         // Product needed for some POS related logic if any
         Product::factory()->create(['name' => 'Test Product', 'price' => 10, 'category' => 'Test']);
+
+        // Seed StoreSetting for middleware/view composers
+        \App\Models\StoreSetting::create([
+            'store_name' => 'Pedido Feito',
+            'is_open' => true,
+        ]);
     }
 
     public function test_can_open_register()
