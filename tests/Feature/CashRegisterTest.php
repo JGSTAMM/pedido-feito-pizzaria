@@ -85,6 +85,8 @@ class CashRegisterTest extends TestCase
 
     public function test_summary_calculation()
     {
+        $this->withoutExceptionHandling();
+
         $register = CashRegister::create([
             'user_id' => $this->user->id,
             'opening_balance' => 100.00,

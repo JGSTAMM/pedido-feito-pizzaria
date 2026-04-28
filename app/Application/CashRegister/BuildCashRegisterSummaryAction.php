@@ -7,8 +7,19 @@ use App\Models\Order;
 
 class BuildCashRegisterSummaryAction
 {
-    public function execute(CashRegister $register): array
+    public function execute(?CashRegister $register): array
     {
+        if (!$register) {
+            return [
+                'opening_balance' => 0.0,
+                'total_sales' => 0.0,
+                'order_count' => 0,
+                'methods' => [],
+                'total_change' => 0.0,
+                'total_in_drawer' => 0.0,
+            ];
+        }
+
         $orders = Order::where('cash_register_id', $register->id)
             ->whereNotNull('paid_at')
             ->with('payments')

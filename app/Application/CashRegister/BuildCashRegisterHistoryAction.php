@@ -52,11 +52,11 @@ class BuildCashRegisterHistoryAction
                 'notes' => $register->notes,
                 'summary' => [
                     'total_sales' => (float) $orders->sum('total_amount'),
-                    'order_count' => $orders->count(),
-                    'methods' => $methods,
-                    'total_change' => $totalChange,
-                    'expected_physical' => $expectedPhysical,
-                    'register_diff' => $registerDiff,
+                    'order_count' => (int) $orders->count(),
+                    'methods' => collect($methods)->map(fn ($val) => (float) $val)->all(),
+                    'total_change' => (float) $totalChange,
+                    'expected_physical' => (float) $expectedPhysical,
+                    'register_diff' => (float) $registerDiff,
                 ],
             ];
         });
