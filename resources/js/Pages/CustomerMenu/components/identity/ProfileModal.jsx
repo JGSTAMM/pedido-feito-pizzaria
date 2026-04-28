@@ -196,9 +196,10 @@ export default function ProfileModal({ isOpen, onClose, onSuccess, customer }) {
                                 </div>
 
                                 <div>
-                                    <label className="mb-2 block text-[10px] font-black uppercase text-text-muted ml-4">{t('digital_menu.profile.full_name_label')}</label>
+                                    <label className="mb-2 block text-[10px] font-black uppercase text-text-muted ml-4" htmlFor="profile-full-name">{t('digital_menu.profile.full_name_label')}</label>
                                     <input
                                         type="text"
+                                        id="profile-full-name"
                                         value={name}
                                         onChange={(e) => setName(e.target.value)}
                                         placeholder={t('digital_menu.profile.placeholders.full_name')}
@@ -207,9 +208,10 @@ export default function ProfileModal({ isOpen, onClose, onSuccess, customer }) {
                                 </div>
 
                                 <div>
-                                    <label className="mb-2 block text-[10px] font-black uppercase text-text-muted ml-4">{t('digital_menu.profile.whatsapp_label')}</label>
+                                    <label className="mb-2 block text-[10px] font-black uppercase text-text-muted ml-4" htmlFor="profile-whatsapp">{t('digital_menu.profile.whatsapp_label')}</label>
                                     <input
                                         type="tel"
+                                        id="profile-whatsapp"
                                         value={phone}
                                         onChange={handlePhoneChange}
                                         placeholder={t('digital_menu.profile.placeholders.whatsapp')}
@@ -312,9 +314,10 @@ export default function ProfileModal({ isOpen, onClose, onSuccess, customer }) {
                                 }} className="space-y-5">
                                     <div className="grid grid-cols-3 gap-4">
                                         <div className="col-span-2">
-                                            <label className="mb-2 block text-[10px] font-black uppercase text-white/50 ml-4">{t('digital_menu.profile.street_label')}</label>
+                                            <label className="mb-2 block text-[10px] font-black uppercase text-white/50 ml-4" htmlFor="new-address-street">{t('digital_menu.profile.street_label')}</label>
                                             <input
                                                 type="text"
+                                                id="new-address-street"
                                                 placeholder={t('digital_menu.profile.placeholders.street')}
                                                 value={newAddress.street}
                                                 onChange={(e) => setNewAddress({ ...newAddress, street: e.target.value })}
@@ -322,9 +325,10 @@ export default function ProfileModal({ isOpen, onClose, onSuccess, customer }) {
                                             />
                                         </div>
                                         <div className="col-span-1">
-                                            <label className="mb-2 block text-[10px] font-black uppercase text-white/50 ml-4">{t('digital_menu.profile.number_label')}</label>
+                                            <label className="mb-2 block text-[10px] font-black uppercase text-white/50 ml-4" htmlFor="new-address-number">{t('digital_menu.profile.number_label')}</label>
                                             <input
                                                 type="text"
+                                                id="new-address-number"
                                                 placeholder={t('digital_menu.profile.placeholders.number')}
                                                 value={newAddress.number}
                                                 onChange={(e) => setNewAddress({ ...newAddress, number: e.target.value })}
@@ -333,10 +337,15 @@ export default function ProfileModal({ isOpen, onClose, onSuccess, customer }) {
                                         </div>
                                     </div>
                                     <div className="relative">
-                                        <label className="mb-2 block text-[10px] font-black uppercase text-white/50 ml-4">{t('digital_menu.profile.neighborhood_label')}</label>
+                                        <label className="mb-2 block text-[10px] font-black uppercase text-white/50 ml-4" htmlFor="new-address-neighborhood">{t('digital_menu.profile.neighborhood_label')}</label>
                                         <div
+                                            id="new-address-neighborhood"
+                                            role="button"
+                                            tabIndex={0}
+                                            aria-label={t('digital_menu.profile.select_neighborhood_placeholder')}
                                             className={`w-full rounded-full border border-[#2A2A35] bg-[#16161E] px-6 py-3.5 text-sm font-bold ${!newAddress.neighborhoodId ? 'text-white/50' : 'text-white'} shadow-inner flex items-center justify-between cursor-pointer`}
                                             onClick={() => setIsNeighDropdownOpen(!isNeighDropdownOpen)}
+                                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setIsNeighDropdownOpen(!isNeighDropdownOpen); }}
                                         >
                                             <span>
                                                 {newAddress.neighborhoodId
@@ -367,9 +376,10 @@ export default function ProfileModal({ isOpen, onClose, onSuccess, customer }) {
                                         )}
                                     </div>
                                     <div>
-                                        <label className="mb-2 block text-[10px] font-black uppercase text-white/50 ml-4">{t('digital_menu.profile.complement_label')}</label>
+                                        <label className="mb-2 block text-[10px] font-black uppercase text-white/50 ml-4" htmlFor="new-address-complement">{t('digital_menu.profile.complement_label')}</label>
                                         <input
                                             type="text"
+                                            id="new-address-complement"
                                             placeholder={t('digital_menu.profile.placeholders.complement')}
                                             value={newAddress.complement}
                                             onChange={(e) => setNewAddress({ ...newAddress, complement: e.target.value })}

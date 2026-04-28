@@ -304,9 +304,11 @@ export default function CheckoutFormPremium({
                         {t('digital_menu.checkout.delivery_section_title')}
                     </h3>
 
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label={t('digital_menu.checkout.fulfillment_section_title')}>
                         <button
                             type="button"
+                            role="radio"
+                            aria-checked={fulfillmentType === 'dine_in'}
                             onClick={() => setFulfillmentType('dine_in')}
                             className={`min-h-[44px] h-auto flex flex-col items-center justify-center rounded-2xl border px-1 py-1.5 text-[10px] leading-[1.15] text-center outline-none focus:outline-none focus:ring-0 transition-all font-bold uppercase tracking-wide ${fulfillmentType === 'dine_in'
                                 ? 'border-primary/40 bg-primary/15 text-primary shadow-[0_0_16px_rgba(139,92,246,0.25)]'
@@ -317,6 +319,8 @@ export default function CheckoutFormPremium({
                         </button>
                         <button
                             type="button"
+                            role="radio"
+                            aria-checked={fulfillmentType === 'pickup'}
                             onClick={() => setFulfillmentType('pickup')}
                             className={`min-h-[44px] h-auto flex flex-col items-center justify-center rounded-2xl border px-1 py-1.5 text-[10px] leading-[1.15] text-center outline-none focus:outline-none focus:ring-0 transition-all font-bold uppercase tracking-wide ${fulfillmentType === 'pickup'
                                 ? 'border-primary/40 bg-primary/15 text-primary shadow-[0_0_16px_rgba(139,92,246,0.25)]'
@@ -327,6 +331,8 @@ export default function CheckoutFormPremium({
                         </button>
                         <button
                             type="button"
+                            role="radio"
+                            aria-checked={fulfillmentType === 'delivery'}
                             onClick={() => setFulfillmentType('delivery')}
                             className={`min-h-[44px] h-auto flex flex-col items-center justify-center rounded-2xl border px-1 py-1.5 text-[10px] leading-[1.15] text-center outline-none focus:outline-none focus:ring-0 transition-all font-bold uppercase tracking-wide ${fulfillmentType === 'delivery'
                                 ? 'border-primary/40 bg-primary/15 text-primary shadow-[0_0_16px_rgba(139,92,246,0.25)]'
@@ -495,7 +501,7 @@ export default function CheckoutFormPremium({
                         {t('digital_menu.checkout.payment_section_title')}
                     </h3>
 
-                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-3" role="radiogroup" aria-label={t('digital_menu.checkout.payment_section_title')}>
                         {activePaymentOptions.map((option) => {
                             const isActive = formValues.paymentMethod === option.key;
                             const isDisabled = !option.enabled;
@@ -504,6 +510,8 @@ export default function CheckoutFormPremium({
                                 <button
                                     key={option.key}
                                     type="button"
+                                    role="radio"
+                                    aria-checked={isActive}
                                     disabled={isDisabled}
                                     onClick={() => {
                                         if (option.enabled) {

@@ -56,7 +56,7 @@ export default function TabPayment({ statusKey, paymentData, orderDetail, format
             {/* Info de Dinheiro */}
             {isCashPayment && statusKey !== 'delivered' && statusKey !== 'completed' && statusKey !== 'cancelled' && (
                 <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-5 text-center">
-                    <p className="text-base font-bold text-amber-400 mb-1">💵 {t('digital_menu.payment.cash_on_delivery_title', { type: orderDetail.type === 'delivery' ? 'entrega' : 'retirada' })}</p>
+                    <p className="text-base font-bold text-amber-400 mb-1">💵 {t('digital_menu.payment.cash_on_delivery_title', { type: orderDetail.type === 'delivery' ? t('digital_menu.payment.delivery_type') : t('digital_menu.payment.pickup_type') })}</p>
                     <p className="text-sm text-white/60">{t('digital_menu.payment.cash_on_delivery_desc')}</p>
                 </div>
             )}

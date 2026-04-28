@@ -142,6 +142,7 @@ export default function IdentityModal({ isOpen, onClose, onSuccess }) {
                                             value={phone}
                                             onChange={handlePhoneChange}
                                             placeholder={t('digital_menu.identity.placeholders.whatsapp')}
+                                            aria-label={t('digital_menu.identity.whatsapp_label')}
                                             inputMode="numeric"
                                             autoFocus
                                             className="w-full rounded-full border border-[#2A2A35] bg-[#16161E] px-6 py-4 text-center text-xl font-black text-white placeholder:text-white/20 focus:border-primary/50 focus:outline-none shadow-inner tracking-widest"
@@ -154,6 +155,7 @@ export default function IdentityModal({ isOpen, onClose, onSuccess }) {
                                             value={name}
                                             onChange={(e) => setName(e.target.value)}
                                             placeholder={t('digital_menu.identity.placeholders.name')}
+                                            aria-label={t('digital_menu.identity.full_name_label')}
                                             autoFocus
                                             className="w-full rounded-full border border-[#2A2A35] bg-[#16161E] px-6 py-4 text-center text-lg font-bold text-white placeholder:text-white/20 focus:border-primary/50 focus:outline-none shadow-inner"
                                         />

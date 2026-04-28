@@ -27,7 +27,7 @@ export default function TabOrder({ orderDetail, formatCurrency, t }) {
                             <p className="text-sm font-bold text-white leading-snug">
                                 {orderDetail.type === 'delivery'
                                     ? orderDetail.delivery_address
-                                    : 'Retirar no local da filial'}
+                                    : t('digital_menu.payment.pickup_at_store_desc')}
                             </p>
                             {orderDetail.type === 'delivery' && orderDetail.delivery_complement && (
                                 <p className="text-xs text-white/60 mt-0.5">{orderDetail.delivery_complement}</p>

@@ -140,6 +140,7 @@ export function NeighborhoodSearchSelect({
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 placeholder={t('digital_menu.checkout.search_neighborhood')}
+                                aria-label={t('digital_menu.checkout.search_neighborhood')}
                                 className="w-full bg-white/5 border border-white/10 rounded-lg pl-9 pr-3 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-primary/50 transition-colors"
                                 autoFocus
                             />

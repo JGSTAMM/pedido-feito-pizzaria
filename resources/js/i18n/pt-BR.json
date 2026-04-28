@@ -256,6 +256,8 @@
             "continue_action": "Continuar",
             "cancel_action": "Cancelar",
             "back_action": "Voltar",
+            "whatsapp_label": "Número do WhatsApp",
+            "full_name_label": "Seu Nome Completo",
             "placeholders": {
                 "whatsapp": "(51) 99999-9999",
                 "name": "Seu Nome"
@@ -700,6 +702,12 @@
             "copy_success": "✓ Código copiado!",
             "back_to_menu": "Voltar para o Início",
             "details_header": "Detalhes do Pedido",
+            "status_tab": "Status",
+            "order_tab": "O Pedido",
+            "payment_tab": "Pagamento",
+            "pickup_at_store_desc": "Retirar no local da filial",
+            "delivery_type": "entrega",
+            "pickup_type": "retirada",
             "tracking_title": "Rastreamento",
             "tracking_subtitle": "Acompanhe seu pedido",
             "tracking_unavailable": "Rastreamento indisponível",
@@ -741,7 +749,10 @@
                 "confirmed": "Confirmado",
                 "preparing": "Preparando",
                 "ready": "Pronto",
-                "delivered": "Entregue"
+                "delivered": "Entregue",
+                "status_tab": "Status",
+                "order_tab": "O Pedido",
+                "payment_tab": "Pagamento"
             }
         },
         "errors": {

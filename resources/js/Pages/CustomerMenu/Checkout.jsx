@@ -43,7 +43,11 @@ export default function Checkout() {
     return (
         <main className="min-h-screen bg-[#0D0D12] text-white pb-20">
             <header className={`${luccheseMenuTheme.glass} sticky top-0 z-30 flex items-center gap-4 px-6 py-4 border-b border-white/5`}>
-                <Link href="/menu/cart" className="flex h-10 w-10 items-center justify-center rounded-full bg-white/5 hover:bg-white/10 transition-colors">
+                <Link 
+                    href="/menu/cart" 
+                    className="flex h-10 w-10 items-center justify-center rounded-full bg-white/5 hover:bg-white/10 transition-colors"
+                    aria-label={t('digital_menu.common.back')}
+                >
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
                 </Link>
                 <div>

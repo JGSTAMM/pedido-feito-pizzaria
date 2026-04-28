@@ -256,6 +256,8 @@
             "continue_action": "Continuar",
             "cancel_action": "Cancelar",
             "back_action": "Volver",
+            "whatsapp_label": "Número de WhatsApp",
+            "full_name_label": "Tu Nombre Completo",
             "placeholders": {
                 "whatsapp": "(55) 555-5555",
                 "name": "Tu Nombre"
@@ -698,7 +700,14 @@
             "pix_copy_label": "Haz clic en el botón de abajo para copiar el código PIX:",
             "copy_code": "Copiar Código PIX",
             "copy_success": "✓ ¡Código copiado!",
-            "back_to_menu": "Volver al Inicio"
+            "back_to_menu": "Volver al Inicio",
+            "details_header": "Detalles del Pedido",
+            "status_tab": "Estado",
+            "order_tab": "El Pedido",
+            "payment_tab": "Pago",
+            "pickup_at_store_desc": "Recoger en el local de la sucursal",
+            "delivery_type": "entrega",
+            "pickup_type": "recogida"
         },
         "errors": {
             "generic": "Ocurrió un error inesperado.",
