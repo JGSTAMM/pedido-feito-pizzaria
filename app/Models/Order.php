@@ -36,6 +36,7 @@ class Order extends Model
         'paid_at',
         'accepted_at',
         'rejected_at',
+        'total_amount',
     ];
 
     // Order statuses
