@@ -12,7 +12,7 @@ class ProductFactory extends Factory
     public function definition(): array
     {
         $categories = ['Drinks', 'Desserts', 'Sides', 'Beverages'];
-        
+
         return [
             'name' => $this->faker->words(2, true),
             'price' => $this->faker->randomFloat(2, 3, 25),

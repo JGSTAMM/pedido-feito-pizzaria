@@ -11,6 +11,7 @@ use Symfony\Component\HttpFoundation\Response;
 class SetRequestLocale
 {
     private const LOCALE_COOKIE = 'app_locale';
+
     private const MENU_LOCALE_SELECTED_COOKIE = 'menu_locale_selected';
 
     private const SUPPORTED_LOCALES = [

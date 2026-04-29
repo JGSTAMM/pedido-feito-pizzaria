@@ -4,9 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Inertia\Inertia;
 
 class UserController extends Controller
 {
@@ -16,16 +16,17 @@ class UserController extends Controller
     public function __construct()
     {
         // Alternativamente, a checagem pode ser feita dentro das funções,
-        // mas a melhor abordagem é centralizar. 
-        // Em apps React/Laravel Inertia, a validação no construtor via middleware closure 
+        // mas a melhor abordagem é centralizar.
+        // Em apps React/Laravel Inertia, a validação no construtor via middleware closure
         // ou diretamente no método é adequada.
     }
 
     public function index()
     {
         abort_if(Auth::user()->role !== 'admin', 403, 'Acesso Negado: Apenas Administradores podem gerenciar a equipe.');
-        
+
         $users = User::orderBy('name')->get();
+
         return Inertia::render('Admin/Users/Index', [
             'users' => $users,
         ]);
@@ -54,12 +55,12 @@ class UserController extends Controller
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
+            'email' => 'required|string|email|max:255|unique:users,email,'.$user->id,
             'role' => 'required|in:admin,caixa,garcom',
             'password' => 'nullable|string|min:4',
         ]);
 
-        if (!empty($validated['password'])) {
+        if (! empty($validated['password'])) {
             $validated['password'] = Hash::make($validated['password']);
         } else {
             unset($validated['password']);
@@ -79,6 +80,7 @@ class UserController extends Controller
         }
 
         $user->delete();
+
         return redirect()->back()->with('success', 'Funcionário desligado do sistema.');
     }
 }

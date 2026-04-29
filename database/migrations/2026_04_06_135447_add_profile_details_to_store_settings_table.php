@@ -31,7 +31,7 @@ return new class extends Migration
                 'full_address',
                 'google_maps_embed_url',
                 'payment_methods',
-                'custom_info'
+                'custom_info',
             ]);
         });
     }

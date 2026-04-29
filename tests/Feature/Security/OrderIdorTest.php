@@ -21,7 +21,7 @@ class OrderIdorTest extends TestCase
         $table1 = Table::create(['name' => 'Mesa 1', 'status' => 'available']);
         $table2 = Table::create(['name' => 'Mesa 2', 'status' => 'available']);
 
-        $order1 = new Order();
+        $order1 = new Order;
         $order1->forceFill([
             'table_id' => $table1->id,
             'status' => 'preparing',
@@ -30,10 +30,10 @@ class OrderIdorTest extends TestCase
         ])->save();
 
         // User 2 should NOT be able to see Table 1's orders
-        // Note: Currently we don't have store-table relationships, 
+        // Note: Currently we don't have store-table relationships,
         // but a basic check would be ensuring the user is a waiter/admin
         // or has a relationship to the table.
-        
+
         // User 2 (no role) should be FORBIDDEN from viewing table orders
         $response = $this->actingAs($user2)->getJson("/api/tables/{$table1->id}/orders");
         $response->assertStatus(403);

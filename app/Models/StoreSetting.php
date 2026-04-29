@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 
 class StoreSetting extends Model
 {
@@ -43,8 +44,10 @@ class StoreSetting extends Model
             if (str_starts_with($this->logo_image, 'http')) {
                 return $this->logo_image;
             }
-            return asset('storage/' . $this->logo_image);
+
+            return asset('storage/'.$this->logo_image);
         }
+
         return null;
     }
 
@@ -54,19 +57,21 @@ class StoreSetting extends Model
             if (str_starts_with($this->cover_image, 'http')) {
                 return $this->cover_image;
             }
-            return asset('storage/' . $this->cover_image);
+
+            return asset('storage/'.$this->cover_image);
         }
+
         return null;
     }
 
     protected static function booted()
     {
         static::saved(function ($setting) {
-            \Illuminate\Support\Facades\Cache::forget('printer_settings');
+            Cache::forget('printer_settings');
         });
 
         static::deleted(function ($setting) {
-            \Illuminate\Support\Facades\Cache::forget('printer_settings');
+            Cache::forget('printer_settings');
         });
     }
 }

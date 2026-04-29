@@ -2,15 +2,15 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
-use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class OrderItem extends Model
 {
     use HasFactory, HasUuids, SoftDeletes;
-
 
     protected $fillable = [
         'order_id',
@@ -23,19 +23,20 @@ class OrderItem extends Model
         'notes',
         'description',
     ];
+
     protected $casts = [];
 
-    protected function unitPrice(): \Illuminate\Database\Eloquent\Casts\Attribute
+    protected function unitPrice(): Attribute
     {
-        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+        return Attribute::make(
             get: fn ($value) => $value / 100,
             set: fn ($value) => (int) round($value * 100),
         );
     }
 
-    protected function subtotal(): \Illuminate\Database\Eloquent\Casts\Attribute
+    protected function subtotal(): Attribute
     {
-        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+        return Attribute::make(
             get: fn ($value) => $value / 100,
             set: fn ($value) => (int) round($value * 100),
         );
@@ -51,8 +52,6 @@ class OrderItem extends Model
         return $this->belongsTo(Product::class);
     }
 
-
-
     public function pizzaSize()
     {
         return $this->belongsTo(PizzaSize::class);
@@ -61,7 +60,7 @@ class OrderItem extends Model
     public function flavors()
     {
         return $this->belongsToMany(PizzaFlavor::class, 'order_item_flavors')
-                    ->withPivot('fraction')
-                    ->withTimestamps();
+            ->withPivot('fraction')
+            ->withTimestamps();
     }
 }

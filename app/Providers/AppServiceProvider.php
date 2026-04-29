@@ -6,9 +6,9 @@ use App\Models\Order;
 use App\Models\Table;
 use App\Policies\OrderPolicy;
 use App\Policies\TablePolicy;
-use Illuminate\Support\ServiceProvider;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {

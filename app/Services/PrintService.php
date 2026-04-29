@@ -7,14 +7,15 @@ use App\Application\Printing\Exceptions\PrinterNetworkException;
 use App\Application\Printing\Formatters\ReceiptFormatter;
 use App\Models\Order;
 use App\Models\PrinterSetting;
-use Mike42\Escpos\PrintConnectors\NetworkPrintConnector;
-use Mike42\Escpos\PrintConnectors\FilePrintConnector;
-use Mike42\Escpos\Printer;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Mike42\Escpos\PrintConnectors\NetworkPrintConnector;
+use Mike42\Escpos\Printer;
 
 class PrintService
 {
     protected int $paperWidth;
+
     protected ReceiptFormatter $formatter;
 
     public function __construct(ReceiptFormatter $formatter)
@@ -26,7 +27,7 @@ class PrintService
 
     protected function getSetting($key, $default = null)
     {
-        $settings = \Illuminate\Support\Facades\Cache::remember('printer_settings', 86400, function () {
+        $settings = Cache::remember('printer_settings', 86400, function () {
             return PrinterSetting::pluck('value', 'key')->toArray();
         });
 
@@ -44,13 +45,14 @@ class PrintService
 
         try {
             $printer = $this->connectToPrinter('kitchen');
-            
+
             $this->formatter->formatKitchenTicket($printer, $order);
 
             $printer->cut();
             $printer->close();
 
             Log::info("Kitchen ticket printed for order #{$order->id}");
+
             return true;
 
         } catch (PrinterNetworkException|PrinterHardwareException $e) {
@@ -78,6 +80,7 @@ class PrintService
             $printer->close();
 
             Log::info("Customer receipt printed for order #{$order->id}");
+
             return true;
 
         } catch (PrinterNetworkException|PrinterHardwareException $e) {
@@ -95,7 +98,7 @@ class PrintService
         // $printerType is 'kitchen' or 'cashier'
         $ip = $this->getSetting("{$printerType}_ip");
         $port = $this->getSetting("{$printerType}_port", 9100);
-        
+
         if (empty($ip)) {
             throw new PrinterHardwareException(
                 "No IP configured for {$printerType} printer.",
@@ -105,6 +108,7 @@ class PrintService
 
         try {
             $connector = new NetworkPrintConnector($ip, $port);
+
             return new Printer($connector);
         } catch (\Throwable $e) {
             throw $this->classifyConnectionException($e, $printerType, $ip, $port);
@@ -169,19 +173,20 @@ class PrintService
     {
         try {
             $printer = $this->connectToPrinter($printerType);
-            if (!$printer) {
+            if (! $printer) {
                 return false;
             }
 
             $this->formatter->formatTestReceipt($printer, $printerType);
-            
+
             $printer->cut();
             $printer->close();
 
             return true;
 
         } catch (\Exception $e) {
-            Log::error("Printer test failed: " . $e->getMessage());
+            Log::error('Printer test failed: '.$e->getMessage());
+
             return false;
         }
     }

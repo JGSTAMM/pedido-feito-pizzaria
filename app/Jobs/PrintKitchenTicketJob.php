@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
-class PrintKitchenTicketJob implements ShouldQueue, ShouldBeUnique
+class PrintKitchenTicketJob implements ShouldBeUnique, ShouldQueue
 {
     use InteractsWithQueue;
     use Queueable;
@@ -49,8 +49,7 @@ class PrintKitchenTicketJob implements ShouldQueue, ShouldBeUnique
         PrintService $printService,
         PrintingTelemetryService $telemetry,
         PrinterAlertService $alertService,
-    ): void
-    {
+    ): void {
         $idempotencyKey = "printing:kitchen:completed:{$this->orderId}";
 
         if (Cache::has($idempotencyKey)) {
@@ -64,7 +63,7 @@ class PrintKitchenTicketJob implements ShouldQueue, ShouldBeUnique
         $order = Order::with(['items.product', 'items.pizzaSize', 'items.flavors', 'table', 'payments'])
             ->find($this->orderId);
 
-        if (!$order) {
+        if (! $order) {
             Log::warning('Order not found for kitchen print job.', [
                 'order_id' => $this->orderId,
             ]);
@@ -75,7 +74,7 @@ class PrintKitchenTicketJob implements ShouldQueue, ShouldBeUnique
         try {
             $printed = $printService->printKitchenTicket($order);
 
-            if (!$printed) {
+            if (! $printed) {
                 return;
             }
 

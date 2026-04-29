@@ -2,14 +2,14 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Payment extends Model
 {
     use HasUuids, SoftDeletes;
-
 
     protected $fillable = [
         'order_id', 'method', 'amount', 'notes',
@@ -20,9 +20,9 @@ class Payment extends Model
         'paid_at' => 'datetime',
     ];
 
-    protected function amount(): \Illuminate\Database\Eloquent\Casts\Attribute
+    protected function amount(): Attribute
     {
-        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+        return Attribute::make(
             get: fn ($value) => $value / 100,
             set: fn ($value) => (int) round($value * 100),
         );
@@ -47,6 +47,6 @@ class Payment extends Model
 
     public function isOnline(): bool
     {
-        return !empty($this->gateway_id);
+        return ! empty($this->gateway_id);
     }
 }

@@ -38,7 +38,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        // Reverting defaults is tricky without knowing previous state, 
+        // Reverting defaults is tricky without knowing previous state,
         // so we generally leave them or set to nullable if strict rollback needed.
     }
 };

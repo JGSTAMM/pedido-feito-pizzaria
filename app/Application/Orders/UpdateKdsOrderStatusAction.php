@@ -10,7 +10,7 @@ class UpdateKdsOrderStatusAction
 
     public function execute(Order $order, string $status): void
     {
-        if (!in_array($status, self::ALLOWED_STATUSES, true)) {
+        if (! in_array($status, self::ALLOWED_STATUSES, true)) {
             return;
         }
 

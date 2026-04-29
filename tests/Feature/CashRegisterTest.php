@@ -6,10 +6,11 @@ use App\Models\CashRegister;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\Product;
+use App\Models\StoreSetting;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
 use Inertia\Testing\AssertableInertia as Assert;
+use Tests\TestCase;
 
 class CashRegisterTest extends TestCase
 {
@@ -21,13 +22,13 @@ class CashRegisterTest extends TestCase
     {
         parent::setUp();
         $this->withoutVite();
-        
+
         $this->user = User::factory()->create();
         // Product needed for some POS related logic if any
         Product::factory()->create(['name' => 'Test Product', 'price' => 10, 'category' => 'Test']);
 
         // Seed StoreSetting for middleware/view composers
-        \App\Models\StoreSetting::create([
+        StoreSetting::create([
             'store_name' => 'Pedido Feito',
             'phone' => '123456789',
             'full_address' => 'Test Address',
@@ -66,20 +67,20 @@ class CashRegisterTest extends TestCase
         $response = $this->post('/pos/order', [
             'customer_name' => 'Test Customer',
             'payments' => [
-                ['method' => 'dinheiro', 'amount' => 50.00]
+                ['method' => 'dinheiro', 'amount' => 50.00],
             ],
             'items' => [
                 [
                     'id' => Product::first()->id,
                     'type' => 'product',
                     'quantity' => 5,
-                    'price' => 10.00
-                ]
-            ]
+                    'price' => 10.00,
+                ],
+            ],
         ]);
 
         $response->assertStatus(302);
-        
+
         $order = Order::latest()->first();
         $this->assertEquals($register->id, $order->cash_register_id);
     }
@@ -117,7 +118,7 @@ class CashRegisterTest extends TestCase
             'customer_name' => 'Test 2',
         ]);
         Payment::create(['order_id' => $order2->id, 'method' => 'credito', 'amount' => 60.00]);
-        
+
         // Test calculation in controller
         $this->actingAs($this->user)
             ->get('/cash-register')

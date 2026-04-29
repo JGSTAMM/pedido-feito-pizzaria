@@ -17,6 +17,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
 class PosController extends Controller
@@ -24,8 +26,7 @@ class PosController extends Controller
     public function __construct(
         private readonly PizzaPriceService $pizzaPriceService,
         private readonly CashRegisterLockService $cashRegisterLockService,
-    ) {
-    }
+    ) {}
 
     /**
      * Display the POS page with all catalog data.
@@ -155,8 +156,8 @@ class PosController extends Controller
                 // Legacy single payment (backward compat)
                 'payment_method' => 'required_without:payments|nullable|string|in:dinheiro,pix,credito,debito',
             ]);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            \Illuminate\Support\Facades\Log::error('Validation Failed in POS Checkout:', $e->errors());
+        } catch (ValidationException $e) {
+            Log::error('Validation Failed in POS Checkout:', $e->errors());
             throw $e;
         }
 
@@ -299,19 +300,19 @@ class PosController extends Controller
                     'notes' => $data['notes'],
                 ]);
 
-                if (!empty($data['flavor_ids'])) {
-                    $fraction = '1/' . count($data['flavor_ids']);
+                if (! empty($data['flavor_ids'])) {
+                    $fraction = '1/'.count($data['flavor_ids']);
                     foreach ($data['flavor_ids'] as $flavorId) {
                         $orderItem->flavors()->attach($flavorId, [
-                            'id' => \Illuminate\Support\Str::uuid()->toString(),
-                            'fraction' => $fraction
+                            'id' => Str::uuid()->toString(),
+                            'fraction' => $fraction,
                         ]);
                     }
                 }
             }
 
             // Create payment record(s) — supports split payment
-            if (!empty($validated['payments'])) {
+            if (! empty($validated['payments'])) {
                 foreach ($validated['payments'] as $paymentData) {
                     Payment::create([
                         'order_id' => $order->id,
@@ -330,7 +331,7 @@ class PosController extends Controller
 
             DB::commit();
 
-            return redirect()->back()->with('success', "Pedido #{$order->id} finalizado com sucesso! Total: R$ " . number_format($totalAmount, 2, ',', '.'));
+            return redirect()->back()->with('success', "Pedido #{$order->id} finalizado com sucesso! Total: R$ ".number_format($totalAmount, 2, ',', '.'));
 
         } catch (\Exception $e) {
             DB::rollBack();

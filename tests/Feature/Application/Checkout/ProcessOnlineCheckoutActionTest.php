@@ -24,7 +24,7 @@ class ProcessOnlineCheckoutActionTest extends TestCase
         $neighborhood = Neighborhood::forceCreate([
             'name' => 'Teste',
             'city' => 'Teste City',
-            'delivery_fee' => 5.00
+            'delivery_fee' => 5.00,
         ]);
 
         $validatedData = [
@@ -40,7 +40,7 @@ class ProcessOnlineCheckoutActionTest extends TestCase
                     'type' => 'product',
                     'product_id' => $product->id,
                     'quantity' => 2,
-                ]
+                ],
             ],
         ];
 
@@ -54,7 +54,7 @@ class ProcessOnlineCheckoutActionTest extends TestCase
                     'id' => '123456789',
                     'qr_code' => 'qrcode123',
                     'ticket_url' => 'http://example.com/ticket',
-                ]
+                ],
             ]);
 
         $this->app->instance(PaymentGatewayService::class, $paymentGatewayMock);
@@ -100,7 +100,7 @@ class ProcessOnlineCheckoutActionTest extends TestCase
                     'type' => 'product',
                     'product_id' => $product->id,
                     'quantity' => 1,
-                ]
+                ],
             ],
         ];
 

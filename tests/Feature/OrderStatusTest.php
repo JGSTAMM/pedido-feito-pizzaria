@@ -3,10 +3,8 @@
 namespace Tests\Feature;
 
 use App\Models\Order;
-use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\User;
-use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -15,6 +13,7 @@ class OrderStatusTest extends TestCase
     use RefreshDatabase;
 
     protected $user;
+
     protected $product;
 
     protected function setUp(): void
@@ -26,7 +25,7 @@ class OrderStatusTest extends TestCase
 
     public function test_kds_mark_ready_sets_timestamp()
     {
-        $order = new Order();
+        $order = new Order;
         $order->forceFill([
             'status' => 'preparing',
             'type' => 'salon',
@@ -47,7 +46,7 @@ class OrderStatusTest extends TestCase
     public function test_api_returns_only_ready_orders_from_today()
     {
         // Ready order from today
-        $orderToday = new Order();
+        $orderToday = new Order;
         $orderToday->forceFill([
             'status' => 'ready',
             'type' => 'salon',
@@ -58,7 +57,7 @@ class OrderStatusTest extends TestCase
         ])->save();
 
         // Ready order from yesterday
-        $orderYesterday = new Order();
+        $orderYesterday = new Order;
         $orderYesterday->forceFill([
             'status' => 'ready',
             'type' => 'salon',
@@ -70,7 +69,7 @@ class OrderStatusTest extends TestCase
         $orderYesterday->save();
 
         // Preparing order
-        $orderPreparing = new Order();
+        $orderPreparing = new Order;
         $orderPreparing->forceFill([
             'status' => 'preparing',
             'type' => 'salon',

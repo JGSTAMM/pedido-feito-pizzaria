@@ -17,12 +17,11 @@ class OnlinePaymentController extends Controller
         private readonly PaymentGatewayService $paymentGatewayService,
         private readonly ProcessOnlineCheckoutAction $processOnlineCheckoutAction,
         private readonly ProcessPaymentWebhookAction $processPaymentWebhookAction,
-    ) {
-    }
+    ) {}
 
     /**
      * POST /api/online-orders
-     * 
+     *
      * Creates an order from the digital menu and generates a payment.
      * The order stays in "awaiting_payment" until the gateway confirms.
      */
@@ -89,7 +88,7 @@ class OnlinePaymentController extends Controller
 
     /**
      * POST /api/payments/webhook
-     * 
+     *
      * Receives payment notifications from Mercado Pago.
      */
     public function webhook(Request $request)
@@ -103,7 +102,7 @@ class OnlinePaymentController extends Controller
 
     /**
      * GET /api/orders/{id}/payment-status
-     * 
+     *
      * Allows the customer to poll for payment confirmation.
      */
     public function paymentStatus(string $orderId)
@@ -112,12 +111,12 @@ class OnlinePaymentController extends Controller
         // For guest checkouts, we verify against the session ID stored during store()
         $isAuthorized = (session()->get('current_order_id') === $orderId);
 
-        if (!$isAuthorized) {
-            Log::warning("Unauthorized order status access attempt (IDOR)", [
+        if (! $isAuthorized) {
+            Log::warning('Unauthorized order status access attempt (IDOR)', [
                 'requested_order_id' => $orderId,
                 'session_order_id' => session()->get('current_order_id'),
                 'ip' => request()->ip(),
-                'user_agent' => request()->userAgent()
+                'user_agent' => request()->userAgent(),
             ]);
 
             return response()->json([
@@ -128,7 +127,7 @@ class OnlinePaymentController extends Controller
 
         $order = Order::find($orderId);
 
-        if (!$order) {
+        if (! $order) {
             return response()->json([
                 'success' => false,
                 'error' => __('digital_menu.errors.order_not_found'),
@@ -141,8 +140,8 @@ class OnlinePaymentController extends Controller
                 $gatewayStatus = $this->paymentGatewayService->checkPaymentStatus($order);
 
                 if (
-                    $gatewayStatus && 
-                    !in_array($gatewayStatus, ['pending', 'in_process']) && 
+                    $gatewayStatus &&
+                    ! in_array($gatewayStatus, ['pending', 'in_process']) &&
                     $gatewayStatus !== $order->online_payment_status
                 ) {
                     // Webhook may have been delayed — process ANY conclusive status now
@@ -153,9 +152,9 @@ class OnlinePaymentController extends Controller
                     $order->refresh();
                 }
             } catch (\Throwable $e) {
-                Log::error('Gateway polling failed: ' . $e->getMessage(), [
+                Log::error('Gateway polling failed: '.$e->getMessage(), [
                     'order_id' => $order->id,
-                    'trace' => $e->getTraceAsString()
+                    'trace' => $e->getTraceAsString(),
                 ]);
 
                 return response()->json([
@@ -167,19 +166,19 @@ class OnlinePaymentController extends Controller
         }
 
         return response()->json([
-            'success'               => true,
-            'message'               => __('digital_menu.checkout.payment_status_loaded'),
-            'order_id'              => $order->id,
-            'order_code'            => $order->short_code,
-            'status'                => $order->status,
-            'payment_status'        => $order->online_payment_status,
+            'success' => true,
+            'message' => __('digital_menu.checkout.payment_status_loaded'),
+            'order_id' => $order->id,
+            'order_code' => $order->short_code,
+            'status' => $order->status,
+            'payment_status' => $order->online_payment_status,
             'payment_method_online' => $order->payment_method_online,
-            'type'                  => $order->type,
-            'customer_name'         => $order->customer_name,
-            'is_paid'               => $order->isPaidOnline(),
-            'is_accepted'           => $order->status === Order::STATUS_ACCEPTED,
-            'pix_qr_code'           => $order->pix_qr_code,
-            'pix_qr_code_base64'    => $order->pix_qr_code_base64,
+            'type' => $order->type,
+            'customer_name' => $order->customer_name,
+            'is_paid' => $order->isPaidOnline(),
+            'is_accepted' => $order->status === Order::STATUS_ACCEPTED,
+            'pix_qr_code' => $order->pix_qr_code,
+            'pix_qr_code_base64' => $order->pix_qr_code_base64,
         ]);
     }
 }

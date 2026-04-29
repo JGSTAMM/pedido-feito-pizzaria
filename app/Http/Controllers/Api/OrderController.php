@@ -6,20 +6,20 @@ use App\Application\Orders\CreateOrderAction;
 use App\Application\Orders\OrderActionException;
 use App\Application\Orders\PayAndCloseTableAction;
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\Order;
 use App\Models\Table;
+use Illuminate\Http\Request;
 
 class OrderController extends Controller
 {
     protected CreateOrderAction $createOrderAction;
+
     protected PayAndCloseTableAction $payAndCloseTableAction;
 
     public function __construct(
         CreateOrderAction $createOrderAction,
         PayAndCloseTableAction $payAndCloseTableAction
-    )
-    {
+    ) {
         $this->createOrderAction = $createOrderAction;
         $this->payAndCloseTableAction = $payAndCloseTableAction;
     }
@@ -45,7 +45,7 @@ class OrderController extends Controller
 
             return response()->json([
                 'message' => __('order.create.success'),
-                'order_id' => $order->id
+                'order_id' => $order->id,
             ], 201);
         } catch (OrderActionException $e) {
             return response()->json(['message' => $e->getMessage()], $e->getStatus());
@@ -77,7 +77,7 @@ class OrderController extends Controller
                     if ($item->pizzaSize) {
                         return [
                             'type' => 'pizza',
-                            'name' => 'Pizza ' . $item->pizzaSize->name,
+                            'name' => 'Pizza '.$item->pizzaSize->name,
                             'flavors' => $item->flavors->pluck('name')->join(' / '),
                             'quantity' => $item->quantity,
                             'subtotal' => $item->subtotal,
@@ -124,7 +124,7 @@ class OrderController extends Controller
                     if ($item->pizzaSize) {
                         return [
                             'type' => 'pizza',
-                            'name' => 'Pizza ' . $item->pizzaSize->name,
+                            'name' => 'Pizza '.$item->pizzaSize->name,
                             'flavors' => $item->flavors->pluck('name')->join(' / '),
                             'quantity' => $item->quantity,
                             'subtotal' => $item->subtotal,
@@ -150,7 +150,7 @@ class OrderController extends Controller
                 'current_page' => $orders->currentPage(),
                 'last_page' => $orders->lastPage(),
                 'total' => $orders->total(),
-            ]
+            ],
         ]);
     }
 

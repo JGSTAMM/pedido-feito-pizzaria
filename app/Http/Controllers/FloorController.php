@@ -4,9 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Application\CashRegister\CashRegisterLockService;
 use App\Application\Orders\OrderActionException;
-use App\Models\CashRegister;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\Payment;
 use App\Models\PizzaFlavor;
 use App\Models\PizzaSize;
 use App\Models\Product;
@@ -16,6 +16,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 
 class FloorController extends Controller
@@ -23,8 +24,7 @@ class FloorController extends Controller
     public function __construct(
         private readonly PizzaPriceService $pizzaPriceService,
         private readonly CashRegisterLockService $cashRegisterLockService,
-    ) {
-    }
+    ) {}
 
     public function index()
     {
@@ -45,6 +45,7 @@ class FloorController extends Controller
                         'elapsed_minutes' => (int) $activeOrder->created_at->diffInMinutes(now()),
                         'items' => $activeOrder->items->map(function ($item) {
                             $isPizza = $item->type === 'pizza_custom';
+
                             return [
                                 'id' => $item->id,
                                 'quantity' => $item->quantity,
@@ -250,7 +251,7 @@ class FloorController extends Controller
                     'status' => 'pending',
                     'type' => 'dine_in',
                     'total_amount' => $totalAmount,
-                    'customer_name' => 'Mesa ' . $table->name,
+                    'customer_name' => 'Mesa '.$table->name,
                     'table_id' => $table->id,
                     'cash_register_id' => $activeRegister?->id,
                     'user_id' => Auth::id(),
@@ -271,12 +272,12 @@ class FloorController extends Controller
                     'notes' => $data['notes'],
                 ]);
 
-                if (!empty($data['flavor_ids'])) {
-                    $fraction = '1/' . count($data['flavor_ids']);
+                if (! empty($data['flavor_ids'])) {
+                    $fraction = '1/'.count($data['flavor_ids']);
                     foreach ($data['flavor_ids'] as $flavorId) {
                         $orderItem->flavors()->attach($flavorId, [
-                            'id' => \Illuminate\Support\Str::uuid()->toString(),
-                            'fraction' => $fraction
+                            'id' => Str::uuid()->toString(),
+                            'fraction' => $fraction,
                         ]);
                     }
                 }
@@ -324,6 +325,7 @@ class FloorController extends Controller
 
             if ($orders->isEmpty()) {
                 DB::rollBack();
+
                 return redirect()->back()->with('error', __('order.payment.no_active_orders'));
             }
 
@@ -332,29 +334,31 @@ class FloorController extends Controller
 
             if ($totalPaid < $totalAmount - 0.01) {
                 DB::rollBack();
+
                 return redirect()->back()->with('error', __('order.payment.insufficient_amount'));
             }
 
-            $paymentPool = collect($validated['payments'])->map(function($p) {
-                return ['method' => $p['method'], 'amount' => (float)$p['amount']];
+            $paymentPool = collect($validated['payments'])->map(function ($p) {
+                return ['method' => $p['method'], 'amount' => (float) $p['amount']];
             })->toArray();
 
             $pIndex = 0;
 
             foreach ($orders as $index => $order) {
-                $amountToPayForOrder = (float)$order->total_amount;
-                
+                $amountToPayForOrder = (float) $order->total_amount;
+
                 // Distribute payment to this order
                 while ($amountToPayForOrder > 0.001 && $pIndex < count($paymentPool)) {
                     $currentMethod = &$paymentPool[$pIndex];
                     if ($currentMethod['amount'] <= 0) {
                         $pIndex++;
+
                         continue;
                     }
 
                     $take = min($currentMethod['amount'], $amountToPayForOrder);
 
-                    \App\Models\Payment::create([
+                    Payment::create([
                         'order_id' => $order->id,
                         'method' => $currentMethod['method'],
                         'amount' => $take,
@@ -367,19 +371,19 @@ class FloorController extends Controller
                         $pIndex++;
                     }
                 }
-                
+
                 // If last order, dump remaining payment (change)
                 if ($index === $orders->count() - 1) {
-                     while($pIndex < count($paymentPool)) {
+                    while ($pIndex < count($paymentPool)) {
                         if ($paymentPool[$pIndex]['amount'] > 0.001) {
-                            \App\Models\Payment::create([
+                            Payment::create([
                                 'order_id' => $order->id,
                                 'method' => $paymentPool[$pIndex]['method'],
                                 'amount' => $paymentPool[$pIndex]['amount'],
                             ]);
                         }
                         $pIndex++;
-                     }
+                    }
                 }
 
                 // Update order to 'completed' so it leaves the table's activeOrders scope
@@ -393,7 +397,7 @@ class FloorController extends Controller
             $table->update(['status' => 'available']);
 
             DB::commit();
-            
+
             return redirect()->back()->with('success', __('order.payment.success'));
 
         } catch (\Exception $e) {

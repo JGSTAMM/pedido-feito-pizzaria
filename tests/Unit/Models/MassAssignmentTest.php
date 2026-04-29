@@ -2,16 +2,15 @@
 
 namespace Tests\Unit\Models;
 
-use Tests\TestCase;
 use App\Models\Customer;
 use App\Models\OrderItem;
-use Illuminate\Database\Eloquent\MassAssignmentException;
+use Tests\TestCase;
 
 class MassAssignmentTest extends TestCase
 {
     public function test_customer_model_prevents_mass_assignment_of_is_admin()
     {
-        $customer = new Customer();
+        $customer = new Customer;
         $customer->fill([
             'name' => 'John Doe',
             'is_admin' => true,
@@ -23,7 +22,7 @@ class MassAssignmentTest extends TestCase
 
     public function test_order_item_model_prevents_mass_assignment_of_fake_discount()
     {
-        $orderItem = new OrderItem();
+        $orderItem = new OrderItem;
         $orderItem->fill([
             'quantity' => 2,
             'fake_discount' => 100,

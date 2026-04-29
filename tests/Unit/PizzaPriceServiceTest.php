@@ -2,11 +2,11 @@
 
 namespace Tests\Unit;
 
-use Tests\TestCase;
-use App\Services\PizzaPriceService;
-use App\Models\PizzaSize;
 use App\Models\PizzaFlavor;
+use App\Models\PizzaSize;
+use App\Services\PizzaPriceService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class PizzaPriceServiceTest extends TestCase
 {
@@ -25,7 +25,7 @@ class PizzaPriceServiceTest extends TestCase
         $size = PizzaSize::factory()->create([
             'is_special_broto_rule' => false,
         ]);
-        
+
         $flavor = PizzaFlavor::factory()->create([
             'base_price' => 50.00,
         ]);
@@ -40,7 +40,7 @@ class PizzaPriceServiceTest extends TestCase
         $size = PizzaSize::factory()->create([
             'is_special_broto_rule' => false,
         ]);
-        
+
         $flavor1 = PizzaFlavor::factory()->create(['base_price' => 40.00]);
         $flavor2 = PizzaFlavor::factory()->create(['base_price' => 60.00]); // Highest
         $flavor3 = PizzaFlavor::factory()->create(['base_price' => 55.00]);
@@ -55,7 +55,7 @@ class PizzaPriceServiceTest extends TestCase
         $size = PizzaSize::factory()->create([
             'is_special_broto_rule' => true,
         ]);
-        
+
         $flavor = PizzaFlavor::factory()->create([
             'base_price' => 50.00,
         ]);

@@ -19,8 +19,7 @@ class ProcessOnlineCheckoutAction
     public function __construct(
         private readonly PaymentGatewayService $paymentGatewayService,
         private readonly PizzaPriceService $pizzaPriceService,
-    ) {
-    }
+    ) {}
 
     public function execute(array $validated): array
     {
@@ -42,23 +41,23 @@ class ProcessOnlineCheckoutAction
             DB::beginTransaction();
 
             $deliveryFee = $this->resolveDeliveryFee($validated);
-            $orderType   = ($validated['type'] ?? null) === 'dine_in' ? 'salon' : $validated['type'];
+            $orderType = ($validated['type'] ?? null) === 'dine_in' ? 'salon' : $validated['type'];
 
             $isCash = ($validated['payment_method'] ?? '') === 'cash';
 
             // Use forceFill for fields intentionally excluded from $fillable (status, total_amount)
-            $order = new Order();
+            $order = new Order;
             $order->forceFill([
-                'status'               => $isCash ? Order::STATUS_PENDING : Order::STATUS_AWAITING_PAYMENT,
-                'type'                 => $orderType,
-                'table_id'             => $tableId,
-                'customer_name'        => $validated['customer_name'],
-                'customer_phone'       => $validated['customer_phone'],
-                'neighborhood_id'      => $validated['neighborhood_id'] ?? null,
-                'delivery_address'     => $validated['delivery_address'] ?? null,
-                'delivery_complement'  => $validated['delivery_complement'] ?? null,
-                'delivery_fee'         => $deliveryFee,
-                'total_amount'         => 0,
+                'status' => $isCash ? Order::STATUS_PENDING : Order::STATUS_AWAITING_PAYMENT,
+                'type' => $orderType,
+                'table_id' => $tableId,
+                'customer_name' => $validated['customer_name'],
+                'customer_phone' => $validated['customer_phone'],
+                'neighborhood_id' => $validated['neighborhood_id'] ?? null,
+                'delivery_address' => $validated['delivery_address'] ?? null,
+                'delivery_complement' => $validated['delivery_complement'] ?? null,
+                'delivery_fee' => $deliveryFee,
+                'total_amount' => 0,
             ]);
             $order->save();
 
@@ -69,14 +68,14 @@ class ProcessOnlineCheckoutAction
             // Start payment BEFORE committing so we can rollback on gateway failure
             $paymentResult = $this->startPayment($order, $validated);
 
-            if (!$paymentResult['success']) {
+            if (! $paymentResult['success']) {
                 DB::rollBack();
 
                 return [
-                    'status'  => 400,
+                    'status' => 400,
                     'payload' => [
                         'success' => false,
-                        'error'   => $paymentResult['error'] ?? __('digital_menu.checkout.payment_creation_failed'),
+                        'error' => $paymentResult['error'] ?? __('digital_menu.checkout.payment_creation_failed'),
                     ],
                 ];
             }
@@ -84,26 +83,26 @@ class ProcessOnlineCheckoutAction
             DB::commit();
 
             return [
-                'status'  => 201,
+                'status' => 201,
                 'payload' => [
-                    'success'  => true,
-                    'message'  => __('digital_menu.checkout.order_created'),
+                    'success' => true,
+                    'message' => __('digital_menu.checkout.order_created'),
                     'order_id' => $order->id,
-                    'payment'  => $paymentResult['data'],
+                    'payment' => $paymentResult['data'],
                 ],
             ];
         } catch (Throwable $exception) {
             DB::rollBack();
             Log::error('Error creating online order', [
-                'message'   => $exception->getMessage(),
+                'message' => $exception->getMessage(),
                 'exception' => $exception,
             ]);
 
             return [
-                'status'  => 500,
+                'status' => 500,
                 'payload' => [
                     'success' => false,
-                    'error'   => __('digital_menu.errors.checkout_process_failed'),
+                    'error' => __('digital_menu.errors.checkout_process_failed'),
                 ],
             ];
         }
@@ -127,6 +126,7 @@ class ProcessOnlineCheckoutAction
         foreach ($items as $item) {
             if ($item['type'] === 'pizza') {
                 $total += $this->createPizzaItem($order, $item);
+
                 continue;
             }
 
@@ -230,7 +230,7 @@ class ProcessOnlineCheckoutAction
             return [null, null];
         }
 
-        if (!empty($validated['table_id'])) {
+        if (! empty($validated['table_id'])) {
             $table = Table::find($validated['table_id']);
 
             if ($table) {
@@ -248,7 +248,7 @@ class ProcessOnlineCheckoutAction
             ->whereRaw('LOWER(name) = ?', [strtolower($tableCode)])
             ->first();
 
-        if (!$table) {
+        if (! $table) {
             return [null, __('digital_menu.checkout.errors.table_not_found')];
         }
 

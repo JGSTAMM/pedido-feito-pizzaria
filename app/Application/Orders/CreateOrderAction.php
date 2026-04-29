@@ -19,8 +19,7 @@ class CreateOrderAction
     public function __construct(
         private readonly PizzaPriceService $priceService,
         private readonly CashRegisterLockService $cashRegisterLockService,
-    ) {
-    }
+    ) {}
 
     public function execute(array $validated, User $user): Order
     {
@@ -61,7 +60,7 @@ class CreateOrderAction
                         'notes' => $notes,
                     ]);
 
-                    $fraction = '1/' . count($flavorIds);
+                    $fraction = '1/'.count($flavorIds);
                     $attachData = [];
 
                     foreach ($flavorIds as $flavorId) {
@@ -73,6 +72,7 @@ class CreateOrderAction
 
                     $orderItem->flavors()->attach($attachData);
                     $totalAmount += $price;
+
                     continue;
                 }
 

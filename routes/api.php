@@ -1,19 +1,20 @@
 <?php
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\CustomerIdentityController;
 use App\Http\Controllers\Api\DataController;
-use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\DigitalMenuController;
 use App\Http\Controllers\Api\OnlinePaymentController;
-use App\Http\Controllers\Api\CustomerIdentityController;
+use App\Http\Controllers\Api\OrderController;
+use Illuminate\Http\Request;
+use Illuminate\Session\Middleware\StartSession;
+use Illuminate\Support\Facades\Route;
 
 // ═══════════════════════════════════════════
 // ROTAS PÚBLICAS (com rate limiting)
 // ═══════════════════════════════════════════
 
-Route::middleware(['throttle:60,1', \Illuminate\Session\Middleware\StartSession::class])->group(function () {
+Route::middleware(['throttle:60,1', StartSession::class])->group(function () {
     Route::get('/digital-menu', [DigitalMenuController::class, 'index']);
     Route::post('/customers/identify', [CustomerIdentityController::class, 'identify']);
     Route::get('/orders/{order}/payment-status', [OnlinePaymentController::class, 'paymentStatus']);
@@ -23,7 +24,7 @@ Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,
 
 // Online Payment (público — o cliente faz o pedido sem login)
 Route::post('/online-orders', [OnlinePaymentController::class, 'store'])
-    ->middleware(['throttle:10,1', \Illuminate\Session\Middleware\StartSession::class]);
+    ->middleware(['throttle:10,1', StartSession::class]);
 
 Route::post('/payments/webhook', [OnlinePaymentController::class, 'webhook'])
     ->middleware('throttle:60,1');

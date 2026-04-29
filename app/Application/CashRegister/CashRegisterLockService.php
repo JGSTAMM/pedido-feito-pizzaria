@@ -9,8 +9,7 @@ class CashRegisterLockService
 {
     public function __construct(
         private readonly EnsureNoPendingOrdersForCloseAction $ensureNoPendingOrdersForCloseAction,
-    ) {
-    }
+    ) {}
 
     public function requireOpenRegister(): CashRegister
     {
@@ -18,7 +17,7 @@ class CashRegisterLockService
             ->latest()
             ->first();
 
-        if (!$register) {
+        if (! $register) {
             throw new OrderActionException('order.create.cash_register_closed', 403);
         }
 

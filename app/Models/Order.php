@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
-use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 
 class Order extends Model
 {
@@ -41,20 +43,32 @@ class Order extends Model
 
     // Order statuses
     const STATUS_AWAITING_PAYMENT = 'awaiting_payment';
+
     const STATUS_PAID_ONLINE = 'paid_online';
+
     const STATUS_ACCEPTED = 'accepted';
+
     const STATUS_REJECTED = 'rejected';
+
     const STATUS_PENDING = 'pending';
+
     const STATUS_PREPARING = 'preparing';
+
     const STATUS_READY = 'ready';
+
     const STATUS_DELIVERED = 'delivered';
+
     const STATUS_PAID = 'paid';
+
     const STATUS_COMPLETED = 'completed';
 
     // Online payment statuses
     const ONLINE_PAYMENT_PENDING = 'pending';
+
     const ONLINE_PAYMENT_APPROVED = 'approved';
+
     const ONLINE_PAYMENT_REJECTED = 'rejected';
+
     const ONLINE_PAYMENT_REFUNDED = 'refunded';
 
     protected static function boot()
@@ -62,7 +76,7 @@ class Order extends Model
         parent::boot();
 
         static::creating(function ($order) {
-            if ($order->type === 'delivery' && !$order->status) {
+            if ($order->type === 'delivery' && ! $order->status) {
                 $order->status = self::STATUS_PENDING;
             }
 
@@ -71,10 +85,10 @@ class Order extends Model
                 $maxAttempts = 10;
                 $attempts = 0;
                 do {
-                    $code = strtoupper(\Illuminate\Support\Str::random(5));
+                    $code = strtoupper(Str::random(5));
                     $attempts++;
                     if ($attempts >= $maxAttempts) {
-                        throw new \RuntimeException('Unable to generate a unique short_code after ' . $maxAttempts . ' attempts.');
+                        throw new \RuntimeException('Unable to generate a unique short_code after '.$maxAttempts.' attempts.');
                     }
                 } while (self::where('short_code', $code)->exists());
 
@@ -90,25 +104,25 @@ class Order extends Model
         'rejected_at' => 'datetime',
     ];
 
-    protected function totalAmount(): \Illuminate\Database\Eloquent\Casts\Attribute
+    protected function totalAmount(): Attribute
     {
-        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+        return Attribute::make(
             get: fn ($value) => $value / 100,
             set: fn ($value) => (int) round($value * 100),
         );
     }
 
-    protected function deliveryFee(): \Illuminate\Database\Eloquent\Casts\Attribute
+    protected function deliveryFee(): Attribute
     {
-        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+        return Attribute::make(
             get: fn ($value) => $value / 100,
             set: fn ($value) => (int) round($value * 100),
         );
     }
 
-    protected function changeAmount(): \Illuminate\Database\Eloquent\Casts\Attribute
+    protected function changeAmount(): Attribute
     {
-        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+        return Attribute::make(
             get: fn ($value) => $value / 100,
             set: fn ($value) => (int) round($value * 100),
         );
@@ -169,7 +183,7 @@ class Order extends Model
 
     public function isOnlineOrder(): bool
     {
-        return !empty($this->payment_gateway_id);
+        return ! empty($this->payment_gateway_id);
     }
 
     public function isPaidOnline(): bool

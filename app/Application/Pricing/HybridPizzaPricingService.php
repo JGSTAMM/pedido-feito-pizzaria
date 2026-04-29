@@ -13,7 +13,7 @@ class HybridPizzaPricingService
     {
         $size = PizzaSize::find($sizeId);
 
-        if (!$size) {
+        if (! $size) {
             return 0.0;
         }
 

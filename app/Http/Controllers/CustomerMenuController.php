@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Order;
-use App\Models\StoreSetting;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -29,7 +28,7 @@ class CustomerMenuController extends Controller
         $lastOrder = null;
 
         if ($phone) {
-            $order = \App\Models\Order::where('customer_phone', $phone)
+            $order = Order::where('customer_phone', $phone)
                 ->orderByDesc('created_at')
                 ->first();
 
@@ -87,32 +86,32 @@ class CustomerMenuController extends Controller
     private function formatOrderForCustomer(Order $order): array
     {
         return [
-            'id'                    => $order->id,
-            'short_code'            => $order->short_code ?? strtoupper(substr($order->id, 0, 5)),
-            'status'                => $order->status,
-            'type'                  => $order->type,
-            'customer_name'         => $order->customer_name,
-            'customer_phone'        => $order->customer_phone,
-            'delivery_address'      => $order->delivery_address,
-            'delivery_complement'   => $order->delivery_complement,
-            'notes'                 => $order->notes,
+            'id' => $order->id,
+            'short_code' => $order->short_code ?? strtoupper(substr($order->id, 0, 5)),
+            'status' => $order->status,
+            'type' => $order->type,
+            'customer_name' => $order->customer_name,
+            'customer_phone' => $order->customer_phone,
+            'delivery_address' => $order->delivery_address,
+            'delivery_complement' => $order->delivery_complement,
+            'notes' => $order->notes,
             'payment_method_online' => $order->payment_method_online,
             'online_payment_status' => $order->online_payment_status,
-            'total_amount'          => (float) $order->total_amount,
-            'delivery_fee'          => (float) $order->delivery_fee,
-            'items'                 => $order->items->map(fn ($item) => [
-                'id'         => $item->id,
-                'name'       => $this->resolveItemName($item),
-                'quantity'   => $item->quantity,
+            'total_amount' => (float) $order->total_amount,
+            'delivery_fee' => (float) $order->delivery_fee,
+            'items' => $order->items->map(fn ($item) => [
+                'id' => $item->id,
+                'name' => $this->resolveItemName($item),
+                'quantity' => $item->quantity,
                 'unit_price' => (float) $item->unit_price,
-                'subtotal'   => (float) $item->subtotal,
-                'notes'       => $item->notes,
+                'subtotal' => (float) $item->subtotal,
+                'notes' => $item->notes,
                 'description' => $item->description,
-                'type'        => $item->type,
+                'type' => $item->type,
             ])->all(),
-            'items_count'            => $order->items->sum('quantity'),
-            'created_at_formatted'   => $order->created_at?->format('d/m/Y \à\s H:i'),
-            'created_at'             => $order->created_at?->toIso8601String(),
+            'items_count' => $order->items->sum('quantity'),
+            'created_at_formatted' => $order->created_at?->format('d/m/Y \à\s H:i'),
+            'created_at' => $order->created_at?->toIso8601String(),
         ];
     }
 
@@ -121,12 +120,12 @@ class CustomerMenuController extends Controller
         if ($item->type === 'pizza_custom' || $item->type === 'pizza') {
             $size = $item->pizzaSize?->name ?? '';
             $flavors = $item->flavors->pluck('name')->join(', ');
+
             return trim("{$size} — {$flavors}", ' — ') ?: 'Pizza';
         }
 
         return $item->product?->name ?? 'Item';
     }
-
 
     public function cart(): Response
     {
@@ -143,7 +142,7 @@ class CustomerMenuController extends Controller
     public function status(Order $order): Response
     {
         $order->load(['items.product', 'items.flavors', 'items.pizzaSize']);
-        
+
         return Inertia::render('CustomerMenu/PaymentStatus', [
             'orderId' => $order->id,
             'orderDetail' => $this->formatOrderForCustomer($order),

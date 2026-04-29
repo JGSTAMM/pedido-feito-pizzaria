@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Models\CashRegister;
-use App\Models\Order;
 use App\Models\PizzaFlavor;
 use App\Models\PizzaSize;
 use App\Models\Product;
@@ -54,7 +53,7 @@ class ApiOrderTest extends TestCase
     public function test_can_create_order()
     {
         $this->withoutExceptionHandling();
-        
+
         $orderData = [
             'table_id' => $this->table->id,
             'items' => [

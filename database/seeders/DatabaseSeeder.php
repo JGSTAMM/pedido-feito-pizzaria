@@ -2,11 +2,11 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-use App\Models\Table;
-use App\Models\PizzaSize;
 use App\Models\PizzaFlavor;
+use App\Models\PizzaSize;
 use App\Models\Product;
+use App\Models\Table;
+use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -144,12 +144,12 @@ class DatabaseSeeder extends Seeder
         // BEBIDAS
         // =============================================
         $bebidas = [
-            ['name' => 'Água com/sem Gás',       'price' =>  5.00, 'category' => 'Bebidas'],
-            ['name' => 'Refrigerante Lata',      'price' =>  6.00, 'category' => 'Bebidas'],
-            ['name' => 'Refrigerante 600ml',     'price' =>  8.00, 'category' => 'Bebidas'],
+            ['name' => 'Água com/sem Gás',       'price' => 5.00, 'category' => 'Bebidas'],
+            ['name' => 'Refrigerante Lata',      'price' => 6.00, 'category' => 'Bebidas'],
+            ['name' => 'Refrigerante 600ml',     'price' => 8.00, 'category' => 'Bebidas'],
             ['name' => 'Refrigerante 2L',        'price' => 15.00, 'category' => 'Bebidas'],
-            ['name' => 'Suco Lata',              'price' =>  8.00, 'category' => 'Bebidas'],
-            ['name' => 'Suco Integral',          'price' =>  8.00, 'category' => 'Bebidas'],
+            ['name' => 'Suco Lata',              'price' => 8.00, 'category' => 'Bebidas'],
+            ['name' => 'Suco Integral',          'price' => 8.00, 'category' => 'Bebidas'],
             ['name' => 'Cerveja Lata',           'price' => 10.00, 'category' => 'Bebidas'],
             ['name' => 'Cerveja Latão',          'price' => 12.00, 'category' => 'Bebidas'],
             ['name' => 'Cerveja 600ml',          'price' => 20.00, 'category' => 'Bebidas'],

@@ -59,6 +59,7 @@ class PayAndCloseTableAction
 
                     if (($current['amount'] ?? 0) <= 0) {
                         $poolIndex++;
+
                         continue;
                     }
 

@@ -43,7 +43,7 @@ class CustomerIdentityController extends Controller
                     'email' => $customer->email,
                 ],
             ]);
-            
+
             return $response->cookie('customer_phone', $customer->phone, 60 * 24 * 365);
         }
 
@@ -64,7 +64,7 @@ class CustomerIdentityController extends Controller
                     'email' => $customer->email,
                 ],
             ]);
-            
+
             return $response->cookie('customer_phone', $customer->phone, 60 * 24 * 365);
         }
 

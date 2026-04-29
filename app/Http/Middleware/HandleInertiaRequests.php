@@ -2,6 +2,8 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Order;
+use App\Models\StoreSetting;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -35,17 +37,17 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
-        $storeSetting = \App\Models\StoreSetting::first();
-        
+        $storeSetting = StoreSetting::first();
+
         $phone = $request->cookie('customer_phone', '');
         $activeOrdersCount = 0;
 
         if ($phone) {
-            $activeOrdersCount = \App\Models\Order::where('customer_phone', $phone)
+            $activeOrdersCount = Order::where('customer_phone', $phone)
                 ->whereNotIn('status', ['delivered', 'completed', 'cancelled'])
                 ->count();
         }
-        
+
         return [
             ...parent::share($request),
             'appName' => $storeSetting?->store_name ?? config('app.name', 'Pedido Feito'),

@@ -8,13 +8,11 @@ use Illuminate\Support\Facades\Cache;
 
 class ProcessPaymentWebhookAction
 {
-    public function __construct(private readonly PaymentGatewayService $paymentGatewayService)
-    {
-    }
+    public function __construct(private readonly PaymentGatewayService $paymentGatewayService) {}
 
     public function execute(Request $request): array
     {
-        if (!$this->paymentGatewayService->validateWebhookSignature($request)) {
+        if (! $this->paymentGatewayService->validateWebhookSignature($request)) {
             return [
                 'status' => 403,
                 'payload' => [
@@ -25,7 +23,7 @@ class ProcessPaymentWebhookAction
         }
 
         $notificationId = $this->paymentGatewayService->extractNotificationId($request);
-        if (!$notificationId) {
+        if (! $notificationId) {
             return [
                 'status' => 400,
                 'payload' => [
@@ -36,7 +34,7 @@ class ProcessPaymentWebhookAction
         }
 
         $cacheKey = "mercadopago:webhook:{$notificationId}";
-        if (!Cache::add($cacheKey, now()->toISOString(), now()->addDay())) {
+        if (! Cache::add($cacheKey, now()->toISOString(), now()->addDay())) {
             return [
                 'status' => 200,
                 'payload' => [
@@ -48,7 +46,7 @@ class ProcessPaymentWebhookAction
         }
 
         $success = $this->paymentGatewayService->handleWebhook($request->all());
-        if (!$success) {
+        if (! $success) {
             Cache::forget($cacheKey);
 
             return [

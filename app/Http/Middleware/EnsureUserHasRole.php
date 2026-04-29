@@ -15,7 +15,7 @@ class EnsureUserHasRole
     {
         $user = $request->user();
 
-        if (!$user) {
+        if (! $user) {
             abort(401);
         }
 
@@ -26,7 +26,7 @@ class EnsureUserHasRole
 
         $userRole = $this->normalizeRole((string) ($user->role ?? ''));
 
-        if (!in_array($userRole, $normalizedAllowedRoles, true)) {
+        if (! in_array($userRole, $normalizedAllowedRoles, true)) {
             abort(403, __('auth.unauthorized'));
         }
 

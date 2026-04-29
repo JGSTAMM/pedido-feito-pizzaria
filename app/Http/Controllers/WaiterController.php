@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\CashRegister;
+use App\Models\Order;
 use App\Models\PizzaFlavor;
 use App\Models\PizzaSize;
 use App\Models\Product;
@@ -31,6 +31,7 @@ class WaiterController extends Controller
                         'elapsed_minutes' => (int) $activeOrder->created_at->diffInMinutes(now()),
                         'items' => $activeOrder->items->map(function ($item) {
                             $isPizza = $item->type === 'pizza_custom';
+
                             return [
                                 'id' => $item->id,
                                 'quantity' => $item->quantity,
@@ -120,7 +121,7 @@ class WaiterController extends Controller
     public function orders()
     {
         $user = Auth::user();
-        $orders = \App\Models\Order::whereIn('status', ['pending', 'preparing', 'ready'])
+        $orders = Order::whereIn('status', ['pending', 'preparing', 'ready'])
             ->with(['items.product', 'table'])
             ->orderByDesc('created_at')
             ->get()

@@ -45,7 +45,7 @@ class FlavorController extends Controller
 
     public function toggleStatus(PizzaFlavor $flavor)
     {
-        $flavor->update(['is_active' => !$flavor->is_active]);
+        $flavor->update(['is_active' => ! $flavor->is_active]);
 
         return redirect()->back()->with('success', 'Status do sabor alterado com sucesso.');
     }

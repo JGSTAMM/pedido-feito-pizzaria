@@ -12,8 +12,7 @@ class KdsController extends Controller
     public function __construct(
         private readonly BuildKdsOrdersAction $buildKdsOrdersAction,
         private readonly UpdateKdsOrderStatusAction $updateKdsOrderStatusAction,
-    ) {
-    }
+    ) {}
 
     public function index()
     {

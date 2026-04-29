@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Application\CashRegister\BuildCashRegisterHistoryAction;
-use App\Application\CashRegister\CashRegisterLockService;
 use App\Application\CashRegister\BuildCashRegisterSummaryAction;
+use App\Application\CashRegister\CashRegisterLockService;
 use App\Application\Orders\OrderActionException;
 use App\Models\CashRegister;
 use Illuminate\Http\Request;
@@ -17,8 +17,7 @@ class CashRegisterController extends Controller
         private readonly BuildCashRegisterSummaryAction $buildCashRegisterSummaryAction,
         private readonly BuildCashRegisterHistoryAction $buildCashRegisterHistoryAction,
         private readonly CashRegisterLockService $cashRegisterLockService,
-    ) {
-    }
+    ) {}
 
     public function index(Request $request)
     {

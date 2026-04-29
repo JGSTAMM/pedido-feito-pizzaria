@@ -12,10 +12,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('store_settings', function (Blueprint $table) {
-            if (!Schema::hasColumn('store_settings', 'google_maps_embed_url')) {
+            if (! Schema::hasColumn('store_settings', 'google_maps_embed_url')) {
                 $table->text('google_maps_embed_url')->nullable()->after('full_address');
             }
-            if (!Schema::hasColumn('store_settings', 'google_maps_place_url')) {
+            if (! Schema::hasColumn('store_settings', 'google_maps_place_url')) {
                 $table->text('google_maps_place_url')->nullable()->after('google_maps_embed_url');
             }
         });

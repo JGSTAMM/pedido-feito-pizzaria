@@ -10,6 +10,7 @@ use App\Models\Neighborhood;
 use App\Models\PizzaFlavor;
 use App\Models\PizzaSize;
 use App\Models\Product;
+use App\Models\StoreSetting;
 use App\Models\Table;
 
 class GetDigitalCatalogAction
@@ -44,7 +45,7 @@ class GetDigitalCatalogAction
             });
 
         return [
-            'storeSetting' => \App\Models\StoreSetting::first(),
+            'storeSetting' => StoreSetting::first(),
             'pizza_sizes' => PizzaSizeResource::collection(PizzaSize::all()),
             'pizza_flavors' => PizzaFlavorResource::collection($flavors),
             'products' => ProductResource::collection($products),

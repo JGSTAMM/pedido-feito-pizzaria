@@ -47,7 +47,7 @@ class ProductController extends Controller
 
     public function toggleStatus(Product $product)
     {
-        $product->update(['is_active' => !$product->is_active]);
+        $product->update(['is_active' => ! $product->is_active]);
 
         return redirect()->back()->with('success', 'Status do produto alterado com sucesso.');
     }

@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Models\Order;
-use App\Models\OrderItem;
 use App\Models\Payment;
 use App\Models\Product;
 use App\Models\Table;
@@ -16,7 +15,9 @@ class PaymentFlowTest extends TestCase
     use RefreshDatabase;
 
     protected $user;
+
     protected $table;
+
     protected $product;
 
     protected function setUp(): void
@@ -30,7 +31,7 @@ class PaymentFlowTest extends TestCase
     public function test_order_creation_with_payment_marks_as_paid()
     {
         // Simulate order creation in POS (direct sale)
-        $order = new Order();
+        $order = new Order;
         $order->forceFill([
             'status' => 'paid',
             'type' => 'salon',
@@ -52,13 +53,13 @@ class PaymentFlowTest extends TestCase
             'status' => 'paid',
             'total_amount' => 5000,
         ]);
-        
+
         $this->assertNotNull($order->fresh()->paid_at);
     }
 
     public function test_payment_with_change_amount()
     {
-        $order = new Order();
+        $order = new Order;
         $order->forceFill([
             'status' => 'paid',
             'total_amount' => 45.00,
@@ -83,7 +84,7 @@ class PaymentFlowTest extends TestCase
     {
         // Table is occupied with orders
         $this->table->update(['status' => 'occupied']);
-        
+
         $order1 = Order::create([
             'table_id' => $this->table->id,
             'status' => 'pending',
@@ -97,7 +98,7 @@ class PaymentFlowTest extends TestCase
 
         $this->assertDatabaseHas('tables', [
             'id' => $this->table->id,
-            'status' => 'available', 
+            'status' => 'available',
         ]);
 
         $this->assertDatabaseHas('orders', [
@@ -118,7 +119,7 @@ class PaymentFlowTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user)->postJson("/api/tables/{$this->table->id}/close");
-        
+
         $response->assertStatus(404)
             ->assertJson(['message' => 'Nenhum pedido ativo nesta mesa']);
     }

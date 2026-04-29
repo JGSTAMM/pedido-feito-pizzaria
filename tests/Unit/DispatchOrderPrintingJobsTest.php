@@ -17,7 +17,7 @@ class DispatchOrderPrintingJobsTest extends TestCase
         config()->set('printing.auto_print_kitchen', true);
         config()->set('printing.auto_print_receipt', false);
 
-        $listener = new DispatchOrderPrintingJobs();
+        $listener = new DispatchOrderPrintingJobs;
         $listener->handle(new OrderCreatedForPrinting('order-123'));
 
         Bus::assertDispatched(PrintKitchenTicketJob::class, function (PrintKitchenTicketJob $job) {
@@ -33,7 +33,7 @@ class DispatchOrderPrintingJobsTest extends TestCase
         config()->set('printing.auto_print_kitchen', false);
         config()->set('printing.auto_print_receipt', true);
 
-        $listener = new DispatchOrderPrintingJobs();
+        $listener = new DispatchOrderPrintingJobs;
         $listener->handle(new OrderCreatedForPrinting('order-999'));
 
         Bus::assertDispatched(PrintCustomerReceiptJob::class, function (PrintCustomerReceiptJob $job) {

@@ -14,7 +14,9 @@ class DeliveryOrderTest extends TestCase
     use RefreshDatabase;
 
     protected $user;
+
     protected $neighborhood;
+
     protected $product;
 
     protected function setUp(): void

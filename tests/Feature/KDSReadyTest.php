@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\Models\Table;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -14,6 +15,7 @@ class KDSReadyTest extends TestCase
     use RefreshDatabase;
 
     protected $user;
+
     protected $table;
 
     protected function setUp(): void
@@ -22,15 +24,15 @@ class KDSReadyTest extends TestCase
         $this->user = User::factory()->create();
         $this->product = Product::factory()->create(['name' => 'Burger', 'price' => 20]);
         // Create table for FK
-        $this->table = \App\Models\Table::create(['name' => 'Mesa 1', 'status' => 'available']);
+        $this->table = Table::create(['name' => 'Mesa 1', 'status' => 'available']);
     }
 
     public function test_mark_order_as_ready_sets_timestamp()
     {
         // Simulate KDS action logic (normally in Livewire component, but we test the model update or controller if applicable)
         // KDS component method: update(['status' => 'ready', 'ready_at' => now()])
-        
-        $order = new Order();
+
+        $order = new Order;
         $order->forceFill([
             'status' => 'preparing',
             'total_amount' => 20.00,
@@ -49,7 +51,7 @@ class KDSReadyTest extends TestCase
     public function test_api_returns_ready_orders()
     {
         // Create 1 ready order
-        $readyOrder = new Order();
+        $readyOrder = new Order;
         $readyOrder->forceFill([
             'status' => 'ready',
             'ready_at' => now(),
@@ -65,14 +67,14 @@ class KDSReadyTest extends TestCase
         ]);
 
         // Create 1 preparing order (should not be returned)
-        $preparingOrder = new Order();
+        $preparingOrder = new Order;
         $preparingOrder->forceFill([
             'status' => 'preparing',
             'total_amount' => 20.00,
         ])->save();
 
         // Create 1 old ready order (yesterday) - Endpoint filters by today()
-        $oldOrder = new Order();
+        $oldOrder = new Order;
         $oldOrder->forceFill([
             'status' => 'ready',
             'ready_at' => now()->subDay(),

@@ -6,10 +6,11 @@ use App\Models\Order;
 use App\Models\Payment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use MercadoPago\Client\Payment\PaymentClient;
 use MercadoPago\Client\Common\RequestOptions;
-use MercadoPago\MercadoPagoConfig;
+use MercadoPago\Client\Payment\PaymentClient;
+use MercadoPago\Client\Payment\PaymentRefundClient;
 use MercadoPago\Exceptions\MPApiException;
+use MercadoPago\MercadoPagoConfig;
 
 class PaymentGatewayService
 {
@@ -37,6 +38,7 @@ class PaymentGatewayService
         $secret = (string) config('services.mercadopago.webhook_secret');
         if ($secret === '') {
             Log::error('Mercado Pago webhook secret is not configured');
+
             return false;
         }
 
@@ -76,14 +78,13 @@ class PaymentGatewayService
     /**
      * Create a PIX payment via Mercado Pago.
      *
-     * @param  Order  $order
-     * @param  string $payerEmail  Email do pagador (obrigatório para PIX)
-     * @return array  ['success' => bool, 'data' => [...]]
+     * @param  string  $payerEmail  Email do pagador (obrigatório para PIX)
+     * @return array ['success' => bool, 'data' => [...]]
      */
     public function createPixPayment(Order $order, string $payerEmail): array
     {
         try {
-            $client = new PaymentClient();
+            $client = new PaymentClient;
 
             $requestBody = [
                 'transaction_amount' => (float) $order->total_amount,
@@ -106,9 +107,9 @@ class PaymentGatewayService
                 $requestBody['notification_url'] = $webhookUrl;
             }
 
-            $options = new RequestOptions();
+            $options = new RequestOptions;
             $options->setCustomHeaders([
-                'X-Idempotency-Key: ' . (string) $order->id . '_' . time(),
+                'X-Idempotency-Key: '.(string) $order->id.'_'.time(),
             ]);
 
             Log::info("Creating PIX payment for order #{$order->id}", $requestBody);
@@ -167,17 +168,17 @@ class PaymentGatewayService
 
             return [
                 'success' => false,
-                'error' => 'Erro ao gerar pagamento PIX: ' . ($errorMessage ?: 'Erro desconhecido (status ' . $statusCode . ')'),
+                'error' => 'Erro ao gerar pagamento PIX: '.($errorMessage ?: 'Erro desconhecido (status '.$statusCode.')'),
                 'details' => $content,
             ];
         } catch (\Exception $e) {
-            Log::error("Error creating PIX payment for order #{$order->id}: " . $e->getMessage(), [
+            Log::error("Error creating PIX payment for order #{$order->id}: ".$e->getMessage(), [
                 'exception' => $e,
             ]);
 
             return [
                 'success' => false,
-                'error' => 'Erro interno ao processar pagamento: ' . $e->getMessage(),
+                'error' => 'Erro interno ao processar pagamento: '.$e->getMessage(),
             ];
         }
     }
@@ -185,11 +186,8 @@ class PaymentGatewayService
     /**
      * Create a card payment via Mercado Pago.
      *
-     * @param  Order  $order
-     * @param  string $token          Card token from MercadoPago.js
-     * @param  string $payerEmail
-     * @param  int    $installments   Número de parcelas
-     * @return array
+     * @param  string  $token  Card token from MercadoPago.js
+     * @param  int  $installments  Número de parcelas
      */
     public function createCardPayment(
         Order $order,
@@ -198,7 +196,7 @@ class PaymentGatewayService
         int $installments = 1
     ): array {
         try {
-            $client = new PaymentClient();
+            $client = new PaymentClient;
 
             $requestBody = [
                 'transaction_amount' => (float) $order->total_amount,
@@ -254,13 +252,13 @@ class PaymentGatewayService
                 'details' => $e->getApiResponse()->getContent(),
             ];
         } catch (\Exception $e) {
-            Log::error("Error creating card payment for order #{$order->id}: " . $e->getMessage(), [
+            Log::error("Error creating card payment for order #{$order->id}: ".$e->getMessage(), [
                 'exception' => $e,
             ]);
 
             return [
                 'success' => false,
-                'error' => 'Erro interno ao processar pagamento: ' . $e->getMessage(),
+                'error' => 'Erro interno ao processar pagamento: '.$e->getMessage(),
             ];
         }
     }
@@ -275,20 +273,22 @@ class PaymentGatewayService
         }
 
         $paymentId = $payload['data']['id'] ?? null;
-        if (!$paymentId) {
+        if (! $paymentId) {
             Log::warning('Webhook received without payment ID');
+
             return false;
         }
 
         try {
-            $client = new PaymentClient();
+            $client = new PaymentClient;
             $payment = $client->get($paymentId);
 
             $orderId = $payment->external_reference;
             $order = Order::find($orderId);
 
-            if (!$order) {
+            if (! $order) {
                 Log::warning("Webhook: Order not found for external_reference: {$orderId}");
+
                 return false;
             }
 
@@ -307,7 +307,7 @@ class PaymentGatewayService
                     $order->update([
                         'status' => Order::STATUS_REJECTED,
                         'rejected_at' => now(),
-                        'rejection_reason' => 'Pagamento ' . ($payment->status === 'rejected' ? 'rejeitado' : 'cancelado'),
+                        'rejection_reason' => 'Pagamento '.($payment->status === 'rejected' ? 'rejeitado' : 'cancelado'),
                     ]);
                     break;
 
@@ -323,7 +323,8 @@ class PaymentGatewayService
 
             return true;
         } catch (\Exception $e) {
-            Log::error("Error processing webhook: " . $e->getMessage());
+            Log::error('Error processing webhook: '.$e->getMessage());
+
             return false;
         }
     }
@@ -355,12 +356,12 @@ class PaymentGatewayService
      */
     public function refundPayment(Order $order): array
     {
-        if (!$order->payment_gateway_id) {
+        if (! $order->payment_gateway_id) {
             return ['success' => false, 'error' => 'Pedido não possui pagamento online.'];
         }
 
         try {
-            $client = new \MercadoPago\Client\Payment\PaymentRefundClient();
+            $client = new PaymentRefundClient;
             $refund = $client->refundTotal((int) $order->payment_gateway_id);
 
             $order->update(['online_payment_status' => Order::ONLINE_PAYMENT_REFUNDED]);
@@ -369,7 +370,8 @@ class PaymentGatewayService
 
             return ['success' => true, 'refund_id' => $refund->id ?? null];
         } catch (\Exception $e) {
-            Log::error("Error refunding order #{$order->id}: " . $e->getMessage());
+            Log::error("Error refunding order #{$order->id}: ".$e->getMessage());
+
             return ['success' => false, 'error' => 'Erro ao processar estorno.'];
         }
     }
@@ -379,16 +381,18 @@ class PaymentGatewayService
      */
     public function checkPaymentStatus(Order $order): ?string
     {
-        if (!$order->payment_gateway_id) {
+        if (! $order->payment_gateway_id) {
             return null;
         }
 
         try {
-            $client = new PaymentClient();
+            $client = new PaymentClient;
             $payment = $client->get($order->payment_gateway_id);
+
             return $payment->status;
         } catch (\Exception $e) {
-            Log::error("Error checking payment status for order #{$order->id}: " . $e->getMessage());
+            Log::error("Error checking payment status for order #{$order->id}: ".$e->getMessage());
+
             return null;
         }
     }

@@ -2,8 +2,9 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class CashRegister extends Model
@@ -29,41 +30,41 @@ class CashRegister extends Model
         'payment_summary' => 'array',
     ];
 
-    protected function openingBalance(): \Illuminate\Database\Eloquent\Casts\Attribute
+    protected function openingBalance(): Attribute
     {
-        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+        return Attribute::make(
             get: fn ($value) => $value / 100,
             set: fn ($value) => (int) round($value * 100),
         );
     }
 
-    protected function closingBalance(): \Illuminate\Database\Eloquent\Casts\Attribute
+    protected function closingBalance(): Attribute
     {
-        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+        return Attribute::make(
             get: fn ($value) => $value / 100,
             set: fn ($value) => (int) round($value * 100),
         );
     }
 
-    protected function calculatedBalance(): \Illuminate\Database\Eloquent\Casts\Attribute
+    protected function calculatedBalance(): Attribute
     {
-        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+        return Attribute::make(
             get: fn ($value) => $value / 100,
             set: fn ($value) => (int) round($value * 100),
         );
     }
 
-    protected function difference(): \Illuminate\Database\Eloquent\Casts\Attribute
+    protected function difference(): Attribute
     {
-        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+        return Attribute::make(
             get: fn ($value) => $value / 100,
             set: fn ($value) => (int) round($value * 100),
         );
     }
 
-    protected function totalSales(): \Illuminate\Database\Eloquent\Casts\Attribute
+    protected function totalSales(): Attribute
     {
-        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+        return Attribute::make(
             get: fn ($value) => $value / 100,
             set: fn ($value) => (int) round($value * 100),
         );

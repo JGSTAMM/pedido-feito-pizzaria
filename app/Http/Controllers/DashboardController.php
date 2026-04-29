@@ -2,11 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Order;
-use App\Models\Product;
-use App\Models\PizzaFlavor;
 use App\Models\CashRegister;
-use Illuminate\Support\Facades\DB;
+use App\Models\Order;
+use App\Models\PizzaFlavor;
+use App\Models\Product;
 use Inertia\Inertia;
 
 class DashboardController extends Controller

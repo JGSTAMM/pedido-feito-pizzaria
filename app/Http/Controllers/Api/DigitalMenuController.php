@@ -7,14 +7,12 @@ use App\Http\Controllers\Controller;
 
 class DigitalMenuController extends Controller
 {
-    public function __construct(private readonly GetDigitalCatalogAction $getDigitalCatalogAction)
-    {
-    }
+    public function __construct(private readonly GetDigitalCatalogAction $getDigitalCatalogAction) {}
 
     /**
      * Retorna todos os dados para o cardápio digital.
      * Endpoint PÚBLICO (sem autenticação).
-     * 
+     *
      * GET /api/digital-menu
      */
     public function index()

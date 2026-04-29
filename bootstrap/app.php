@@ -1,8 +1,12 @@
 <?php
 
+use App\Http\Middleware\EnsureUserHasRole;
+use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\SetRequestLocale;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Middleware\HandleCors;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
@@ -16,7 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
-            'role' => \App\Http\Middleware\EnsureUserHasRole::class,
+            'role' => EnsureUserHasRole::class,
         ]);
 
         $middleware->encryptCookies(except: [
@@ -25,18 +29,18 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->web(
             prepend: [
-                \App\Http\Middleware\SetRequestLocale::class,
+                SetRequestLocale::class,
             ],
             append: [
-                \App\Http\Middleware\HandleInertiaRequests::class,
+                HandleInertiaRequests::class,
             ],
         );
         $middleware->api(prepend: [
-            \Illuminate\Http\Middleware\HandleCors::class,
+            HandleCors::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        $exceptions->render(function (\Throwable $exception, Request $request) {
+        $exceptions->render(function (Throwable $exception, Request $request) {
             if (! $request->expectsJson() && ! $request->is('api/*')) {
                 return null;
             }

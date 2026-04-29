@@ -16,12 +16,12 @@ class DataController extends Controller
     public function index()
     {
         return response()->json([
-            'tables'        => Table::select('id', 'name', 'status')->get(),
-            'pizza_sizes'   => PizzaSizeResource::collection(PizzaSize::all()),
+            'tables' => Table::select('id', 'name', 'status')->get(),
+            'pizza_sizes' => PizzaSizeResource::collection(PizzaSize::all()),
             'pizza_flavors' => PizzaFlavorResource::collection(
                 PizzaFlavor::where('is_active', true)->get()
             ),
-            'products'      => ProductResource::collection(
+            'products' => ProductResource::collection(
                 Product::where('is_active', true)->get()
             ),
         ]);

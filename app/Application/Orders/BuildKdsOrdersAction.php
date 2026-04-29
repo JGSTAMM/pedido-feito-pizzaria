@@ -32,12 +32,14 @@ class BuildKdsOrdersAction
                 'notes' => $order->notes,
                 'items' => $order->items->map(function ($item) {
                     $isPizza = in_array($item->type, ['pizza', 'pizza_custom']);
-                    
+
                     if ($isPizza) {
                         $size = $item->pizzaSize?->name ?? '';
                         $flavors = $item->flavors->pluck('name')->join(', ');
                         $name = trim("{$size} — {$flavors}", ' — ');
-                        if (empty($name)) $name = 'Pizza';
+                        if (empty($name)) {
+                            $name = 'Pizza';
+                        }
                     } else {
                         $name = $item->product?->name ?? 'Item';
                     }

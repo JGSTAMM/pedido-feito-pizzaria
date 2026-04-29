@@ -2,8 +2,9 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class PizzaFlavor extends Model
@@ -19,18 +20,17 @@ class PizzaFlavor extends Model
 
     protected $appends = ['image_url'];
 
-    protected function basePrice(): \Illuminate\Database\Eloquent\Casts\Attribute
+    protected function basePrice(): Attribute
     {
-        return \Illuminate\Database\Eloquent\Casts\Attribute::make(
+        return Attribute::make(
             get: fn ($value) => $value / 100,
             set: fn ($value) => (int) round($value * 100),
         );
     }
 
-    protected function imageUrl(): \Illuminate\Database\Eloquent\Casts\Attribute
+    protected function imageUrl(): Attribute
     {
-        return \Illuminate\Database\Eloquent\Casts\Attribute::get(fn () =>
-            $this->image ? asset('storage/' . $this->image) : null
+        return Attribute::get(fn () => $this->image ? asset('storage/'.$this->image) : null
         );
     }
 }

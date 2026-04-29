@@ -9,7 +9,7 @@ class BuildCashRegisterSummaryAction
 {
     public function execute(?CashRegister $register): array
     {
-        if (!$register) {
+        if (! $register) {
             return [
                 'opening_balance' => 0.0,
                 'total_sales' => 0.0,

@@ -2,8 +2,8 @@
 
 namespace Tests\Feature;
 
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Str;
 use RuntimeException;
 use Tests\TestCase;
 
@@ -16,7 +16,7 @@ class ErrorDisclosureTest extends TestCase
             'app.locale' => 'pt_BR',
         ]);
 
-        $path = '/api/test/error-disclosure-' . Str::uuid();
+        $path = '/api/test/error-disclosure-'.Str::uuid();
 
         Route::middleware('api')->get($path, static function () {
             throw new RuntimeException('SQLSTATE[42S02]: Base table or view not found: 1146 Table missing');

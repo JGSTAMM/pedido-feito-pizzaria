@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\StoreSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
-use App\Models\StoreSetting;
 
 class AuthController extends Controller
 {
@@ -19,13 +19,14 @@ class AuthController extends Controller
             if (Auth::user()->role === 'waiter') {
                 return redirect()->intended('/waiter');
             }
+
             return redirect()->intended('/pos');
         }
 
         $storeName = StoreSetting::first()->store_name ?? 'Pedido Feito';
 
         return Inertia::render('Auth/Login', [
-            'storeName' => $storeName
+            'storeName' => $storeName,
         ]);
     }
 

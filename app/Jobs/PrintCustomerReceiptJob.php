@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
-class PrintCustomerReceiptJob implements ShouldQueue, ShouldBeUnique
+class PrintCustomerReceiptJob implements ShouldBeUnique, ShouldQueue
 {
     use InteractsWithQueue;
     use Queueable;
@@ -49,8 +49,7 @@ class PrintCustomerReceiptJob implements ShouldQueue, ShouldBeUnique
         PrintService $printService,
         PrintingTelemetryService $telemetry,
         PrinterAlertService $alertService,
-    ): void
-    {
+    ): void {
         $idempotencyKey = "printing:receipt:completed:{$this->orderId}";
 
         if (Cache::has($idempotencyKey)) {
@@ -64,7 +63,7 @@ class PrintCustomerReceiptJob implements ShouldQueue, ShouldBeUnique
         $order = Order::with(['items.product', 'items.pizzaSize', 'items.flavors', 'table', 'payments'])
             ->find($this->orderId);
 
-        if (!$order) {
+        if (! $order) {
             Log::warning('Order not found for receipt print job.', [
                 'order_id' => $this->orderId,
             ]);
@@ -75,7 +74,7 @@ class PrintCustomerReceiptJob implements ShouldQueue, ShouldBeUnique
         try {
             $printed = $printService->printCustomerReceipt($order);
 
-            if (!$printed) {
+            if (! $printed) {
                 return;
             }
 

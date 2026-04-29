@@ -2,11 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use Inertia\Inertia;
-use App\Models\StoreSetting;
 use App\Models\Printer;
+use App\Models\StoreSetting;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class SettingsController extends Controller
 {
@@ -26,7 +25,7 @@ class SettingsController extends Controller
                     'friday' => ['open' => '18:00', 'close' => '00:00', 'closed' => false],
                     'saturday' => ['open' => '18:00', 'close' => '00:00', 'closed' => false],
                     'sunday' => ['open' => '18:00', 'close' => '23:30', 'closed' => false],
-                ]
+                ],
             ]
         );
 
@@ -41,6 +40,7 @@ class SettingsController extends Controller
     {
         $request->validate(['is_open' => 'required|boolean']);
         StoreSetting::first()->update(['is_open' => $request->is_open]);
+
         return redirect()->back()->with('success', 'Status da loja atualizado.');
     }
 
@@ -49,6 +49,7 @@ class SettingsController extends Controller
     {
         $request->validate(['opening_hours' => 'required|array']);
         StoreSetting::first()->update(['opening_hours' => $request->opening_hours]);
+
         return redirect()->back()->with('success', 'Horários atualizados.');
     }
 
@@ -66,15 +67,16 @@ class SettingsController extends Controller
             'custom_info' => 'nullable|string',
         ]);
         StoreSetting::first()->update($request->only(
-            'store_name', 
-            'cnpj', 
-            'phone', 
-            'full_address', 
-            'google_maps_embed_url', 
-            'google_maps_place_url', 
-            'payment_methods', 
+            'store_name',
+            'cnpj',
+            'phone',
+            'full_address',
+            'google_maps_embed_url',
+            'google_maps_place_url',
+            'payment_methods',
             'custom_info'
         ));
+
         return redirect()->back()->with('success', 'Perfil da loja atualizado.');
     }
 
@@ -125,10 +127,9 @@ class SettingsController extends Controller
             'receipt_show_cnpj' => 'required|boolean',
         ]);
         StoreSetting::first()->update($request->only('receipt_header_1', 'receipt_header_2', 'receipt_footer', 'receipt_show_cnpj'));
+
         return redirect()->back()->with('success', 'Configurações de Recibo atualizadas.');
     }
-
-
 
     // ── Printers CRUD ──
     public function storePrinter(Request $request)
@@ -141,6 +142,7 @@ class SettingsController extends Controller
         ]);
 
         Printer::create($request->only('name', 'type', 'target', 'ip_address'));
+
         return redirect()->back()->with('success', 'Impressora adicionada.');
     }
 
@@ -154,12 +156,14 @@ class SettingsController extends Controller
         ]);
 
         $printer->update($request->only('name', 'type', 'target', 'ip_address'));
+
         return redirect()->back()->with('success', 'Impressora atualizada.');
     }
 
     public function destroyPrinter(Printer $printer)
     {
         $printer->delete();
+
         return redirect()->back()->with('success', 'Impressora excluída.');
     }
 }

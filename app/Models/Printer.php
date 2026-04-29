@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 
 class Printer extends Model
 {
@@ -18,11 +19,11 @@ class Printer extends Model
     protected static function booted()
     {
         static::saved(function ($printer) {
-            \Illuminate\Support\Facades\Cache::forget('printer_settings');
+            Cache::forget('printer_settings');
         });
 
         static::deleted(function ($printer) {
-            \Illuminate\Support\Facades\Cache::forget('printer_settings');
+            Cache::forget('printer_settings');
         });
     }
 }

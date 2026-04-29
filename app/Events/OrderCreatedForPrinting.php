@@ -12,6 +12,5 @@ class OrderCreatedForPrinting
 
     public function __construct(
         public readonly string $orderId,
-    ) {
-    }
+    ) {}
 }

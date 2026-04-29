@@ -33,10 +33,10 @@ class OrderController extends Controller
                 'table_name' => $order->table?->name ?? null,
                 'created_at' => $order->created_at->format('d/m/Y H:i'),
                 'created_at_relative' => $order->created_at->diffForHumans(),
-                'items' => $order->items->map(fn($item) => [
+                'items' => $order->items->map(fn ($item) => [
                     'id' => $item->id,
                     'quantity' => $item->quantity,
-                    'name' => $item->product ? $item->product->name : ($item->pizzaSize ? 'Pizza ' . $item->pizzaSize->name . ' (' . $item->flavors->pluck('name')->join(', ') . ')' : 'Item Customizado'),
+                    'name' => $item->product ? $item->product->name : ($item->pizzaSize ? 'Pizza '.$item->pizzaSize->name.' ('.$item->flavors->pluck('name')->join(', ').')' : 'Item Customizado'),
                     'unit_price' => (float) $item->unit_price,
                     'total_price' => (float) $item->subtotal,
                     'notes' => $item->notes,
