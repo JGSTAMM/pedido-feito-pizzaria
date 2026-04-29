@@ -68,4 +68,52 @@ class RolePolicyAuthorizationTest extends TestCase
 
         $response->assertStatus(422);
     }
+
+    public function test_admin_can_close_cash_register(): void
+    {
+        $admin = User::factory()->create([
+            'role' => 'admin',
+        ]);
+
+        CashRegister::create([
+            'user_id' => $admin->id,
+            'opened_at' => now(),
+            'opening_balance' => 50,
+            'status' => 'open',
+        ]);
+
+        $response = $this->actingAs($admin)->post('/cash-register/close', [
+            'closing_balance' => 100,
+        ]);
+
+        $response->assertStatus(302);
+        $this->assertDatabaseHas('cash_registers', [
+            'status' => 'closed',
+            'closing_balance' => 10000,
+        ]);
+    }
+
+    public function test_kitchen_staff_cannot_access_pos(): void
+    {
+        $kitchen = User::factory()->create([
+            'role' => 'kitchen_staff',
+        ]);
+
+        $response = $this->actingAs($kitchen)->get('/pos');
+
+        $response->assertForbidden();
+    }
+
+    public function test_kitchen_staff_cannot_close_cash_register(): void
+    {
+        $kitchen = User::factory()->create([
+            'role' => 'kitchen_staff',
+        ]);
+
+        $response = $this->actingAs($kitchen)->post('/cash-register/close', [
+            'closing_balance' => 50,
+        ]);
+
+        $response->assertForbidden();
+    }
 }
