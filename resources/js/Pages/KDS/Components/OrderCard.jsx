@@ -95,12 +95,12 @@ export default function OrderCard({ order, columnStatus, onShowDetails, onPrint 
                         {order.is_paid ? (
                             <span className="text-[9px] bg-emerald-500/10 text-emerald-400 px-1 rounded font-black border border-emerald-500/20">PAGO</span>
                         ) : (
-                            <span className="text-[9px] bg-amber-500/10 text-amber-400 px-1 rounded font-black border border-amber-500/20">PIX/DINH</span>
+                            <span className="text-[9px] bg-amber-500/10 text-amber-400 px-1 rounded font-black border border-amber-500/20">PENDENTE</span>
                         )}
                     </div>
                     <p className="text-[11px] text-text-muted font-bold truncate">
-                        {order.table_name ? `MESA ${order.table_name}` : order.type === 'delivery' ? 'DELIVERY' : 'BALCÃO'}
-                        {order.customer_name !== 'Cliente' ? ` - ${order.customer_name}` : ''}
+                        {order.table_name ? (String(order.table_name).toUpperCase().startsWith('MESA') ? String(order.table_name).toUpperCase() : `MESA ${order.table_name}`) : order.type === 'delivery' ? 'DELIVERY' : 'BALCÃO'}
+                        {order.customer_name !== 'Cliente' && order.customer_name !== order.table_name && order.customer_name !== `Mesa ${order.table_name}` && order.customer_name !== `MESA ${order.table_name}` ? ` - ${order.customer_name}` : ''}
                     </p>
                 </div>
                 <div className="flex items-center gap-1.5 shrink-0">
