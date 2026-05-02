@@ -47,7 +47,18 @@ class BuildKdsOrdersAction
                     // Formatar customização para cozinha (ex: "Sem cebola" -> "s/cebola")
                     $customization = $item->description;
                     if ($customization) {
-                        $customization = str_ireplace(['sem ', 'remover '], 's/', $customization);
+                        if ($isPizza) {
+                            $sizeName = isset($size) && $size ? "Pizza {$size}" : "Pizza";
+                            $customization = str_ireplace([$sizeName, "Pizza", isset($size) ? $size : ''], '', $customization);
+                            $customization = trim($customization, " |,-");
+                        }
+
+                        if ($customization) {
+                            $customization = str_ireplace(['sem ', 'remover '], 's/ ', $customization);
+                            $customization = str_ireplace('EXCLUSÕES ', '', $customization);
+                            $customization = str_ireplace('. ', ' | ', $customization);
+                            $customization = rtrim($customization, '.');
+                        }
                     }
 
                     $notes = $item->notes;

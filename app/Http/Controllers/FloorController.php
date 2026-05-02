@@ -237,26 +237,16 @@ class FloorController extends Controller
                 }
             }
 
-            // Find or create active order for this table
-            $order = $table->activeOrders()->lockForUpdate()->first();
-
-            if ($order) {
-                // Append to existing order — update total
-                $order->update([
-                    'total_amount' => (float) $order->total_amount + $totalAmount,
-                ]);
-            } else {
-                // Create new dine_in order for this table
-                $order = Order::create([
-                    'status' => 'pending',
-                    'type' => 'dine_in',
-                    'total_amount' => $totalAmount,
-                    'customer_name' => 'Mesa '.$table->name,
-                    'table_id' => $table->id,
-                    'cash_register_id' => $activeRegister?->id,
-                    'user_id' => Auth::id(),
-                ]);
-            }
+            // ALWAYS create new dine_in order for this table to avoid "infinite order" bug in kitchen
+            $order = Order::create([
+                'status' => 'pending',
+                'type' => 'dine_in',
+                'total_amount' => $totalAmount,
+                'customer_name' => 'Mesa '.$table->name,
+                'table_id' => $table->id,
+                'cash_register_id' => $activeRegister?->id,
+                'user_id' => Auth::id(),
+            ]);
 
             // Create order items
             foreach ($itemsData as $data) {
