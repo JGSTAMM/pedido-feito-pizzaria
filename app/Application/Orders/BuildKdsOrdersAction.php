@@ -50,6 +50,13 @@ class BuildKdsOrdersAction
                         $customization = str_ireplace(['sem ', 'remover '], 's/', $customization);
                     }
 
+                    $notes = $item->notes;
+                    if ($isPizza && $notes && isset($size)) {
+                        $cleanNotes = trim(str_ireplace(["Tamanho: {$size}", $size], '', $notes));
+                        $cleanNotes = trim($cleanNotes, " -,\t\n\r\0\x0B");
+                        $notes = empty($cleanNotes) ? null : $cleanNotes;
+                    }
+
                     return [
                         'id' => $item->id,
                         'quantity' => $item->quantity,
@@ -57,15 +64,7 @@ class BuildKdsOrdersAction
                         'type' => $item->type ?? 'product',
                         'is_pizza' => $isPizza,
                         'customization' => $customization,
-                        'notes' => function() use ($isPizza, $item, $size) {
-                            $notes = $item->notes;
-                            if ($isPizza && $notes && $size) {
-                                $cleanNotes = trim(str_ireplace(["Tamanho: {$size}", $size], '', $notes));
-                                $cleanNotes = trim($cleanNotes, " -,\t\n\r\0\x0B");
-                                return empty($cleanNotes) ? null : $cleanNotes;
-                            }
-                            return $notes;
-                        }(),
+                        'notes' => $notes,
                         'is_beverage' => $item->product && in_array(strtolower($item->product->category), ['bebida', 'bebidas', 'drinks', 'suco', 'sucos', 'refrigerante', 'cerveja']),
                     ];
                 }),
