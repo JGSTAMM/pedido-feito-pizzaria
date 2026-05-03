@@ -218,6 +218,7 @@ export default function Index({ products = [], pizzaFlavors = [], pizzaSizes = [
                     type: item.type,
                     quantity: item.quantity,
                     price: item.price,
+                    observation: item.observation || null,
                 };
             }),
             customer_name: customerName,

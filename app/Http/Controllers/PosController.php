@@ -146,6 +146,7 @@ class PosController extends Controller
                 'items.*.size_id' => 'nullable|string',
                 'items.*.flavor_ids' => 'nullable|array',
                 'items.*.border_id' => 'nullable|string',
+                'items.*.observation' => 'nullable|string',
                 // Customer fields
                 'customer_name' => 'required|string|max:255',
                 'customer_phone' => 'nullable|string|max:20',
@@ -193,7 +194,7 @@ class PosController extends Controller
                         'unit_price' => $unitPrice,
                         'subtotal' => $subtotal,
                         'description' => $product->name,
-                        'notes' => null,
+                        'notes' => $item['observation'] ?? null,
                     ];
                 } elseif ($item['type'] === 'pizza_custom') {
                     // Pizza Builder item — validate server-side
@@ -251,7 +252,8 @@ class PosController extends Controller
                         'quantity' => $item['quantity'],
                         'unit_price' => $unitPrice,
                         'subtotal' => $subtotal,
-                        'notes' => null,
+                        'description' => $flavor->name,
+                        'notes' => $item['observation'] ?? null,
                     ];
                 }
             }
