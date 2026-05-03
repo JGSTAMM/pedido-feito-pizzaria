@@ -10,13 +10,20 @@ use Illuminate\Http\Request;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Route;
 
+use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
+use Illuminate\Cookie\Middleware\EncryptCookies;
+
 // ═══════════════════════════════════════════
 // ROTAS PÚBLICAS (com rate limiting)
 // ═══════════════════════════════════════════
 
-Route::middleware(['throttle:60,1', StartSession::class])->group(function () {
+Route::middleware(['throttle:60,1', EncryptCookies::class, AddQueuedCookiesToResponse::class, StartSession::class])->group(function () {
     Route::get('/digital-menu', [DigitalMenuController::class, 'index']);
     Route::post('/customers/identify', [CustomerIdentityController::class, 'identify']);
+});
+
+// Payment status polling — relaxed throttle to prevent 429 on 5-second intervals
+Route::middleware(['throttle:120,1', EncryptCookies::class, AddQueuedCookiesToResponse::class, StartSession::class])->group(function () {
     Route::get('/orders/{order}/payment-status', [OnlinePaymentController::class, 'paymentStatus']);
 });
 
@@ -24,7 +31,7 @@ Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,
 
 // Online Payment (público — o cliente faz o pedido sem login)
 Route::post('/online-orders', [OnlinePaymentController::class, 'store'])
-    ->middleware(['throttle:10,1', StartSession::class]);
+    ->middleware(['throttle:10,1', EncryptCookies::class, AddQueuedCookiesToResponse::class, StartSession::class]);
 
 Route::post('/payments/webhook', [OnlinePaymentController::class, 'webhook'])
     ->middleware('throttle:60,1');

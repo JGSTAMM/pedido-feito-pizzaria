@@ -9,11 +9,11 @@ export async function fetchDigitalCatalog() {
 }
 
 export async function submitOrder(payload) {
-    const response = await axios.post(ONLINE_ORDER_ENDPOINT, payload);
+    const response = await axios.post(ONLINE_ORDER_ENDPOINT, payload, { withCredentials: true });
     return response.data;
 }
 
 export async function getOrderPaymentStatus(orderId) {
-    const response = await axios.get(`/api/orders/${orderId}/payment-status`);
+    const response = await axios.get(`/api/orders/${orderId}/payment-status`, { withCredentials: true });
     return response.data;
 }
