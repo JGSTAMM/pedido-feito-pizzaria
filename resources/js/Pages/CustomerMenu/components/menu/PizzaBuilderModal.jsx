@@ -226,7 +226,7 @@ export default function PizzaBuilderModal({
                         onClose();
                     }
                 }}
-                className="relative w-full h-[100dvh] sm:h-auto sm:max-w-lg sm:max-h-[85vh] bg-[#111116] sm:rounded-[2rem] sm:border sm:border-slate-800 shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-full sm:slide-in-from-bottom-8 duration-500"
+                className="relative w-full h-[100dvh] sm:min-h-[600px] sm:max-w-lg sm:max-h-[85vh] bg-[#111116] sm:rounded-[2rem] sm:border sm:border-slate-800 shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-full sm:slide-in-from-bottom-8 duration-500"
             >
                 {/* Header */}
                 <header className="flex items-center justify-between p-6 border-b border-white/5 bg-white/5 backdrop-blur-md z-10 sticky top-0 shrink-0">

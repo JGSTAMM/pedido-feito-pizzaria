@@ -177,7 +177,7 @@ export default function PizzaBuilderModal({ isOpen, onClose, onConfirm, pizzaFla
             onClick={handleClose}
         >
             <div
-                className="w-full h-[100dvh] bg-[#120F1D] flex flex-col overflow-hidden sm:relative sm:w-full sm:max-w-3xl sm:h-auto sm:max-h-[90vh] sm:rounded-2xl sm:border sm:border-border-subtle sm:shadow-2xl sm:animate-scale-in"
+                className="w-full h-[100dvh] bg-[#120F1D] flex flex-col overflow-hidden sm:relative sm:w-full sm:max-w-3xl sm:min-h-[600px] sm:max-h-[90vh] sm:rounded-2xl sm:border sm:border-border-subtle sm:shadow-2xl sm:animate-scale-in"
                 onClick={e => e.stopPropagation()}
             >
                 {/* Header */}
