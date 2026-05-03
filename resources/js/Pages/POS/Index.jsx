@@ -5,6 +5,94 @@ import { norm } from '@/utils/normalize';
 import PizzaBuilderModal from './PizzaBuilderModal';
 import PaymentModal from './PaymentModal';
 
+const CartItem = ({ item, getCartImageSrc, formatBRL, updateQuantity }) => {
+    const [isExpanded, setIsExpanded] = useState(false);
+
+    return (
+        <div className="flex flex-col gap-2 bg-surface p-3 rounded-xl border border-transparent hover:border-border-subtle transition-all group">
+            <div className="flex gap-3">
+                <div className="w-16 h-16 rounded-lg bg-[#2D2D3A] overflow-hidden flex-shrink-0">
+                    <img
+                        alt="Thumb"
+                        className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
+                        src={getCartImageSrc(item)}
+                    />
+                </div>
+                <div className="flex-1 flex flex-col justify-between min-w-0">
+                    <div className="flex justify-between items-start">
+                        <div className="flex-1 min-w-0 pr-2">
+                            <div className="flex items-center gap-2">
+                                <h4 className="text-sm font-semibold text-white leading-tight truncate">{item.name}</h4>
+                                {item.type === 'pizza_custom' && (
+                                    <button 
+                                        onClick={() => setIsExpanded(!isExpanded)}
+                                        className="text-text-muted hover:text-white transition-colors flex items-center justify-center"
+                                        title="Ver detalhes"
+                                    >
+                                        <span className="material-symbols-outlined text-[16px]">{isExpanded ? 'expand_less' : 'info'}</span>
+                                    </button>
+                                )}
+                            </div>
+                            {item.type === 'pizza_custom' && (
+                                <div className="mt-1">
+                                    <p className="text-xs text-primary/90 leading-snug break-words whitespace-normal">{item.description}</p>
+                                    {item.border && <p className="text-xs text-amber-400/80 mt-0.5 truncate">{item.border}</p>}
+                                </div>
+                            )}
+                        </div>
+                        <p className="text-sm font-bold text-white whitespace-nowrap">{formatBRL(item.price * item.quantity)}</p>
+                    </div>
+                    <div className="flex items-center justify-between mt-1">
+                        <p className="text-xs text-text-muted">{item.category}</p>
+                        <div className="flex items-center bg-[#0A0A0B] rounded-lg p-1 gap-2 border border-border-subtle">
+                            <button
+                                onClick={() => updateQuantity(item.key, -1)}
+                                className="w-5 h-5 flex items-center justify-center text-text-muted hover:text-white rounded hover:bg-surface"
+                            >
+                                <span className="material-symbols-outlined text-[14px]">remove</span>
+                            </button>
+                            <span className="text-xs font-bold w-4 text-center">{item.quantity}</span>
+                            <button
+                                onClick={() => updateQuantity(item.key, 1)}
+                                className="w-5 h-5 flex items-center justify-center text-text-muted hover:text-white rounded hover:bg-surface"
+                            >
+                                <span className="material-symbols-outlined text-[14px]">add</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Expanded Details Block */}
+            {isExpanded && item.type === 'pizza_custom' && (
+                <div className="mt-1 bg-white/5 p-2.5 rounded border border-white/10 flex flex-col gap-1.5 animate-in slide-in-from-top-2">
+                    {item.observation ? (
+                        item.observation.split('|').map((obs, idx) => {
+                            const trimmed = obs.trim();
+                            if (!trimmed) return null;
+                            if (trimmed.startsWith('Obs:')) {
+                                return (
+                                    <div key={idx} className="text-xs text-gray-400 italic mt-0.5">
+                                        {trimmed}
+                                    </div>
+                                );
+                            }
+                            return (
+                                <div key={idx} className="flex items-start gap-1.5 text-xs text-red-400/90 font-medium">
+                                    <span className="material-symbols-outlined text-[14px] mt-0.5">warning</span>
+                                    <span className="leading-snug">{trimmed}</span>
+                                </div>
+                            );
+                        })
+                    ) : (
+                        <div className="text-xs text-gray-500 italic">Nenhuma observação ou exclusão.</div>
+                    )}
+                </div>
+            )}
+        </div>
+    );
+};
+
 export default function Index({ products = [], pizzaFlavors = [], pizzaSizes = [], categories = [], cashRegister = null, borderOptions = [] }) {
     const { flash } = usePage().props;
 
@@ -353,47 +441,13 @@ export default function Index({ products = [], pizzaFlavors = [], pizzaSizes = [
                             </div>
                         ) : (
                             cart.map((item) => (
-                                <div key={item.key} className="flex gap-3 bg-surface p-3 rounded-xl border border-transparent hover:border-border-subtle transition-all group">
-                                    <div className="w-16 h-16 rounded-lg bg-[#2D2D3A] overflow-hidden flex-shrink-0">
-                                        <img
-                                            alt="Thumb"
-                                            className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
-                                            src={getCartImageSrc(item)}
-                                        />
-                                    </div>
-                                    <div className="flex-1 flex flex-col justify-between">
-                                        <div className="flex justify-between items-start">
-                                            <div className="flex-1 min-w-0 pr-2">
-                                                <h4 className="text-sm font-semibold text-white leading-tight">{item.name}</h4>
-                                                {item.type === 'pizza_custom' && (
-                                                    <div className="mt-1">
-                                                        <p className="text-xs text-primary/90 leading-snug break-words whitespace-normal">{item.description}</p>
-                                                        {item.border && <p className="text-xs text-amber-400/80 mt-0.5">{item.border}</p>}
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <p className="text-sm font-bold text-white whitespace-nowrap">{formatBRL(item.price * item.quantity)}</p>
-                                        </div>
-                                        <div className="flex items-center justify-between mt-1">
-                                            <p className="text-xs text-text-muted">{item.category}</p>
-                                            <div className="flex items-center bg-[#0A0A0B] rounded-lg p-1 gap-2 border border-border-subtle">
-                                                <button
-                                                    onClick={() => updateQuantity(item.key, -1)}
-                                                    className="w-5 h-5 flex items-center justify-center text-text-muted hover:text-white rounded hover:bg-surface"
-                                                >
-                                                    <span className="material-symbols-outlined text-[14px]">remove</span>
-                                                </button>
-                                                <span className="text-xs font-bold w-4 text-center">{item.quantity}</span>
-                                                <button
-                                                    onClick={() => updateQuantity(item.key, 1)}
-                                                    className="w-5 h-5 flex items-center justify-center text-text-muted hover:text-white rounded hover:bg-surface"
-                                                >
-                                                    <span className="material-symbols-outlined text-[14px]">add</span>
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                                <CartItem 
+                                    key={item.key} 
+                                    item={item} 
+                                    getCartImageSrc={getCartImageSrc} 
+                                    formatBRL={formatBRL} 
+                                    updateQuantity={updateQuantity} 
+                                />
                             ))
                         )}
                     </div>
