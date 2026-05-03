@@ -296,9 +296,15 @@ export default function TableOrderDrawer({
                                                 </p>
                                             )}
                                             {item.notes && (
-                                                <div className="flex items-center gap-1.5 text-xs text-orange-400 mt-1.5 bg-orange-400/10 w-fit px-2 py-0.5 rounded border border-orange-400/20">
-                                                    <span className="material-symbols-outlined text-[14px]">warning</span>
-                                                    {item.notes}
+                                                <div className="mt-2 space-y-1 bg-red-500/10 p-2.5 rounded-lg border border-red-500/30 shadow-[0_0_10px_rgba(239,68,68,0.1)]">
+                                                    {item.notes.split('|').map((note, idx) => (
+                                                        <div key={idx} className="flex items-start gap-1.5 text-[11px] text-red-400 font-bold uppercase tracking-wide leading-tight">
+                                                            <span className="material-symbols-outlined text-[14px] flex-shrink-0 mt-0.5">
+                                                                {note.trim().startsWith('⚠️') ? '' : 'warning'}
+                                                            </span>
+                                                            <span className="flex-1">{note.trim().replace(/^⚠️\s*/, '')}</span>
+                                                        </div>
+                                                    ))}
                                                 </div>
                                             )}
                                         </div>

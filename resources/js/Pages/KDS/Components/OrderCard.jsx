@@ -21,21 +21,18 @@ function KdsItemRow({ item, compact = false, dimmed = false }) {
                     <span className={`font-black text-lg md:text-xl tracking-wide uppercase ${nameColor}`}>
                         {item.name}
                     </span>
-                    {item.customization && (
-                        <div className="mt-1.5 space-y-1">
-                            {item.customization.split('|').map((c, idx) => (
-                                <p key={idx} className="text-amber-400 font-black text-sm md:text-base uppercase tracking-wide flex items-center gap-1.5">
-                                    <span className="text-red-400">✕</span> {c.trim()}
-                                </p>
-                            ))}
-                        </div>
-                    )}
                 </div>
             </div>
             {item.notes && (
-                <div className={`flex items-start gap-2 mt-3 ${compact ? 'ml-[42px]' : 'ml-[52px]'} bg-red-700 p-3 rounded-lg border-2 border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.7)]`}>
-                    <span className="material-symbols-outlined text-white text-[24px] flex-shrink-0 animate-pulse font-black">warning</span>
-                    <span className="text-white font-black text-sm md:text-lg uppercase tracking-widest leading-snug drop-shadow-md">{item.notes}</span>
+                <div className={`mt-3 ${compact ? 'ml-[42px]' : 'ml-[52px]'} bg-red-500/10 p-3 rounded-lg border-2 border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.3)]`}>
+                    <div className="space-y-1.5">
+                        {item.notes.split('|').map((note, idx) => (
+                            <p key={idx} className="text-white font-black text-sm md:text-lg uppercase tracking-widest leading-snug drop-shadow-md flex items-start gap-2">
+                                {idx === 0 && <span className="material-symbols-outlined text-red-500 text-[20px] flex-shrink-0 animate-pulse font-black">warning</span>}
+                                <span className={idx === 0 ? '' : 'ml-7'}>{note.trim()}</span>
+                            </p>
+                        ))}
+                    </div>
                 </div>
             )}
         </div>

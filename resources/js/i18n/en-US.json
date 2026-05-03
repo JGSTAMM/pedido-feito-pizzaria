@@ -408,7 +408,8 @@
             "customize": "Customize",
             "selected": "Selected",
             "customize_hint": "Click to Customize",
-            "customizing": "Customizing..."
+            "customizing": "Customizing...",
+            "modification_prefix": "W/O"
         },
         "flavor_detail": {
             "ingredients": "Ingredients",

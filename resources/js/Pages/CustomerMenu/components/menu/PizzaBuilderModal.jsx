@@ -127,16 +127,19 @@ export default function PizzaBuilderModal({
 
         const borderNote = selectedBorderId === 'none' ? null : `${t('digital_menu.pizza_builder.border_label')}: ${translateDynamic(selectedBorderOption.name)}`;
 
-        const itemNotes = borderNote;
-
-        const customizations = selectedFlavorInstances
+        const flavorExclusions = selectedFlavorInstances
             .filter(inst => inst.removed && inst.removed.length > 0)
             .map(inst => {
                 const p = flavorProductsMap.get(String(inst.flavorId));
                 const flavorName = translateDynamic(p?.name);
-                return `${flavorName}: sem ${inst.removed.map(r => translateDynamic(r)).join(', ')}`;
-            })
-            .join(' | ');
+                const prefix = t('digital_menu.pizza_builder.modification_prefix');
+                return `⚠️ ${flavorName}: ${prefix} ${inst.removed.map(r => translateDynamic(r)).join(', ')}`;
+            });
+
+        let finalNotes = borderNote || '';
+        if (flavorExclusions.length > 0) {
+            finalNotes = finalNotes ? `${finalNotes}|${flavorExclusions.join('|')}` : flavorExclusions.join('|');
+        }
 
         const customPizzaId = `custom-pizza-${selectedPizzaSizeOption.id}-${selectedFlavorInstances.map(i => `${i.flavorId}-${(i.removed || []).slice().sort().join('_')}`).join('|')}`;
 
@@ -147,8 +150,8 @@ export default function PizzaBuilderModal({
             price: pizzaBuilderPrice,
             pizza_size_id: selectedPizzaSizeOption.id,
             flavor_instances: selectedFlavorInstances,
-            notes: itemNotes,
-            description: customizations || null,
+            notes: finalNotes || null,
+            description: null, // Moved everything to notes for standardized UI
             image_url: null,
         }, 1);
 

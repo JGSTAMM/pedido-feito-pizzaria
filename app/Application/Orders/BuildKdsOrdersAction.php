@@ -44,29 +44,24 @@ class BuildKdsOrdersAction
                         $name = $item->product?->name ?? 'Item';
                     }
 
-                    // Formatar customização para cozinha (ex: "Sem cebola" -> "s/cebola")
-                    $customization = $item->description;
-                    if ($customization) {
-                        if ($isPizza) {
-                            $sizeName = isset($size) && $size ? "Pizza {$size}" : "Pizza";
-                            $customization = str_ireplace([$sizeName, "Pizza", isset($size) ? $size : ''], '', $customization);
-                            $customization = trim($customization, " |,-");
-                        }
+                    // Unified modifications logic for KDS (Description + Notes)
+                    $rawCustom = (string)$item->description;
+                    $rawNotes = (string)$item->notes;
 
-                        if ($customization) {
-                            $customization = str_ireplace(['sem ', 'remover '], 's/ ', $customization);
-                            $customization = str_ireplace('EXCLUSÕES ', '', $customization);
-                            $customization = str_ireplace('. ', ' | ', $customization);
-                            $customization = rtrim($customization, '.');
-                        }
+                    // Clean up redundant pizza size info
+                    if ($isPizza && isset($size) && $size) {
+                        $sizePattern = "Pizza {$size}";
+                        $rawCustom = str_ireplace([$sizePattern, $size], '', $rawCustom);
+                        $rawNotes = str_ireplace([$sizePattern, $size], '', $rawNotes);
                     }
 
-                    $notes = $item->notes;
-                    if ($isPizza && $notes && isset($size)) {
-                        $cleanNotes = trim(str_ireplace(["Tamanho: {$size}", $size], '', $notes));
-                        $cleanNotes = trim($cleanNotes, " -,\t\n\r\0\x0B");
-                        $notes = empty($cleanNotes) ? null : $cleanNotes;
-                    }
+                    $parts = array_filter([
+                        trim($rawCustom, " |,-."),
+                        trim($rawNotes, " |,-.")
+                    ]);
+
+                    $unifiedNotes = implode('|', $parts);
+                    $unifiedNotes = empty($unifiedNotes) ? null : $unifiedNotes;
 
                     return [
                         'id' => $item->id,
@@ -74,8 +69,8 @@ class BuildKdsOrdersAction
                         'name' => $name,
                         'type' => $item->type ?? 'product',
                         'is_pizza' => $isPizza,
-                        'customization' => $customization,
-                        'notes' => $notes,
+                        'customization' => null,
+                        'notes' => $unifiedNotes,
                         'is_beverage' => $item->product && in_array(strtolower($item->product->category), ['bebida', 'bebidas', 'drinks', 'suco', 'sucos', 'refrigerante', 'cerveja']),
                     ];
                 }),

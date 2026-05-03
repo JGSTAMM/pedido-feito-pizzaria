@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useI18n } from '@/hooks/useI18n';
 import { norm } from '@/utils/normalize';
 
 const BORDER_PRICE = 20.00;
@@ -33,6 +34,7 @@ function formatBRL(value) {
 }
 
 export default function PizzaBuilderModal({ isOpen, onClose, onConfirm, pizzaFlavors = [], pizzaSizes = [], borderOptions = [] }) {
+    const { t } = useI18n();
     // Steps: 1 = Size, 2 = Flavors, 3 = Border + Resumo
     const [step, setStep] = useState(1);
     const [selectedSize, setSelectedSize] = useState(null);
@@ -126,17 +128,24 @@ export default function PizzaBuilderModal({ isOpen, onClose, onConfirm, pizzaFla
             ? selectedFlavors.map(f => `1/${selectedFlavors.length} ${f.name}`).join(', ')
             : selectedFlavors[0].name;
 
-        // Build observation with exclusions PER FLAVOR
+        // Build observation with exclusions PER FLAVOR using pipe separator
         let obsParts = [];
         selectedFlavors.forEach(f => {
             if (f.excludedIngredients && f.excludedIngredients.size > 0) {
-                obsParts.push(`Exclusões ${f.name}: Sem ${[...f.excludedIngredients].join(', ')}`);
+                const prefix = t('digital_menu.pizza_builder.modification_prefix');
+                obsParts.push(`⚠️ ${f.name}: ${prefix} ${[...f.excludedIngredients].join(', ')}`);
             }
         });
         
-        let finalObservation = observation.trim();
+        let finalObservation = '';
         if (obsParts.length > 0) {
-            finalObservation = finalObservation ? `${finalObservation}. ${obsParts.join('. ')}` : obsParts.join('. ');
+            finalObservation = obsParts.join('|');
+        }
+
+        if (observation.trim()) {
+            finalObservation = finalObservation 
+                ? `${finalObservation}|Obs: ${observation.trim()}` 
+                : `Obs: ${observation.trim()}`;
         }
 
         const pizzaItem = {

@@ -408,7 +408,8 @@
             "customize": "Personalizar",
             "selected": "Selecionado",
             "customize_hint": "Clique para Personalizar",
-            "customizing": "Personalizando..."
+            "customizing": "Personalizando...",
+            "modification_prefix": "S/"
         },
         "flavor_detail": {
             "ingredients": "Ingredientes",
