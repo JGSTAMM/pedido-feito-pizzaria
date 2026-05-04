@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import MobileLayout from '@/Layouts/MobileLayout';
 import TableOrderDrawer from '@/Pages/Floor/TableOrderDrawer';
 
@@ -14,6 +14,16 @@ export default function Index({
 }) {
     const [selectedTable, setSelectedTable] = useState(null);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+    const [isScrolled, setIsScrolled] = useState(false);
+
+    // Memoized scroll listener to prevent infinite re-renders
+    const handleScroll = useCallback((e) => {
+        const scrolled = e.target.scrollTop > 20;
+        setIsScrolled((prev) => {
+            if (prev === scrolled) return prev;
+            return scrolled;
+        });
+    }, []);
 
     // Synchronize selected table with Inertia prop updates
     useEffect(() => {
@@ -44,12 +54,12 @@ export default function Index({
 
     return (
     <>
-        <MobileLayout activeTab="/waiter">
+        <MobileLayout activeTab="/waiter" onScroll={handleScroll}>
             {/* ─── Header ─── */}
-            <div className="sticky top-0 z-20 bg-background-dark/90 backdrop-blur-xl border-b border-border-subtle">
-                <div className="px-5 pt-5 pb-4">
+            <div className={`sticky top-0 z-20 bg-background-dark/90 backdrop-blur-xl border-b border-border-subtle transition-all duration-300 ease-in-out ${isScrolled ? 'pt-3 pb-3' : 'pt-5 pb-4'}`}>
+                <div className="px-5">
                     {/* Greeting */}
-                    <div className="flex items-center justify-between mb-4">
+                    <div className={`flex items-center justify-between transition-all duration-300 ease-in-out overflow-hidden ${isScrolled ? 'h-0 opacity-0 mb-0' : 'h-14 opacity-100 mb-4'}`}>
                         <div>
                             <p className="text-text-muted text-xs font-bold uppercase tracking-widest mb-0.5">
                                 {greeting}
@@ -64,24 +74,30 @@ export default function Index({
                     </div>
 
                     {/* Stats Strip */}
-                    <div className="flex gap-2">
-                        <div className="flex-1 bg-surface border border-border-subtle rounded-xl px-3 py-2.5 text-center">
+                    <div className={`transition-all duration-300 ease-in-out ${isScrolled ? 'flex justify-between items-center bg-surface border border-border-subtle rounded-full px-5 py-2.5 shadow-lg' : 'flex gap-2'}`}>
+                        <div className={isScrolled ? 'flex items-center gap-2' : 'flex-1 bg-surface border border-border-subtle rounded-xl px-3 py-2.5 text-center'}>
                             <p className="text-text-muted text-[10px] font-bold uppercase tracking-wider">Total</p>
-                            <p className="text-white text-xl font-black">{stats.total || 0}</p>
+                            <p className={`text-white font-black ${isScrolled ? 'text-sm' : 'text-xl'}`}>{stats.total || 0}</p>
                         </div>
-                        <div className="flex-1 bg-emerald-500/5 border border-emerald-500/20 rounded-xl px-3 py-2.5 text-center">
+
+                        {isScrolled && <div className="w-px h-5 bg-border-subtle" />}
+
+                        <div className={isScrolled ? 'flex items-center gap-2' : 'flex-1 bg-emerald-500/5 border border-emerald-500/20 rounded-xl px-3 py-2.5 text-center'}>
                             <p className="text-emerald-400 text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1">
                                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                                Livres
+                                {!isScrolled && 'Livres'}
                             </p>
-                            <p className="text-white text-xl font-black">{stats.free || 0}</p>
+                            <p className={`text-white font-black ${isScrolled ? 'text-sm' : 'text-xl'}`}>{stats.free || 0}</p>
                         </div>
-                        <div className="flex-1 bg-orange-500/5 border border-orange-500/20 rounded-xl px-3 py-2.5 text-center">
+
+                        {isScrolled && <div className="w-px h-5 bg-border-subtle" />}
+
+                        <div className={isScrolled ? 'flex items-center gap-2' : 'flex-1 bg-orange-500/5 border border-orange-500/20 rounded-xl px-3 py-2.5 text-center'}>
                             <p className="text-orange-400 text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1">
                                 <span className="w-1.5 h-1.5 rounded-full bg-orange-400" />
-                                Ocupadas
+                                {!isScrolled && 'Ocupadas'}
                             </p>
-                            <p className="text-white text-xl font-black">{stats.occupied || 0}</p>
+                            <p className={`text-white font-black ${isScrolled ? 'text-sm' : 'text-xl'}`}>{stats.occupied || 0}</p>
                         </div>
                     </div>
                 </div>

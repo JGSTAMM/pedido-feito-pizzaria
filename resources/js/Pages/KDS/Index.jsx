@@ -175,7 +175,14 @@ function OrderDetailModal({ order, isOpen, onClose }) {
                                         )}
                                         {item.notes && (
                                             <div className="mt-2 bg-red-500/10 p-2 rounded-lg border border-red-500/20">
-                                                <p className="text-xs font-black text-red-300 uppercase tracking-widest">OBS: {item.notes}</p>
+                                                <div className="space-y-1">
+                                                    {item.notes.split('|').map((note, idx) => (
+                                                        <p key={idx} className="text-xs font-black text-red-300 uppercase tracking-widest flex items-start gap-1.5">
+                                                            {idx === 0 && <span className="material-symbols-outlined text-[14px] text-red-400">warning</span>}
+                                                            <span className={idx === 0 ? '' : 'ml-[20px]'}>{note.trim()}</span>
+                                                        </p>
+                                                    ))}
+                                                </div>
                                             </div>
                                         )}
                                     </div>

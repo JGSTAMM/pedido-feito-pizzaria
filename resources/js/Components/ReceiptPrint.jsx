@@ -82,7 +82,12 @@ export default function ReceiptPrint({ order }) {
                                 )}
                                 {item.notes && (
                                     <div className="text-[9px] mt-0.5 leading-tight pl-1 font-bold uppercase">
-                                        {t('receipt.shared.notesLabel')}: {item.notes}
+                                        {t('receipt.shared.notesLabel')}:
+                                        <div className="mt-0.5 ml-1">
+                                            {item.notes.split('|').map((note, idx) => (
+                                                <div key={idx} className="block">{note.trim()}</div>
+                                            ))}
+                                        </div>
                                     </div>
                                 )}
                             </td>

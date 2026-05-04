@@ -133,7 +133,9 @@ export default function PizzaBuilderModal({ isOpen, onClose, onConfirm, pizzaFla
         selectedFlavors.forEach(f => {
             if (f.excludedIngredients && f.excludedIngredients.size > 0) {
                 const prefix = t('digital_menu.pizza_builder.modification_prefix');
-                obsParts.push(`⚠️ ${f.name}: ${prefix} ${[...f.excludedIngredients].join(', ')}`);
+                f.excludedIngredients.forEach(ingredient => {
+                    obsParts.push(`⚠️ ${f.name}: ${prefix} ${ingredient}`);
+                });
             }
         });
         

@@ -127,14 +127,17 @@ export default function PizzaBuilderModal({
 
         const borderNote = selectedBorderId === 'none' ? null : `${t('digital_menu.pizza_builder.border_label')}: ${translateDynamic(selectedBorderOption.name)}`;
 
-        const flavorExclusions = selectedFlavorInstances
-            .filter(inst => inst.removed && inst.removed.length > 0)
-            .map(inst => {
+        let flavorExclusions = [];
+        selectedFlavorInstances.forEach(inst => {
+            if (inst.removed && inst.removed.length > 0) {
                 const p = flavorProductsMap.get(String(inst.flavorId));
                 const flavorName = translateDynamic(p?.name);
                 const prefix = t('digital_menu.pizza_builder.modification_prefix');
-                return `⚠️ ${flavorName}: ${prefix} ${inst.removed.map(r => translateDynamic(r)).join(', ')}`;
-            });
+                inst.removed.forEach(r => {
+                    flavorExclusions.push(`⚠️ ${flavorName}: ${prefix} ${translateDynamic(r)}`);
+                });
+            }
+        });
 
         let finalNotes = borderNote || '';
         if (flavorExclusions.length > 0) {

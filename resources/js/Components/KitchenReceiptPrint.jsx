@@ -58,7 +58,9 @@ export default function KitchenReceiptPrint({ order }) {
                                 )}
                                 {item.notes && (
                                     <div className="mt-2 p-1 border-2 border-black font-black text-base uppercase">
-                                        {t('receipt.kitchen.notesDecoratedWithValue', { note: item.notes })}
+                                        {item.notes.split('|').map((note, idx) => (
+                                            <div key={idx} className="mb-0.5">{t('receipt.kitchen.notesDecoratedWithValue', { note: note.trim() })}</div>
+                                        ))}
                                     </div>
                                 )}
                             </td>

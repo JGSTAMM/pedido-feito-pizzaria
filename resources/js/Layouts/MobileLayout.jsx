@@ -7,7 +7,7 @@ const navTabs = [
     { href: '/waiter/profile', icon: 'person', labelKey: 'nav.profile' },
 ];
 
-export default function MobileLayout({ children, activeTab = '/waiter' }) {
+export default function MobileLayout({ children, activeTab = '/waiter', onScroll }) {
     const { url } = usePage();
     const { t } = useI18n();
 
@@ -19,7 +19,7 @@ export default function MobileLayout({ children, activeTab = '/waiter' }) {
     return (
         <div className="bg-background-dark text-white h-[100dvh] flex flex-col overflow-hidden selection:bg-primary selection:text-white">
             {/* Main Content — scrollable */}
-            <main className="flex-1 overflow-y-auto overflow-x-hidden">
+            <main className="flex-1 overflow-y-auto overflow-x-hidden" onScroll={onScroll}>
                 {children}
             </main>
 
