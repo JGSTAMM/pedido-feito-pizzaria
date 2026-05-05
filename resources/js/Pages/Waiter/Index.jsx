@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import MobileLayout from '@/Layouts/MobileLayout';
 import TableOrderDrawer from '@/Pages/Floor/TableOrderDrawer';
 
@@ -15,15 +15,29 @@ export default function Index({
     const [selectedTable, setSelectedTable] = useState(null);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
+    const lastScrollUpdate = useRef(0);
 
-    // Memoized scroll listener to prevent infinite re-renders
+    // Throttled scroll listener with robust hysteresis
     const handleScroll = useCallback((e) => {
-        const scrolled = e.target.scrollTop > 20;
+        const scrollTop = e.target.scrollTop;
+        const now = Date.now();
+        
+        // Throttle state updates to 100ms for stability
+        if (now - lastScrollUpdate.current < 100) return;
+
         setIsScrolled((prev) => {
-            if (prev === scrolled) return prev;
-            return scrolled;
+            // High hysteresis: 
+            // Shrink at 120px (committed scroll)
+            // Expand at 5px (return to top)
+            const next = prev ? scrollTop >= 5 : scrollTop > 120;
+            if (next !== prev) {
+                lastScrollUpdate.current = now;
+                return next;
+            }
+            return prev;
         });
     }, []);
+
 
     // Synchronize selected table with Inertia prop updates
     useEffect(() => {
@@ -56,46 +70,50 @@ export default function Index({
     <>
         <MobileLayout activeTab="/waiter" onScroll={handleScroll}>
             {/* ─── Header ─── */}
-            <div className={`sticky top-0 z-20 bg-background-dark/90 backdrop-blur-xl border-b border-border-subtle transition-all duration-300 ease-in-out ${isScrolled ? 'pt-3 pb-3' : 'pt-5 pb-4'}`}>
+            <div className={`sticky top-0 z-20 bg-background-dark/95 backdrop-blur-xl border-b border-border-subtle transition-shadow duration-500 ease-in-out pt-4 pb-4 ${isScrolled ? 'shadow-2xl' : ''}`}>
                 <div className="px-5">
-                    {/* Greeting */}
-                    <div className={`flex items-center justify-between transition-all duration-300 ease-in-out overflow-hidden ${isScrolled ? 'h-0 opacity-0 mb-0' : 'h-14 opacity-100 mb-4'}`}>
-                        <div>
-                            <p className="text-text-muted text-xs font-bold uppercase tracking-widest mb-0.5">
-                                {greeting}
-                            </p>
-                            <h1 className="text-white text-2xl font-black tracking-tight">
-                                {userName.split(' ')[0]} <span className="text-primary">👋</span>
-                            </h1>
-                        </div>
-                        <div className="size-11 rounded-full bg-gradient-to-tr from-primary to-purple-400 flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-primary/20">
-                            {userName.charAt(0).toUpperCase()}
+                    {/* Greeting Section - Stable transitions */}
+                    <div 
+                        className={`overflow-hidden transition-[max-height,opacity,margin,transform] duration-500 ease-in-out ${isScrolled ? 'max-h-0 opacity-0 mb-0 -translate-y-2' : 'max-h-40 opacity-100 mb-4 translate-y-0'}`}
+                    >
+                        <div className="flex items-center justify-between pb-1">
+                            <div>
+                                <p className="text-text-muted text-[10px] font-bold uppercase tracking-[0.2em] mb-1">
+                                    {greeting}
+                                </p>
+                                <h1 className="text-white text-2xl font-black tracking-tight flex items-center gap-2">
+                                    {userName.split(' ')[0]} <span className="text-primary">👋</span>
+                                </h1>
+                            </div>
+                            <div className="size-12 rounded-2xl bg-gradient-to-tr from-primary to-purple-500 flex items-center justify-center text-white font-bold text-lg shadow-xl shadow-primary/20 border border-white/10">
+                                {userName.charAt(0).toUpperCase()}
+                            </div>
                         </div>
                     </div>
 
                     {/* Stats Strip */}
-                    <div className={`transition-all duration-300 ease-in-out ${isScrolled ? 'flex justify-between items-center bg-surface border border-border-subtle rounded-full px-5 py-2.5 shadow-lg' : 'flex gap-2'}`}>
+                    <div className={`transition-all duration-500 ease-in-out ${isScrolled ? 'flex justify-between items-center bg-background-dark/80 border border-border-subtle rounded-full px-4 py-2 shadow-lg backdrop-blur-xl' : 'flex gap-2'}`}>
                         <div className={isScrolled ? 'flex items-center gap-2' : 'flex-1 bg-surface border border-border-subtle rounded-xl px-3 py-2.5 text-center'}>
                             <p className="text-text-muted text-[10px] font-bold uppercase tracking-wider">Total</p>
                             <p className={`text-white font-black ${isScrolled ? 'text-sm' : 'text-xl'}`}>{stats.total || 0}</p>
                         </div>
 
-                        {isScrolled && <div className="w-px h-5 bg-border-subtle" />}
+                        {isScrolled && <div className="w-px h-4 bg-border-subtle/50" />}
 
                         <div className={isScrolled ? 'flex items-center gap-2' : 'flex-1 bg-emerald-500/5 border border-emerald-500/20 rounded-xl px-3 py-2.5 text-center'}>
                             <p className="text-emerald-400 text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1">
                                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                                {!isScrolled && 'Livres'}
+                                <span className={isScrolled ? 'text-[10px] font-black' : ''}>LIVRES</span>
                             </p>
                             <p className={`text-white font-black ${isScrolled ? 'text-sm' : 'text-xl'}`}>{stats.free || 0}</p>
                         </div>
 
-                        {isScrolled && <div className="w-px h-5 bg-border-subtle" />}
+                        {isScrolled && <div className="w-px h-4 bg-border-subtle/50" />}
 
                         <div className={isScrolled ? 'flex items-center gap-2' : 'flex-1 bg-orange-500/5 border border-orange-500/20 rounded-xl px-3 py-2.5 text-center'}>
                             <p className="text-orange-400 text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1">
                                 <span className="w-1.5 h-1.5 rounded-full bg-orange-400" />
-                                {!isScrolled && 'Ocupadas'}
+                                <span className={isScrolled ? 'text-[10px] font-black' : ''}>OCUPADAS</span>
                             </p>
                             <p className={`text-white font-black ${isScrolled ? 'text-sm' : 'text-xl'}`}>{stats.occupied || 0}</p>
                         </div>
@@ -104,7 +122,7 @@ export default function Index({
             </div>
 
             {/* ─── Table Grid ─── */}
-            <div className="px-4 py-4 pb-6">
+            <div className="px-4 pt-6 pb-8 relative z-10">
                 <div className="grid grid-cols-2 gap-3">
                     {tables.map((table) => {
                         const isOccupied = table.status === 'occupied';
