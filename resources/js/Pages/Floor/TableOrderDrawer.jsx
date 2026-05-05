@@ -43,12 +43,18 @@ export default function TableOrderDrawer({
 
     const filteredItems = useMemo(() => {
         let items = allItems;
-        if (activeCategory === 'Pizzas') {
-            // In Pizzas category, do NOT list individual flavors — show a CTA to open Pizza Builder
-            items = [];
-        } else if (activeCategory === null && !searchTerm) {
-            // "Todos" default tab without search -> Hide individual flavors & SORT strictly
-            items = items.filter(i => i.category !== 'Pizzas');
+        
+        if (activeCategory) {
+            items = items.filter(i => i.category === activeCategory || (i.category && i.category.name === activeCategory));
+        }
+        
+        if (searchTerm) {
+            const q = norm(searchTerm);
+            items = items.filter(i => norm(i.name).includes(q));
+        }
+        
+        // Default sort if no category or search
+        if (!activeCategory && !searchTerm) {
             items.sort((a, b) => {
                 const getPriority = (item) => {
                     if (item.category === 'Promoções' || item.category === 'Extras') return 1;
@@ -57,12 +63,6 @@ export default function TableOrderDrawer({
                 };
                 return getPriority(a) - getPriority(b);
             });
-        } else if (activeCategory) {
-            items = items.filter(i => i.category === activeCategory);
-        }
-        if (searchTerm) {
-            const q = norm(searchTerm);
-            items = items.filter(i => norm(i.name).includes(q));
         }
         return items;
     }, [allItems, activeCategory, searchTerm]);
@@ -269,6 +269,7 @@ export default function TableOrderDrawer({
                     {/* Active Order Section (Tab 1) */}
                     {activeTab === 'account' && activeOrder && activeOrder.items?.length > 0 && (
                         <div className={`${isMobile ? 'p-4' : 'p-6'} border-b border-border-subtle bg-white/[0.01]`}>
+                            <h3 className="text-lg font-bold text-white mb-4">{t('floor.drawer.tabs.account')}</h3>
                             <div className="flex items-center justify-between mb-3">
                                 <p className="text-xs text-text-muted uppercase font-bold tracking-wider">
                                     {t('floor.drawer.orderCode')} #{activeOrder.short_code || String(activeOrder.id).substring(0, 5).toUpperCase()}
@@ -327,6 +328,7 @@ export default function TableOrderDrawer({
                     {/* ─── Add Items Section (Tab 2) ─── */}
                     {activeTab === 'add_items' && (
                         <div className={`${isMobile ? 'p-4' : 'p-6'}`}>
+                            <h3 className="text-lg font-bold text-white mb-4">{t('floor.drawer.tabs.addItems')}</h3>
                             <p className="text-xs text-text-muted uppercase font-bold tracking-wider mb-3">
                                 {t('floor.drawer.addItems.title')}
                             </p>
@@ -366,22 +368,23 @@ export default function TableOrderDrawer({
                             {(activeCategory === 'Pizzas' || activeCategory === null) && (
                                 <button
                                     onClick={() => setShowPizzaBuilder(true)}
-                                    className="w-full mb-6 flex items-center gap-4 p-4 bg-gradient-to-r from-primary/10 to-[#06b6d4]/10 border border-primary/30 rounded-2xl hover:border-primary/50 hover:from-primary/20 hover:to-[#06b6d4]/20 transition-all group shadow-[0_0_20px_rgba(139,92,246,0.05)]"
+                                    className="w-full mb-6 flex items-center justify-between p-4 bg-gradient-to-r from-primary/10 to-[#06b6d4]/10 border border-primary/30 rounded-2xl hover:border-primary/50 hover:from-primary/20 hover:to-[#06b6d4]/20 transition-all group shadow-[0_0_20px_rgba(139,92,246,0.05)]"
                                 >
-                                    <div className="size-12 bg-primary/20 rounded-xl flex items-center justify-center text-primary group-hover:scale-110 group-hover:bg-primary group-hover:text-white transition-all shadow-[0_0_15px_rgba(139,92,246,0.2)]">
-                                        <span className="material-symbols-outlined text-[24px]">local_pizza</span>
+                                    <div className="flex items-center gap-4 flex-1">
+                                        <div className="size-12 bg-primary/20 rounded-xl flex items-center justify-center text-primary group-hover:scale-110 group-hover:bg-primary group-hover:text-white transition-all shadow-[0_0_15px_rgba(139,92,246,0.2)] shrink-0">
+                                            <span className="material-symbols-outlined text-[24px]">local_pizza</span>
+                                        </div>
+                                        <div className="text-left flex-1">
+                                            <p className="text-white font-bold text-base mb-0.5">{t('digital_menu.catalog.build_pizza')}</p>
+                                            <p className="text-text-muted text-sm group-hover:text-white/70 transition-colors">{t('digital_menu.catalog.build_pizza_subtitle') || t('floor.drawer.addItems.customPizzaSubtitle')}</p>
+                                        </div>
                                     </div>
-                                    <div className="text-left flex-1">
-                                        <p className="text-white font-bold text-base mb-0.5">{t('floor.drawer.addItems.customPizzaTitle')}</p>
-                                        <p className="text-text-muted text-sm group-hover:text-white/70 transition-colors">{t('floor.drawer.addItems.customPizzaSubtitle')}</p>
-                                    </div>
-                                    <span className="material-symbols-outlined text-primary text-[24px] bg-primary/10 size-10 flex items-center justify-center rounded-lg group-hover:bg-primary group-hover:text-white transition-colors">arrow_forward</span>
+                                    <span className="material-symbols-outlined text-primary text-[24px] bg-primary/10 size-10 flex items-center justify-center rounded-lg group-hover:bg-primary group-hover:text-white transition-colors shrink-0">arrow_forward</span>
                                 </button>
                             )}
 
                             {/* Product List */}
-                            {activeCategory !== 'Pizzas' && (
-                                <div className="space-y-3 max-h-80 overflow-y-auto custom-scrollbar pr-1">
+                            <div className="space-y-3 max-h-80 overflow-y-auto custom-scrollbar pr-1">
                                     {filteredItems.length === 0 && (
                                         <div className="text-center bg-surface border border-border-subtle rounded-2xl py-8">
                                             <span className="material-symbols-outlined text-4xl text-text-muted/50 mb-2">search_off</span>
@@ -409,7 +412,6 @@ export default function TableOrderDrawer({
                                         </button>
                                     ))}
                                 </div>
-                            )}
                         </div>
                     )}
                 </div>
