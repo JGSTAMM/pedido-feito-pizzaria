@@ -253,13 +253,13 @@ export default function TableOrderDrawer({
                         className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all ${activeTab === 'account' ? 'bg-white/10 text-white shadow-sm' : 'text-text-muted hover:text-white hover:bg-white/5'} ${!isOccupied ? 'opacity-50 cursor-not-allowed' : ''}`}
                         disabled={!isOccupied}
                     >
-                        {t('floor.drawer.tabs.account')}
+                        {t('floor.drawer.tabs.account') || 'Ver Pedidos / Conta'}
                     </button>
                     <button
                         onClick={() => setActiveTab('add_items')}
                         className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all ${activeTab === 'add_items' ? 'bg-white/10 text-white shadow-sm' : 'text-text-muted hover:text-white hover:bg-white/5'}`}
                     >
-                        {t('floor.drawer.tabs.addItems')}
+                        {t('floor.drawer.tabs.addItems') || 'Novo Pedido'}
                     </button>
                 </div>
 
