@@ -360,7 +360,7 @@ export default function TableOrderDrawer({
                                     onClick={() => setActiveCategory(null)}
                                     className={`px-4 py-2 rounded-xl text-sm font-bold whitespace-nowrap transition-all border ${!activeCategory ? 'bg-primary/20 text-primary border-primary/30 shadow-[0_0_15px_rgba(139,92,246,0.15)]' : 'bg-surface text-text-muted border-border-subtle hover:bg-surface-hover hover:text-white'}`}
                                 >
-                                    {t('floor.drawer.addItems.all')}
+                                    {t('floor.drawer.addItems.all') || 'Todos'}
                                 </button>
                                 {categories.map(cat => (
                                     <button
@@ -384,8 +384,8 @@ export default function TableOrderDrawer({
                                             <span className="material-symbols-outlined text-[24px]">local_pizza</span>
                                         </div>
                                         <div className="text-left flex-1">
-                                            <p className="text-white font-bold text-base mb-0.5">{t('digital_menu.catalog.build_pizza')}</p>
-                                            <p className="text-text-muted text-sm group-hover:text-white/70 transition-colors">{t('digital_menu.catalog.build_pizza_subtitle') || t('floor.drawer.addItems.customPizzaSubtitle')}</p>
+                                            <p className="text-white font-bold text-base mb-0.5">{t('digital_menu.catalog.build_pizza') || 'Montar Pizza'}</p>
+                                            <p className="text-text-muted text-sm group-hover:text-white/70 transition-colors">{t('digital_menu.catalog.build_pizza_subtitle') || t('floor.drawer.addItems.customPizzaSubtitle') || 'Personalizar sabores e ingredientes'}</p>
                                         </div>
                                     </div>
                                     <span className="material-symbols-outlined text-primary text-[24px] bg-primary/10 size-10 flex items-center justify-center rounded-lg group-hover:bg-primary group-hover:text-white transition-colors shrink-0">arrow_forward</span>
