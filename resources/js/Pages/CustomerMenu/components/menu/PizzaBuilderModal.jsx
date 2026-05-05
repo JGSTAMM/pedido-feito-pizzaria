@@ -37,10 +37,10 @@ export default function PizzaBuilderModal({
 
     // Derived State
     const selectedPizzaSizeOption = useMemo(() => {
-        return pizzaSizeOptions.find(opt => String(opt.id) === String(selectedPizzaSize)) || pizzaSizeOptions[0] || null;
+        return pizzaSizeOptions.find(opt => String(opt.id) === String(selectedPizzaSize)) || null;
     }, [pizzaSizeOptions, selectedPizzaSize]);
 
-    const selectedSizeMaxFlavors = Number(selectedPizzaSizeOption?.max_flavors || 1);
+    const selectedSizeMaxFlavors = Number(selectedPizzaSizeOption?.max_flavors || 0);
 
     const selectedBorderOption = useMemo(() => {
         return pizzaBorderOptions.find(b => String(b.id) === String(selectedBorderId)) || { id: 'none', name: t('digital_menu.pizza_builder.no_border'), price: 0 };
@@ -77,6 +77,10 @@ export default function PizzaBuilderModal({
 
     // Handlers
     const addFlavorInstance = (flavor) => {
+        if (!selectedPizzaSizeOption) {
+            setPizzaBuilderErrorKey('digital_menu.pizza_builder.select_size_required');
+            return;
+        }
         if (selectedFlavorInstances.length >= selectedSizeMaxFlavors) {
             setPizzaBuilderErrorKey('digital_menu.pizza_builder.max_flavors_limit');
             return;
@@ -164,7 +168,7 @@ export default function PizzaBuilderModal({
     // Reset effects
     useEffect(() => {
         if (isOpen) {
-            setSelectedPizzaSize(String(pizzaSizeOptions[0]?.id || ''));
+            setSelectedPizzaSize('');
             setFlavorSearchQuery('');
 
             if (preSelectedInstance) {
@@ -177,7 +181,7 @@ export default function PizzaBuilderModal({
             setSelectedBorderId('none');
             setPizzaBuilderErrorKey('');
         }
-    }, [isOpen, pizzaSizeOptions, preSelectedInstance]);
+    }, [isOpen, preSelectedInstance]);
 
     // Handle Escape key with capture to ensure priority
     useEffect(() => {
@@ -205,10 +209,10 @@ export default function PizzaBuilderModal({
 
     // Trim flavors if size drops
     useEffect(() => {
-        if (selectedFlavorInstances.length > selectedSizeMaxFlavors) {
+        if (selectedPizzaSizeOption && selectedFlavorInstances.length > selectedSizeMaxFlavors) {
             setSelectedFlavorInstances(prev => prev.slice(0, selectedSizeMaxFlavors));
         }
-    }, [selectedSizeMaxFlavors, selectedFlavorInstances.length]);
+    }, [selectedSizeMaxFlavors, selectedFlavorInstances.length, selectedPizzaSizeOption]);
 
     if (!isOpen) return null;
 

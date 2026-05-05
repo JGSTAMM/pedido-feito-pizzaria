@@ -47,18 +47,18 @@ export default function PizzaBuilderModal({ isOpen, onClose, onConfirm, pizzaFla
     const [customizingFlavor, setCustomizingFlavor] = useState(null);
     const [tempExcluded, setTempExcluded] = useState(new Set());
     const [viewingInfoFlavor, setViewingInfoFlavor] = useState(null);
+    
+    // Track if the smart shortcut flavor has been processed
+    const [consumedInitialFlavor, setConsumedInitialFlavor] = useState(false);
 
     useEffect(() => {
-        if (isOpen && initialFlavor) {
-            const defaultSize = pizzaSizes.find(s => !s.is_broto) || pizzaSizes[0];
-            setSelectedSize(defaultSize);
-            setCustomizingFlavor(initialFlavor);
-            setTempExcluded(new Set());
-            setStep(2);
-        } else if (!isOpen) {
+        if (isOpen) {
+            setStep(1);
+            setConsumedInitialFlavor(false);
+        } else {
             reset();
         }
-    }, [isOpen, initialFlavor, pizzaSizes]);
+    }, [isOpen]);
 
     // Derived
     const maxFlavors = selectedSize?.max_flavors ?? 0;
@@ -111,6 +111,12 @@ export default function PizzaBuilderModal({ isOpen, onClose, onConfirm, pizzaFla
         setSelectedFlavors([]);
         setSelectedBorder(null); // Reset border on size change
         setStep(2);
+        
+        if (initialFlavor && !consumedInitialFlavor) {
+            setCustomizingFlavor(initialFlavor);
+            setTempExcluded(new Set());
+            setConsumedInitialFlavor(true);
+        }
     };
 
     const toggleFlavor = (flavor) => {
