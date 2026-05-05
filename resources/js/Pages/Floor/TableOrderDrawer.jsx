@@ -21,6 +21,7 @@ export default function TableOrderDrawer({
     const [searchTerm, setSearchTerm] = useState('');
     const [activeCategory, setActiveCategory] = useState(null);
     const [showPizzaBuilder, setShowPizzaBuilder] = useState(false);
+    const [initialPizzaFlavor, setInitialPizzaFlavor] = useState(null);
     const [sending, setSending] = useState(false);
     const [pageError, setPageError] = useState('');
 
@@ -69,10 +70,16 @@ export default function TableOrderDrawer({
 
     // ── Cart Actions ──
 
-    // Only for non-pizza items when clicked from the list
+    // Smart Shortcut: If it's a pizza flavor, open the builder. Otherwise open quick observation modal.
     const handleQuickItemClick = (item) => {
-        setSelectedQuickItem(item);
-        setQuickObservation('');
+        const isPizza = pizzaFlavors.some(f => f.id === item.id && f.name === item.name) || item.category === 'Pizzas';
+        if (isPizza) {
+            setInitialPizzaFlavor(item);
+            setShowPizzaBuilder(true);
+        } else {
+            setSelectedQuickItem(item);
+            setQuickObservation('');
+        }
     };
 
     const confirmQuickItem = () => {
@@ -114,6 +121,7 @@ export default function TableOrderDrawer({
     const handlePizzaConfirm = (pizzaItem) => {
         setCart(prev => [...prev, pizzaItem]);
         setShowPizzaBuilder(false);
+        setInitialPizzaFlavor(null);
     };
 
     const cartTotal = cart.reduce((sum, c) => sum + (c.price * c.quantity), 0);
@@ -188,6 +196,7 @@ export default function TableOrderDrawer({
         setSearchTerm('');
         setActiveCategory(null);
         setShowPizzaBuilder(false);
+        setInitialPizzaFlavor(null);
         setPayments([]);
         setPaymentInputValue('');
         setPageError('');
@@ -534,11 +543,15 @@ export default function TableOrderDrawer({
             {showPizzaBuilder && (
                 <PizzaBuilderModal
                     isOpen={showPizzaBuilder}
-                    onClose={() => setShowPizzaBuilder(false)}
+                    onClose={() => {
+                        setShowPizzaBuilder(false);
+                        setInitialPizzaFlavor(null);
+                    }}
                     onConfirm={handlePizzaConfirm}
                     pizzaSizes={pizzaSizes}
                     pizzaFlavors={pizzaFlavors}
                     borderOptions={borderOptions}
+                    initialFlavor={initialPizzaFlavor}
                 />
             )}
 

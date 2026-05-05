@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useI18n } from '@/hooks/useI18n';
 import { norm } from '@/utils/normalize';
 
@@ -33,7 +33,7 @@ function formatBRL(value) {
     return `R$ ${value.toFixed(2).replace('.', ',')}`;
 }
 
-export default function PizzaBuilderModal({ isOpen, onClose, onConfirm, pizzaFlavors = [], pizzaSizes = [], borderOptions = [] }) {
+export default function PizzaBuilderModal({ isOpen, onClose, onConfirm, pizzaFlavors = [], pizzaSizes = [], borderOptions = [], initialFlavor = null }) {
     const { t } = useI18n();
     // Steps: 1 = Size, 2 = Flavors, 3 = Border + Resumo
     const [step, setStep] = useState(1);
@@ -47,6 +47,18 @@ export default function PizzaBuilderModal({ isOpen, onClose, onConfirm, pizzaFla
     const [customizingFlavor, setCustomizingFlavor] = useState(null);
     const [tempExcluded, setTempExcluded] = useState(new Set());
     const [viewingInfoFlavor, setViewingInfoFlavor] = useState(null);
+
+    useEffect(() => {
+        if (isOpen && initialFlavor) {
+            const defaultSize = pizzaSizes.find(s => !s.is_broto) || pizzaSizes[0];
+            setSelectedSize(defaultSize);
+            setCustomizingFlavor(initialFlavor);
+            setTempExcluded(new Set());
+            setStep(2);
+        } else if (!isOpen) {
+            reset();
+        }
+    }, [isOpen, initialFlavor, pizzaSizes]);
 
     // Derived
     const maxFlavors = selectedSize?.max_flavors ?? 0;
