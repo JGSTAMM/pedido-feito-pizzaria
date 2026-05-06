@@ -24,6 +24,7 @@ export default function TableOrderDrawer({
     const [initialPizzaFlavor, setInitialPizzaFlavor] = useState(null);
     const [sending, setSending] = useState(false);
     const [pageError, setPageError] = useState('');
+    const [isCartOpen, setIsCartOpen] = useState(false);
 
     // Quick Item Modal state
     const [selectedQuickItem, setSelectedQuickItem] = useState(null);
@@ -426,12 +427,44 @@ export default function TableOrderDrawer({
                 </div>
 
                 {/* ─── Cart / Footer ─── */}
-                {cart.length > 0 && (
-                    <div className="border-t border-border-subtle bg-surface/50 backdrop-blur-xl shrink-0">
-                        <div className={`${isMobile ? 'p-3 max-h-32' : 'p-6 max-h-48'} overflow-y-auto custom-scrollbar space-y-2 border-b border-border-subtle`}>
-                            <p className="text-xs text-text-muted uppercase font-bold tracking-wider mb-2">
-                                {t('floor.drawer.cart.newItems', { count: cart.length })}
-                            </p>
+                {cart.length > 0 && !isCartOpen && (
+                    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-3rem)] max-w-sm z-40">
+                        <button
+                            onClick={() => setIsCartOpen(true)}
+                            className="w-full bg-gradient-to-r from-primary to-[#06b6d4] hover:from-[#06b6d4] hover:to-primary text-white p-4 rounded-full shadow-[0_10px_40px_rgba(139,92,246,0.4)] border border-white/20 flex items-center justify-between transition-all hover:scale-[1.02] active:scale-95"
+                        >
+                            <div className="flex items-center gap-3">
+                                <div className="bg-black/20 rounded-full p-2 size-10 flex items-center justify-center">
+                                    <span className="material-symbols-outlined text-[20px]">shopping_cart</span>
+                                </div>
+                                <div className="text-left">
+                                    <p className="font-bold text-sm">{cart.length} {cart.length === 1 ? 'item' : 'itens'}</p>
+                                    <p className="text-xs text-white/70 tracking-wide uppercase font-black">{t('floor.drawer.cart.view') || 'Ver Carrinho'}</p>
+                                </div>
+                            </div>
+                            <span className="text-xl font-black">{formatCurrency(cartTotal)}</span>
+                        </button>
+                    </div>
+                )}
+
+                {cart.length > 0 && isCartOpen && (
+                    <div className="absolute inset-x-0 bottom-0 z-50 bg-[#1A1A24]/95 backdrop-blur-xl border-t border-border-subtle rounded-t-3xl shadow-[0_-10px_50px_rgba(0,0,0,0.8)] flex flex-col max-h-[85vh] animate-in slide-in-from-bottom-full duration-300">
+                        {/* Header */}
+                        <div className="p-4 border-b border-white/5 flex items-center justify-between shrink-0">
+                            <h3 className="font-bold text-lg text-white flex items-center gap-2">
+                                <span className="material-symbols-outlined text-primary">shopping_cart</span>
+                                {t('floor.drawer.cart.title') || 'Carrinho'}
+                            </h3>
+                            <button
+                                onClick={() => setIsCartOpen(false)}
+                                className="size-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/10 text-text-muted hover:text-white transition-colors"
+                            >
+                                <span className="material-symbols-outlined text-[24px]">keyboard_arrow_down</span>
+                            </button>
+                        </div>
+
+                        {/* List */}
+                        <div className="p-4 overflow-y-auto custom-scrollbar space-y-2 flex-1 min-h-[30vh]">
                             {cart.map(item => (
                                 <div key={item.key} className="flex items-center gap-4 bg-surface rounded-2xl p-3 border border-border-subtle hover:border-border-subtle-hover transition-colors shadow-sm">
                                     <div className="flex items-center gap-1.5 bg-background-dark/50 rounded-lg p-1 border border-white/5">
@@ -453,7 +486,9 @@ export default function TableOrderDrawer({
                                 </div>
                             ))}
                         </div>
-                        <div className={`${isMobile ? 'p-4' : 'p-6'} bg-surface/80`}>
+
+                        {/* Footer */}
+                        <div className={`${isMobile ? 'p-4' : 'p-6'} bg-surface/80 shrink-0`}>
                             <div className="flex items-center justify-between mb-3 bg-background-dark/50 border border-white/5 p-3 rounded-xl">
                                 <span className="text-sm text-text-muted font-bold tracking-wide uppercase">{t('floor.drawer.cart.totalToSend')}</span>
                                 <span className="text-2xl font-black text-white tracking-tight">
@@ -461,7 +496,10 @@ export default function TableOrderDrawer({
                                 </span>
                             </div>
                             <button
-                                onClick={handleSend}
+                                onClick={() => {
+                                    handleSend();
+                                    setIsCartOpen(false);
+                                }}
                                 disabled={sending}
                                 className="w-full py-4 bg-gradient-to-r from-primary to-[#06b6d4] hover:from-[#06b6d4] hover:to-primary text-white font-bold rounded-xl transition-all shadow-[0_0_20px_rgba(139,92,246,0.3)] hover:shadow-[0_0_30px_rgba(139,92,246,0.5)] flex items-center justify-center gap-3 disabled:opacity-50 disabled:shadow-none"
                             >
