@@ -12,7 +12,8 @@ const WaiterCartItem = ({ item, updateQty, removeFromCart, formatCurrency, t }) 
     const notesArray = item.observation ? item.observation.split('|').map(n => n.trim()).filter(Boolean) : [];
     
     // Has extra details to show?
-    const hasDetails = (item.flavors && item.flavors.length > 0) || notesArray.length > 0 || item.border;
+    const hasValidBorder = item.border && typeof item.border === 'string' && item.border.toLowerCase() !== 'sem borda';
+    const hasDetails = (item.flavors && item.flavors.length > 0) || notesArray.length > 0 || hasValidBorder;
 
     return (
         <div className="flex flex-col gap-2 bg-surface rounded-2xl p-3 border border-border-subtle shadow-sm">
@@ -40,11 +41,11 @@ const WaiterCartItem = ({ item, updateQty, removeFromCart, formatCurrency, t }) 
             {isExpanded && hasDetails && (
                 <div className="pl-6 pr-2 py-2 space-y-2 border-l-2 border-border-subtle ml-2">
                     {/* Border */}
-                    {item.border && (
+                    {hasValidBorder && (
                         <div className="space-y-1">
                             <p className="text-[10px] uppercase font-bold text-text-muted tracking-wider">Borda</p>
                             <div className="text-xs text-white/80">
-                                • {item.border.name}
+                                • {item.border}
                             </div>
                         </div>
                     )}
