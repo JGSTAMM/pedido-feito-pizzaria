@@ -236,7 +236,10 @@ export default function Index({
                                                     </span>
                                                     <span className="text-lg font-black text-emerald-400 tracking-tight flex items-center justify-end gap-1">
                                                         <span className="text-xs text-text-muted font-normal">R$</span>
-                                                        {Number(table.active_order.total).toFixed(2).replace('.', ',')}
+                                                        {(table.active_orders?.length > 0 
+                                                            ? table.active_orders.reduce((sum, o) => sum + (Number(o.total) || 0), 0)
+                                                            : Number(table.active_order?.total || 0)
+                                                        ).toFixed(2).replace('.', ',')}
                                                     </span>
                                                 </div>
                                             </div>

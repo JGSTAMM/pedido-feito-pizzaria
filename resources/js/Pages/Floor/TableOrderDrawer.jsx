@@ -374,62 +374,97 @@ export default function TableOrderDrawer({
                 {/* ─── Content ─── */}
                 <div className="flex-1 overflow-y-auto custom-scrollbar">
 
-                    {/* Active Order Section (Tab 1) */}
-                    {activeTab === 'account' && activeOrder && activeOrder.items?.length > 0 && (
-                        <div className={`${isMobile ? 'p-4' : 'p-6'} border-b border-border-subtle bg-white/[0.01]`}>
-                            <h3 className="text-lg font-bold text-white mb-4">{t('floor.drawer.tabs.account')}</h3>
-                            <div className="flex items-center justify-between mb-3">
-                                <p className="text-xs text-text-muted uppercase font-bold tracking-wider">
-                                    {t('floor.drawer.orderCode')} #{activeOrder.short_code || String(activeOrder.id).substring(0, 5).toUpperCase()}
-                                </p>
-                                <span className="text-emerald-400 text-sm font-bold bg-emerald-400/10 px-2 py-1 rounded-lg border border-emerald-400/20">
-                                    {formatCurrency(activeOrder.total)}
-                                </span>
-                            </div>
-                            <div className={`bg-surface rounded-xl border border-border-subtle divide-y divide-border-subtle ${isMobile ? 'max-h-40' : 'max-h-48'} overflow-y-auto custom-scrollbar`}>
-                                {activeOrder.items.map((item, i) => (
-                                    <div key={i} className="p-3 flex items-start gap-3">
-                                        <span className="text-xs font-bold text-white bg-white/10 px-2 py-1 rounded-lg flex-shrink-0 border border-white/5">
-                                            {item.quantity}x
-                                        </span>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-sm text-white font-semibold leading-tight">
-                                                {item.is_pizza && '🍕 '}{item.name}
-                                            </p>
-                                            {item.is_pizza && item.flavor_names?.length > 0 && (
-                                                <p className="text-xs text-text-muted mt-1 leading-snug">
-                                                    {item.flavor_names.length > 1
-                                                        ? item.flavor_names.map(f => `1/${item.flavor_names.length} ${f}`).join(', ')
-                                                        : item.flavor_names[0]
-                                                    }
-                                                </p>
-                                            )}
-                                            {item.notes && (
-                                                <div className="mt-2 space-y-1 bg-red-500/10 p-2.5 rounded-lg border border-red-500/30 shadow-[0_0_10px_rgba(239,68,68,0.1)]">
-                                                    {item.notes.split('|').map((note, idx) => (
-                                                        <div key={idx} className="flex items-start gap-1.5 text-[11px] text-red-400 font-bold uppercase tracking-wide leading-tight">
-                                                            <span className="material-symbols-outlined text-[14px] flex-shrink-0 mt-0.5">
-                                                                {note.trim().startsWith('⚠️') ? '' : 'warning'}
+                    {/* Active Orders Section (Tab 1) */}
+                    {activeTab === 'account' && (
+                        <div className={`${isMobile ? 'p-4' : 'p-6'} border-b border-border-subtle bg-white/[0.01] space-y-6`}>
+                            {table.active_orders?.length > 0 ? (
+                                <>
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="text-lg font-bold text-white">{t('floor.drawer.tabs.account')}</h3>
+                                        <div className="bg-emerald-500/10 px-3 py-1.5 rounded-xl border border-emerald-500/20">
+                                            <span className="text-emerald-400 text-lg font-black tracking-tight">
+                                                {formatCurrency(table.active_orders.reduce((sum, o) => sum + (Number(o.total) || 0), 0))}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-4">
+                                        {table.active_orders.map((order, oIdx) => (
+                                            <div key={order.id} className="bg-surface rounded-2xl border border-border-subtle overflow-hidden">
+                                                {/* Order Header */}
+                                                <div className="bg-white/5 px-4 py-2.5 border-b border-border-subtle flex items-center justify-between">
+                                                    <p className="text-[10px] text-text-muted uppercase font-black tracking-widest">
+                                                        {t('floor.drawer.orderCode')} #{order.short_code || String(order.id).substring(0, 5).toUpperCase()}
+                                                    </p>
+                                                    <span className="text-xs font-bold text-text-muted">
+                                                        {t('floor.table.elapsedMinutes', { count: Math.floor(order.elapsed_minutes || 0) })}
+                                                    </span>
+                                                </div>
+
+                                                {/* Order Items */}
+                                                <div className="divide-y divide-border-subtle">
+                                                    {order.items?.map((item, i) => (
+                                                        <div key={i} className="p-3 flex items-start gap-3">
+                                                            <span className="text-xs font-bold text-white bg-white/10 px-2 py-1 rounded-lg flex-shrink-0 border border-white/5">
+                                                                {item.quantity}x
                                                             </span>
-                                                            <span className="flex-1">{note.trim().replace(/^⚠️\s*/, '')}</span>
+                                                            <div className="flex-1 min-w-0">
+                                                                <p className="text-sm text-white font-semibold leading-tight">
+                                                                    {item.is_pizza && '🍕 '}{item.name}
+                                                                </p>
+                                                                {item.is_pizza && item.flavor_names?.length > 0 && (
+                                                                    <p className="text-xs text-text-muted mt-1 leading-snug">
+                                                                        {item.flavor_names.length > 1
+                                                                            ? item.flavor_names.map(f => `1/${item.flavor_names.length} ${f}`).join(', ')
+                                                                            : item.flavor_names[0]
+                                                                        }
+                                                                    </p>
+                                                                )}
+                                                                {item.notes && (
+                                                                    <div className="mt-2 space-y-1 bg-red-500/10 p-2.5 rounded-lg border border-red-500/30">
+                                                                        {item.notes.split('|').map((note, idx) => (
+                                                                            <div key={idx} className="flex items-start gap-1.5 text-[11px] text-red-400 font-bold uppercase tracking-wide leading-tight">
+                                                                                <span className="material-symbols-outlined text-[14px] flex-shrink-0 mt-0.5">warning</span>
+                                                                                <span className="flex-1">{note.trim().replace(/^⚠️\s*/, '')}</span>
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                            <span className="text-sm text-text-muted font-medium whitespace-nowrap">
+                                                                {formatCurrency(Number(item.subtotal) || 0)}
+                                                            </span>
                                                         </div>
                                                     ))}
                                                 </div>
-                                            )}
-                                        </div>
-                                        <span className="text-sm text-text-muted font-medium whitespace-nowrap">
-                                            {formatCurrency(item.subtotal)}
-                                        </span>
+
+                                                {/* Order Footer */}
+                                                <div className="bg-black/20 px-4 py-2 flex justify-end">
+                                                    <span className="text-xs font-bold text-white">
+                                                        Subtotal: {formatCurrency(Number(order.total) || 0)}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        ))}
                                     </div>
-                                ))}
-                            </div>
-                            <button
-                                onClick={() => setShowCheckoutModal(true)}
-                                className="w-full mt-4 py-3 bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:text-red-300 font-bold rounded-xl border border-red-500/20 hover:border-red-500/30 transition-all flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(239,68,68,0.1)]"
-                            >
-                                <span className="material-symbols-outlined text-[20px]">receipt_long</span>
-                                {t('floor.drawer.actions.closeAccount')}
-                            </button>
+
+                                    <button
+                                        onClick={() => setShowCheckoutModal(true)}
+                                        className="w-full py-4 bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:text-red-300 font-bold rounded-2xl border border-red-500/20 hover:border-red-500/30 transition-all flex items-center justify-center gap-2 shadow-[0_10px_30px_rgba(239,68,68,0.15)]"
+                                    >
+                                        <span className="material-symbols-outlined text-[20px]">receipt_long</span>
+                                        {t('floor.drawer.actions.closeAccount')}
+                                    </button>
+                                </>
+                            ) : (
+                                <div className="flex flex-col items-center justify-center py-20 text-center">
+                                    <div className="size-20 bg-white/5 rounded-full flex items-center justify-center mb-4 border border-white/5">
+                                        <span className="material-symbols-outlined text-4xl text-text-muted">history</span>
+                                    </div>
+                                    <h4 className="text-white font-bold mb-1">{t('floor.drawer.noOrdersTitle') || 'Sem pedidos ativos'}</h4>
+                                    <p className="text-text-muted text-sm max-w-[200px]">{t('floor.drawer.noOrdersSubtitle') || 'Clique em Novo Pedido para adicionar itens.'}</p>
+                                </div>
+                            )}
                         </div>
                     )}
 
