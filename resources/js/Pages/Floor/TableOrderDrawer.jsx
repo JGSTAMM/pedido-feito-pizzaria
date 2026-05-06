@@ -5,6 +5,99 @@ import PizzaBuilderModal from '@/Pages/POS/PizzaBuilderModal';
 import ReceiptPrint from '@/Components/ReceiptPrint';
 import useI18n from '@/hooks/useI18n';
 
+const WaiterCartItem = ({ item, updateQty, removeFromCart, formatCurrency, t }) => {
+    const [isExpanded, setIsExpanded] = useState(false);
+    
+    // Parse notes and exclusions if present
+    const notesArray = item.observation ? item.observation.split('|').map(n => n.trim()).filter(Boolean) : [];
+    
+    // Has extra details to show?
+    const hasDetails = (item.flavors && item.flavors.length > 0) || notesArray.length > 0 || item.border;
+
+    return (
+        <div className="flex flex-col gap-2 bg-surface rounded-2xl p-3 border border-border-subtle shadow-sm">
+            {/* Top Row: Name and Expand button */}
+            <div className="flex items-start justify-between gap-2">
+                <div className="flex items-start gap-2 flex-1">
+                    <span className="text-base mt-0.5 flex-shrink-0">{item.type === 'pizza_custom' ? '🍕' : '📦'}</span>
+                    <span className="text-sm text-white font-medium break-words leading-tight">
+                        {item.name}
+                    </span>
+                </div>
+                {hasDetails && (
+                    <button 
+                        onClick={() => setIsExpanded(!isExpanded)}
+                        className="p-1 rounded-md bg-white/5 text-text-muted hover:text-white transition-colors flex-shrink-0"
+                    >
+                        <span className="material-symbols-outlined text-[20px]">
+                            {isExpanded ? 'expand_less' : 'expand_more'}
+                        </span>
+                    </button>
+                )}
+            </div>
+            
+            {/* Expanded Details */}
+            {isExpanded && hasDetails && (
+                <div className="pl-6 pr-2 py-2 space-y-2 border-l-2 border-border-subtle ml-2">
+                    {/* Border */}
+                    {item.border && (
+                        <div className="space-y-1">
+                            <p className="text-[10px] uppercase font-bold text-text-muted tracking-wider">Borda</p>
+                            <div className="text-xs text-white/80">
+                                • {item.border.name}
+                            </div>
+                        </div>
+                    )}
+                    {/* Flavors */}
+                    {item.flavors && item.flavors.length > 0 && (
+                        <div className="space-y-1">
+                            <p className="text-[10px] uppercase font-bold text-text-muted tracking-wider">Sabores</p>
+                            {item.flavors.map((f, i) => (
+                                <div key={i} className="text-xs text-white/80">
+                                    • {f.name}
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                    {/* Notes */}
+                    {notesArray.length > 0 && (
+                        <div className="space-y-1">
+                            <p className="text-[10px] uppercase font-bold text-text-muted tracking-wider">Observações</p>
+                            {notesArray.map((note, i) => {
+                                const isExclusion = note.toLowerCase().startsWith('sem ') || note.toLowerCase().startsWith('retirar ') || note.toLowerCase().startsWith('no ');
+                                return (
+                                    <div key={i} className={`text-xs ${isExclusion ? 'text-red-400 font-medium' : 'text-white/80'}`}>
+                                        • {note}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+            )}
+            
+            {/* Bottom Row: Actions */}
+            <div className="flex items-center justify-between mt-1">
+                <div className="flex items-center gap-1.5 bg-background-dark/50 rounded-lg p-1 border border-white/5">
+                    <button onClick={() => updateQty(item.key, -1)} className="size-8 flex items-center justify-center rounded-md bg-white/5 text-text-muted hover:text-white hover:bg-white/10 text-lg font-bold transition-all">−</button>
+                    <span className="text-sm font-bold text-white w-8 text-center">{item.quantity}</span>
+                    <button onClick={() => updateQty(item.key, 1)} className="size-8 flex items-center justify-center rounded-md bg-white/5 text-text-muted hover:text-white hover:bg-white/10 text-lg font-bold transition-all">+</button>
+                </div>
+                <div className="flex items-center gap-3">
+                    <div className="bg-emerald-500/10 px-3 py-1.5 rounded-md border border-emerald-500/20">
+                        <span className="text-sm font-bold text-emerald-400 whitespace-nowrap">
+                            {formatCurrency(item.price * item.quantity)}
+                        </span>
+                    </div>
+                    <button onClick={() => removeFromCart(item.key)} className="size-9 flex items-center justify-center rounded-lg text-text-muted hover:text-red-400 hover:bg-red-400/10 transition-all border border-transparent hover:border-red-400/20">
+                        <span className="material-symbols-outlined text-[20px]">delete</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 export default function TableOrderDrawer({
     table,
     isOpen,
@@ -45,16 +138,16 @@ export default function TableOrderDrawer({
 
     const filteredItems = useMemo(() => {
         let items = allItems;
-        
+
         if (activeCategory) {
             items = items.filter(i => i.category === activeCategory || (i.category && i.category.name === activeCategory));
         }
-        
+
         if (searchTerm) {
             const q = norm(searchTerm);
             items = items.filter(i => norm(i.name).includes(q));
         }
-        
+
         // Default sort if no category or search
         if (!activeCategory && !searchTerm) {
             items.sort((a, b) => {
@@ -395,33 +488,33 @@ export default function TableOrderDrawer({
 
                             {/* Product List */}
                             <div className="space-y-3 max-h-80 overflow-y-auto custom-scrollbar pr-1">
-                                    {filteredItems.length === 0 && (
-                                        <div className="text-center bg-surface border border-border-subtle rounded-2xl py-8">
-                                            <span className="material-symbols-outlined text-4xl text-text-muted/50 mb-2">search_off</span>
-                                            <p className="text-text-muted text-sm font-medium">{t('floor.drawer.addItems.emptySearch')}</p>
+                                {filteredItems.length === 0 && (
+                                    <div className="text-center bg-surface border border-border-subtle rounded-2xl py-8">
+                                        <span className="material-symbols-outlined text-4xl text-text-muted/50 mb-2">search_off</span>
+                                        <p className="text-text-muted text-sm font-medium">{t('floor.drawer.addItems.emptySearch')}</p>
+                                    </div>
+                                )}
+                                {filteredItems.map(item => (
+                                    <button
+                                        key={`${item.type}_${item.id}`}
+                                        onClick={() => handleQuickItemClick(item)}
+                                        className="w-full flex items-center gap-4 p-3.5 bg-surface hover:bg-surface-hover rounded-2xl border border-border-subtle hover:border-border-subtle-hover transition-all group text-left"
+                                    >
+                                        <div className="size-10 bg-white/5 border border-white/5 rounded-xl flex items-center justify-center text-text-muted group-hover:bg-primary group-hover:text-white group-hover:border-primary/50 transition-all flex-shrink-0">
+                                            <span className="material-symbols-outlined text-[20px]">add</span>
                                         </div>
-                                    )}
-                                    {filteredItems.map(item => (
-                                        <button
-                                            key={`${item.type}_${item.id}`}
-                                            onClick={() => handleQuickItemClick(item)}
-                                            className="w-full flex items-center gap-4 p-3.5 bg-surface hover:bg-surface-hover rounded-2xl border border-border-subtle hover:border-border-subtle-hover transition-all group text-left"
-                                        >
-                                            <div className="size-10 bg-white/5 border border-white/5 rounded-xl flex items-center justify-center text-text-muted group-hover:bg-primary group-hover:text-white group-hover:border-primary/50 transition-all flex-shrink-0">
-                                                <span className="material-symbols-outlined text-[20px]">add</span>
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <p className="text-base text-white font-semibold truncate mb-0.5">{item.name}</p>
-                                                <p className="text-xs text-text-muted">{item.category}</p>
-                                            </div>
-                                            <div className="bg-emerald-500/10 px-3 py-1.5 rounded-lg border border-emerald-500/20 group-hover:bg-emerald-500/20 transition-colors">
-                                                <span className="text-sm font-bold text-emerald-400 whitespace-nowrap">
-                                                    {formatCurrency(item.price)}
-                                                </span>
-                                            </div>
-                                        </button>
-                                    ))}
-                                </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-base text-white font-semibold truncate mb-0.5">{item.name}</p>
+                                            <p className="text-xs text-text-muted">{item.category}</p>
+                                        </div>
+                                        <div className="bg-emerald-500/10 px-3 py-1.5 rounded-lg border border-emerald-500/20 group-hover:bg-emerald-500/20 transition-colors">
+                                            <span className="text-sm font-bold text-emerald-400 whitespace-nowrap">
+                                                {formatCurrency(item.price)}
+                                            </span>
+                                        </div>
+                                    </button>
+                                ))}
+                            </div>
                         </div>
                     )}
                 </div>
@@ -466,24 +559,14 @@ export default function TableOrderDrawer({
                         {/* List */}
                         <div className="p-4 overflow-y-auto custom-scrollbar space-y-2 flex-1 min-h-[30vh]">
                             {cart.map(item => (
-                                <div key={item.key} className="flex items-center gap-4 bg-surface rounded-2xl p-3 border border-border-subtle hover:border-border-subtle-hover transition-colors shadow-sm">
-                                    <div className="flex items-center gap-1.5 bg-background-dark/50 rounded-lg p-1 border border-white/5">
-                                        <button onClick={() => updateQty(item.key, -1)} className="size-7 flex items-center justify-center rounded-md bg-white/5 text-text-muted hover:text-white hover:bg-white/10 text-sm font-bold transition-all">−</button>
-                                        <span className="text-sm font-bold text-white w-6 text-center">{item.quantity}</span>
-                                        <button onClick={() => updateQty(item.key, 1)} className="size-7 flex items-center justify-center rounded-md bg-white/5 text-text-muted hover:text-white hover:bg-white/10 text-sm font-bold transition-all">+</button>
-                                    </div>
-                                    <span className="text-sm text-white font-medium flex-1 min-w-0 truncate">
-                                        {item.type === 'pizza_custom' && '🍕 '}{item.name}
-                                    </span>
-                                    <div className="bg-emerald-500/10 px-2.5 py-1 rounded-md border border-emerald-500/20">
-                                        <span className="text-sm font-bold text-emerald-400 whitespace-nowrap">
-                                            {formatCurrency(item.price * item.quantity)}
-                                        </span>
-                                    </div>
-                                    <button onClick={() => removeFromCart(item.key)} className="size-8 flex items-center justify-center rounded-lg text-text-muted hover:text-red-400 hover:bg-red-400/10 transition-all border border-transparent hover:border-red-400/20">
-                                        <span className="material-symbols-outlined text-[20px]">delete</span>
-                                    </button>
-                                </div>
+                                <WaiterCartItem 
+                                    key={item.key} 
+                                    item={item} 
+                                    updateQty={updateQty} 
+                                    removeFromCart={removeFromCart} 
+                                    formatCurrency={formatCurrency} 
+                                    t={t} 
+                                />
                             ))}
                         </div>
 
