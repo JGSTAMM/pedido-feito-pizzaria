@@ -11,16 +11,20 @@ const WaiterCartItem = ({ item, updateQty, removeFromCart, formatCurrency, t }) 
     // Parse notes and exclusions if present
     const notesArray = item.observation ? item.observation.split('|').map(n => n.trim()).filter(Boolean) : [];
     
+    // For custom pizzas, the 'description' field holds the flavor string (e.g., '1/2 Bacon, 1/2 Queijo')
+    const isPizza = item.type === 'pizza_custom';
+    const hasFlavorsText = isPizza && item.description && item.description.trim() !== '';
+
     // Has extra details to show?
     const hasValidBorder = item.border && typeof item.border === 'string' && item.border.toLowerCase() !== 'sem borda';
-    const hasDetails = (item.flavors && item.flavors.length > 0) || notesArray.length > 0 || hasValidBorder;
+    const hasDetails = hasFlavorsText || notesArray.length > 0 || hasValidBorder;
 
     return (
         <div className="flex flex-col gap-2 bg-surface rounded-2xl p-3 border border-border-subtle shadow-sm">
             {/* Top Row: Name and Expand button */}
             <div className="flex items-start justify-between gap-2">
                 <div className="flex items-start gap-2 flex-1">
-                    <span className="text-base mt-0.5 flex-shrink-0">{item.type === 'pizza_custom' ? '🍕' : '📦'}</span>
+                    <span className="text-base mt-0.5 flex-shrink-0">{isPizza ? '🍕' : '📦'}</span>
                     <span className="text-sm text-white font-medium break-words leading-tight">
                         {item.name}
                     </span>
@@ -40,6 +44,17 @@ const WaiterCartItem = ({ item, updateQty, removeFromCart, formatCurrency, t }) 
             {/* Expanded Details */}
             {isExpanded && hasDetails && (
                 <div className="pl-6 pr-2 py-2 space-y-2 border-l-2 border-border-subtle ml-2">
+                    {/* Flavors */}
+                    {hasFlavorsText && (
+                        <div className="space-y-1">
+                            <p className="text-[10px] uppercase font-bold text-text-muted tracking-wider">Sabores</p>
+                            <div className="text-xs text-white/80 space-y-0.5">
+                                {item.description.split(', ').map((flavor, idx) => (
+                                    <div key={idx}>• {flavor}</div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                     {/* Border */}
                     {hasValidBorder && (
                         <div className="space-y-1">
@@ -47,17 +62,6 @@ const WaiterCartItem = ({ item, updateQty, removeFromCart, formatCurrency, t }) 
                             <div className="text-xs text-white/80">
                                 • {item.border}
                             </div>
-                        </div>
-                    )}
-                    {/* Flavors */}
-                    {item.flavors && item.flavors.length > 0 && (
-                        <div className="space-y-1">
-                            <p className="text-[10px] uppercase font-bold text-text-muted tracking-wider">Sabores</p>
-                            {item.flavors.map((f, i) => (
-                                <div key={i} className="text-xs text-white/80">
-                                    • {f.name}
-                                </div>
-                            ))}
                         </div>
                     )}
                     {/* Notes */}
