@@ -17,37 +17,57 @@ class WaiterController extends Controller
         $tables = Table::with(['activeOrders.items.product', 'activeOrders.items.pizzaSize', 'activeOrders.items.flavors'])
             ->get()
             ->map(function ($table) {
-                $activeOrder = $table->activeOrders->first();
+                $activeOrders = $table->activeOrders;
+                $hasActive = $activeOrders->isNotEmpty();
 
                 return [
                     'id' => $table->id,
                     'name' => $table->name,
-                    'status' => $activeOrder ? 'occupied' : 'free',
+                    'status' => $hasActive ? 'occupied' : 'free',
                     'seats' => $table->capacity ?? 4,
-                    'active_order' => $activeOrder ? [
-                        'id' => $activeOrder->id,
-                        'short_code' => $activeOrder->short_code,
-                        'total' => (float) $activeOrder->total_amount,
-                        'elapsed_minutes' => (int) $activeOrder->created_at->diffInMinutes(now()),
-                        'items' => $activeOrder->items->map(function ($item) {
-                            $isPizza = $item->type === 'pizza_custom';
+                    'active_orders' => $activeOrders->map(function ($order) {
+                        return [
+                            'id' => $order->id,
+                            'short_code' => $order->short_code,
+                            'total' => (float) $order->total_amount,
+                            'elapsed_minutes' => (int) $order->created_at->diffInMinutes(now()),
+                            'items' => $order->items->map(function ($item) {
+                                $isPizza = $item->type === 'pizza_custom';
 
-                            return [
-                                'id' => $item->id,
-                                'quantity' => $item->quantity,
-                                'name' => $item->description ?? $item->product?->name ?? 'Item',
-                                'unit_price' => (float) $item->unit_price,
-                                'subtotal' => (float) $item->subtotal,
-                                'type' => $item->type ?? 'product',
-                                'is_pizza' => $isPizza,
-                                'size_name' => $isPizza ? ($item->pizzaSize?->name ?? null) : null,
-                                'flavor_names' => $isPizza ? $item->flavors->pluck('name')->toArray() : [],
-                                'notes' => $item->notes ?? null,
-                            ];
-                        }),
+                                return [
+                                    'id' => $item->id,
+                                    'quantity' => $item->quantity,
+                                    'name' => $item->description ?? $item->product?->name ?? 'Item',
+                                    'unit_price' => (float) $item->unit_price,
+                                    'subtotal' => (float) $item->subtotal,
+                                    'type' => $item->type ?? 'product',
+                                    'is_pizza' => $isPizza,
+                                    'size_name' => $isPizza ? ($item->pizzaSize?->name ?? null) : null,
+                                    'flavor_names' => $isPizza ? $item->flavors->pluck('name')->toArray() : [],
+                                    'notes' => $item->notes ?? null,
+                                ];
+                            })->values()->toArray(),
+                        ];
+                    })->values()->toArray(),
+                    // Consolidate for backward compatibility in the grid
+                    'active_order' => $hasActive ? [
+                        'id' => $activeOrders->first()->id,
+                        'short_code' => $activeOrders->first()->short_code,
+                        'total' => (float) $activeOrders->sum('total_amount'),
+                        'elapsed_minutes' => (int) $activeOrders->first()->created_at->diffInMinutes(now()),
+                        'items' => $activeOrders->flatMap(function ($order) {
+                            return $order->items->map(function ($item) {
+                                return [
+                                    'id' => $item->id,
+                                    'quantity' => $item->quantity,
+                                    'name' => $item->description ?? $item->product?->name ?? 'Item',
+                                    'subtotal' => (float) $item->subtotal,
+                                ];
+                            });
+                        })->values()->toArray(),
                     ] : null,
                 ];
-            });
+            })->values();
 
         $stats = [
             'total' => $tables->count(),
