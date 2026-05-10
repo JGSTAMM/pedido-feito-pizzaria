@@ -11,11 +11,12 @@ class PizzaFlavor extends Model
 {
     use HasFactory, HasUuids;
 
-    protected $fillable = ['name', 'description', 'ingredients', 'flavor_category', 'base_price', 'is_active', 'show_on_digital_menu', 'image'];
+    protected $fillable = ['name', 'description', 'ingredients', 'ingredients_json', 'flavor_category', 'base_price', 'is_active', 'show_on_digital_menu', 'image'];
 
     protected $casts = [
-        'is_active' => 'boolean',
+        'is_active'            => 'boolean',
         'show_on_digital_menu' => 'boolean',
+        'ingredients_json'     => 'array',
     ];
 
     protected $appends = ['image_url'];
