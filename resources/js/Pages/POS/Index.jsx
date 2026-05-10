@@ -4,6 +4,7 @@ import AppLayout from '@/Layouts/AppLayout';
 import { norm } from '@/utils/normalize';
 import PizzaBuilderModal from './PizzaBuilderModal';
 import PaymentModal from './PaymentModal';
+import ProductVariationModal from './ProductVariationModal';
 
 const CartItem = ({ item, getCartImageSrc, formatBRL, updateQuantity }) => {
     const [isExpanded, setIsExpanded] = useState(false);
@@ -105,6 +106,8 @@ export default function Index({ products = [], pizzaFlavors = [], pizzaSizes = [
     const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [showSuccess, setShowSuccess] = useState(flash?.success || null);
     const [showPizzaBuilder, setShowPizzaBuilder] = useState(false);
+    const [showVariationModal, setShowVariationModal] = useState(false);
+    const [productToVariate, setProductToVariate] = useState(null);
 
     // ── Catalog: merge products + pizza flavors into one list ──
     const allItems = useMemo(() => {
@@ -159,9 +162,40 @@ export default function Index({ products = [], pizzaFlavors = [], pizzaSizes = [
     const handleItemClick = (item) => {
         if (item.type === 'pizza_flavor') {
             setShowPizzaBuilder(true);
+        } else if (item.variations && Array.isArray(item.variations) && item.variations.length > 0) {
+            setProductToVariate(item);
+            setShowVariationModal(true);
         } else {
             addToCart(item);
         }
+    };
+
+    const handleVariationConfirm = (product, variation) => {
+        setCart(prev => {
+            const variationNote = variation.name;
+            const key = `${product.type}_${product.id}_var_${variation.name}`;
+            const existing = prev.find(c => c.key === key);
+
+            if (existing) {
+                return prev.map(c =>
+                    c.key === key ? { ...c, quantity: c.quantity + 1 } : c
+                );
+            }
+
+            return [...prev, {
+                key,
+                id: product.id,
+                type: product.type,
+                name: `${product.name} (${variation.name})`,
+                price: Number(variation.price),
+                quantity: 1,
+                image_url: product.image_url,
+                category: product.category,
+                observation: variationNote,
+            }];
+        });
+        setShowVariationModal(false);
+        setProductToVariate(null);
     };
 
     const updateQuantity = (key, delta) => {
@@ -506,6 +540,18 @@ export default function Index({ products = [], pizzaFlavors = [], pizzaSizes = [
                 pizzaSizes={pizzaSizes}
                 borderOptions={borderOptions}
             />
+            {/* Product Variation Modal */}
+            {showVariationModal && (
+                <ProductVariationModal
+                    isOpen={showVariationModal}
+                    onClose={() => {
+                        setShowVariationModal(false);
+                        setProductToVariate(null);
+                    }}
+                    onConfirm={handleVariationConfirm}
+                    product={productToVariate}
+                />
+            )}
         </AppLayout>
     );
 }

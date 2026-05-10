@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { router } from '@inertiajs/react';
 import { norm } from '@/utils/normalize';
 import PizzaBuilderModal from '@/Pages/POS/PizzaBuilderModal';
+import ProductVariationModal from '@/Pages/Pos/ProductVariationModal';
 import ReceiptPrint from '@/Components/ReceiptPrint';
 import useI18n from '@/hooks/useI18n';
 
@@ -120,6 +121,8 @@ export default function TableOrderDrawer({
     const [activeCategory, setActiveCategory] = useState(null);
     const [showPizzaBuilder, setShowPizzaBuilder] = useState(false);
     const [initialPizzaFlavor, setInitialPizzaFlavor] = useState(null);
+    const [showVariationModal, setShowVariationModal] = useState(false);
+    const [productToVariate, setProductToVariate] = useState(null);
     const [sending, setSending] = useState(false);
     const [pageError, setPageError] = useState('');
     const [isCartOpen, setIsCartOpen] = useState(false);
@@ -180,10 +183,42 @@ export default function TableOrderDrawer({
         if (isPizza) {
             setInitialPizzaFlavor(item);
             setShowPizzaBuilder(true);
-        } else {
-            setSelectedQuickItem(item);
-            setQuickObservation('');
+            return;
         }
+
+        // Check if the product has variations
+        if (item.variations && Array.isArray(item.variations) && item.variations.length > 0) {
+            setProductToVariate(item);
+            setShowVariationModal(true);
+            return;
+        }
+
+        setSelectedQuickItem(item);
+        setQuickObservation('');
+    };
+
+    const handleVariationConfirm = (product, variation) => {
+        setCart(prev => {
+            const variationNote = variation.name;
+            const existing = prev.find(c => c.id === product.id && c.type === product.type && c.observation === variationNote);
+
+            if (existing) {
+                return prev.map(c =>
+                    c.key === existing.key ? { ...c, quantity: c.quantity + 1 } : c
+                );
+            }
+
+            return [...prev, {
+                ...product,
+                name: `${product.name} (${variation.name})`,
+                price: Number(variation.price),
+                quantity: 1,
+                observation: variationNote,
+                key: `${product.type}_${product.id}_var_${variation.name}_${Date.now()}`
+            }];
+        });
+        setShowVariationModal(false);
+        setProductToVariate(null);
     };
 
     const confirmQuickItem = () => {
@@ -253,6 +288,7 @@ export default function TableOrderDrawer({
                     type: item.type,
                     quantity: item.quantity,
                     price: item.price,
+                    observation: item.observation || null,
                 };
             }),
         };
@@ -301,6 +337,8 @@ export default function TableOrderDrawer({
         setActiveCategory(null);
         setShowPizzaBuilder(false);
         setInitialPizzaFlavor(null);
+        setShowVariationModal(false);
+        setProductToVariate(null);
         setPayments([]);
         setPaymentInputValue('');
         setPageError('');
@@ -746,6 +784,19 @@ export default function TableOrderDrawer({
                     pizzaFlavors={pizzaFlavors}
                     borderOptions={borderOptions}
                     initialFlavor={initialPizzaFlavor}
+                />
+            )}
+
+            {/* Product Variation Modal */}
+            {showVariationModal && (
+                <ProductVariationModal
+                    isOpen={showVariationModal}
+                    onClose={() => {
+                        setShowVariationModal(false);
+                        setProductToVariate(null);
+                    }}
+                    onConfirm={handleVariationConfirm}
+                    product={productToVariate}
                 />
             )}
 

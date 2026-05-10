@@ -44,6 +44,7 @@ class PosController extends Controller
                 'price' => (float) $p->price,
                 'category' => $p->category,
                 'image_url' => $p->image_url,
+                'variations' => $p->variations,
                 'type' => 'product',
             ]);
 
@@ -65,6 +66,7 @@ class PosController extends Controller
         // Build categories list
         $categories = Product::select('category')
             ->distinct()
+            ->where('is_active_pos', true)
             ->whereNotIn('category', ['Arquivo', 'arquivo', 'Extras', 'extras'])
             ->pluck('category')
             ->toArray();
@@ -182,6 +184,19 @@ class PosController extends Controller
                 if ($item['type'] === 'product') {
                     $product = Product::findOrFail($item['id']);
                     $unitPrice = (float) $product->price;
+                    $description = $product->name;
+                    $observation = $item['observation'] ?? null;
+
+                    // Check for variations in the JSON column
+                    if ($observation && !empty($product->variations)) {
+                        foreach ($product->variations as $variation) {
+                            if ($variation['name'] === $observation) {
+                                $unitPrice = (float) $variation['price'];
+                                $description = "{$product->name} ({$variation['name']})";
+                                break;
+                            }
+                        }
+                    }
 
                     $subtotal = $unitPrice * $item['quantity'];
                     $totalAmount += $subtotal;
@@ -194,8 +209,8 @@ class PosController extends Controller
                         'quantity' => $item['quantity'],
                         'unit_price' => $unitPrice,
                         'subtotal' => $subtotal,
-                        'description' => $product->name,
-                        'notes' => $item['observation'] ?? null,
+                        'description' => $description,
+                        'notes' => $observation,
                     ];
                 } elseif ($item['type'] === 'pizza_custom') {
                     // Pizza Builder item — validate server-side
