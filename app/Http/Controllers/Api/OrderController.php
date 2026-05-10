@@ -55,14 +55,13 @@ class OrderController extends Controller
     /**
      * Get active orders for a table (for waiter order checking)
      */
-    public function getByTable($tableId)
+    public function getByTable(string $tableId)
     {
         $table = Table::findOrFail($tableId);
         $this->authorize('viewOrders', $table);
 
-        $orders = Order::with(['items.product', 'items.pizzaSize', 'items.flavors'])
-            ->where('table_id', $tableId)
-            ->whereNotIn('status', ['completed', 'cancelled', 'paid'])
+        $orders = $table->activeOrders()
+            ->with(['items.product', 'items.pizzaSize', 'items.flavors'])
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -188,15 +187,15 @@ class OrderController extends Controller
     {
         $this->authorize('closeWithoutPayment', $table);
 
-        $activeOrders = Order::where('table_id', $table->id)
-            ->whereNotIn('status', ['completed', 'paid', 'cancelled'])
-            ->get();
+        /** @var \Illuminate\Database\Eloquent\Collection<\App\Models\Order> $activeOrders */
+        $activeOrders = $table->activeOrders()->get();
 
         if ($activeOrders->isEmpty()) {
             return response()->json(['message' => 'Nenhum pedido ativo nesta mesa'], 404);
         }
 
         foreach ($activeOrders as $order) {
+            /** @var \App\Models\Order $order */
             $order->update(['status' => 'completed']);
         }
 

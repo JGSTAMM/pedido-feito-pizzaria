@@ -24,8 +24,8 @@ class PayAndCloseTableAction
 
         try {
             // Get active orders with lock to prevent concurrent payment processing
-            $orders = Order::where('table_id', $table->id)
-                ->whereNotIn('status', ['completed', 'paid', 'cancelled'])
+            /** @var \Illuminate\Database\Eloquent\Collection<\App\Models\Order> $orders */
+            $orders = $table->activeOrders()
                 ->lockForUpdate()
                 ->get();
 
@@ -52,6 +52,7 @@ class PayAndCloseTableAction
             $poolIndex = 0;
 
             foreach ($orders as $orderIndex => $order) {
+                /** @var \App\Models\Order $order */
                 $orderAmountToPay = (float) $order->total_amount;
 
                 while ($orderAmountToPay > 0.001 && $poolIndex < $paymentPool->count()) {

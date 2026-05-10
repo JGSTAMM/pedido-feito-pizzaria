@@ -819,9 +819,75 @@
             "statusFree": "Libre",
             "statusOccupied": "Ocupada",
             "currentOrder": "Pedido Actual",
-            "elapsedMinutes": "Tiempo",
+            "elapsedMinutes": ":count min",
+            "orderTime": "Hecho a las :time",
+            "readyAt": "Listo a las :time",
+            "leadTime": "Prep: :count min",
             "clickToOpen": "Clic para Abrir",
             "table": "Mesa"
+        },
+        "drawer": {
+            "orderCode": "Pedido",
+            "noOrdersTitle": "Sin pedidos activos",
+            "noOrdersSubtitle": "Haga clic en Nuevo Pedido para añadir artículos.",
+            "statusFree": "Libre",
+            "statusOccupied": "Ocupada",
+            "seats": ":count Lugares",
+            "tabs": {
+                "account": "Pedidos / Cuenta",
+                "addItems": "Nuevo Pedido"
+            },
+            "cart": {
+                "title": "Carrito",
+                "view": "Ver Carrito",
+                "flavors_label": "Sabores",
+                "border_label": "Borde",
+                "observations_label": "Observaciones",
+                "subtotal_label": "Subtotal",
+                "item_singular": "artículo",
+                "item_plural": "artículos",
+                "totalToSend": "Total a enviar",
+                "sending": "Enviando...",
+                "sendToKitchen": "Enviar a Cocina"
+            },
+            "addItems": {
+                "title": "Catálogo de Artículos",
+                "searchPlaceholder": "Buscar producto...",
+                "all": "Todos",
+                "customPizzaSubtitle": "Personalizar sabores e ingredientes",
+                "emptySearch": "No se encontró ningún producto"
+            },
+            "quickItem": {
+                "observationOptional": "Observación (Opcional)",
+                "pizzaObservationPlaceholder": "Ej: Sin cebolla, bien cocida...",
+                "defaultObservationPlaceholder": "¿Alguna observación especial?",
+                "addToOrder": "Añadir al Pedido"
+            },
+            "methods": {
+                "dinheiro": "Efectivo",
+                "pix": "Pix",
+                "credito": "Crédito",
+                "debito": "Débito"
+            },
+            "checkout": {
+                "title": "Finalizar Cuenta",
+                "subtitle": "Seleccione los métodos y finalice la cuenta.",
+                "total_label": "Total de la Cuenta",
+                "remaining_label": "Restante",
+                "change_label": "Cambio",
+                "payment_method_label": "Método de Pago",
+                "payment_amount_label": "Valor del Pago",
+                "added_payments_label": "Pagos Añadidos",
+                "clear_all": "Limpiar Todo",
+                "print_check": "Conferencia",
+                "finish_table": "Finalizar Mesa",
+                "missing_amount": "Faltan :amount para finalizar",
+                "closeAccount": "Cerrar Cuenta",
+                "payment_added": "Pago Añadido"
+            },
+            "actions": {
+                "closeAccount": "Cerrar Cuenta"
+            }
         }
     },
     "cashRegister": {

@@ -26,70 +26,81 @@ class FloorController extends Controller
         private readonly CashRegisterLockService $cashRegisterLockService,
     ) {}
 
-    public function index()
+    public function index(): \Inertia\Response
     {
         $tables = Table::with(['activeOrders.items.product', 'activeOrders.items.pizzaSize', 'activeOrders.items.flavors'])
             ->get()
             ->map(function ($table) {
+                /** @var \App\Models\Table $table */
                 $activeOrders = $table->activeOrders;
                 $hasActive = $activeOrders->isNotEmpty();
+
+                $mappedOrders = $activeOrders->map(function ($order) {
+                    $createdAt = $order->created_at;
+                    $readyAt = $order->ready_at;
+                    
+                    return [
+                        'id' => $order->id,
+                        'short_code' => $order->short_code,
+                        'total' => (float) $order->total_amount,
+                        'status' => $order->status,
+                        'created_at' => $createdAt->toIso8601String(),
+                        'created_at_time' => $createdAt->format('H:i'),
+                        'paid_at_time' => $order->paid_at?->format('H:i'),
+                        'ready_at_time' => $readyAt?->format('H:i'),
+                        'lead_time' => $readyAt ? (int) $createdAt->diffInMinutes($readyAt) : null,
+                        'elapsed_minutes' => (int) $createdAt->diffInMinutes(now()),
+                        'items' => $order->items->map(function ($item) {
+                            $isPizza = $item->type === 'pizza_custom';
+                            return [
+                                'id' => $item->id,
+                                'quantity' => $item->quantity,
+                                'name' => $item->description ?? $item->product?->name ?? 'Item',
+                                'unit_price' => (float) $item->unit_price,
+                                'subtotal' => (float) $item->subtotal,
+                                'type' => $item->type ?? 'product',
+                                'is_pizza' => $isPizza,
+                                'size_name' => $isPizza ? ($item->pizzaSize?->name ?? null) : null,
+                                'flavor_names' => $isPizza ? $item->flavors->pluck('name')->toArray() : [],
+                                'notes' => $item->notes ?? null,
+                            ];
+                        })->values()->toArray(),
+                    ];
+                })->values()->toArray();
+
+                $summaryOrder = null;
+                if ($hasActive) {
+                    $first = $activeOrders->first();
+                    $summaryOrder = [
+                        'id' => $first->id,
+                        'short_code' => $first->short_code,
+                        'total' => (float) $activeOrders->sum('total_amount'),
+                        'status' => $first->status,
+                        'created_at_time' => $first->created_at->format('H:i'),
+                        'elapsed_minutes' => (int) $first->created_at->diffInMinutes(now()),
+                        'ready_at_time' => $first->ready_at?->format('H:i'),
+                        'lead_time' => $first->ready_at ? (int) $first->created_at->diffInMinutes($first->ready_at) : null,
+                        'items' => $activeOrders->flatMap(function ($order) {
+                            return $order->items->map(function ($item) {
+                                return [
+                                    'id' => $item->id,
+                                    'quantity' => $item->quantity,
+                                    'name' => $item->description ?? $item->product?->name ?? 'Item',
+                                    'price' => (float) $item->unit_price,
+                                    'subtotal' => (float) $item->subtotal,
+                                ];
+                            });
+                        })->values()->toArray(),
+                    ];
+                }
 
                 return [
                     'id' => $table->id,
                     'name' => $table->name,
                     'status' => $hasActive ? 'occupied' : 'free',
                     'seats' => $table->capacity ?? 4,
-                    'active_orders' => $activeOrders->map(function ($order) {
-                        return [
-                            'id' => $order->id,
-                            'short_code' => $order->short_code,
-                            'total' => (float) $order->total_amount,
-                            'elapsed_minutes' => (int) $order->created_at->diffInMinutes(now()),
-                            'items' => $order->items->map(function ($item) {
-                                $isPizza = $item->type === 'pizza_custom';
-
-                                return [
-                                    'id' => $item->id,
-                                    'quantity' => $item->quantity,
-                                    'name' => $item->description ?? $item->product?->name ?? 'Item',
-                                    'unit_price' => (float) $item->unit_price,
-                                    'subtotal' => (float) $item->subtotal,
-                                    'type' => $item->type ?? 'product',
-                                    'is_pizza' => $isPizza,
-                                    'size_name' => $isPizza ? ($item->pizzaSize?->name ?? null) : null,
-                                    'flavor_names' => $isPizza ? $item->flavors->pluck('name')->toArray() : [],
-                                    'notes' => $item->notes ?? null,
-                                ];
-                            })->values()->toArray(), // values() ensures sequential keys → JSON array
-                        ];
-                    })->values()->toArray(), // values() ensures sequential keys → JSON array, not object
-                    // Keep active_order for backward compatibility or simple UI summaries
-                    'active_order' => $hasActive ? [
-                        'id' => $activeOrders->first()->id,
-                        'table_id' => $table->id,
-                        'table_name' => $table->name,
-                        'short_code' => $activeOrders->first()->short_code,
-                        'total' => (float) $activeOrders->sum('total_amount'), // Sum of ALL orders for the "Total" display
-                        'elapsed_minutes' => (int) $activeOrders->first()->created_at->diffInMinutes(now()),
-                        'items' => $activeOrders->flatMap(function ($order) {
-                            return $order->items->map(function ($item) {
-                                $isPizza = $item->type === 'pizza_custom';
-                                return [
-                                    'id' => $item->id,
-                                    'quantity' => $item->quantity,
-                                    'name' => $item->description ?? $item->product?->name ?? 'Item',
-                                    'price' => (float) $item->unit_price, // Needed for ReceiptPrint
-                                    'unit_price' => (float) $item->unit_price,
-                                    'subtotal' => (float) $item->subtotal,
-                                    'type' => $item->type ?? 'product',
-                                    'is_pizza' => $isPizza,
-                                    'size_name' => $isPizza ? ($item->pizzaSize?->name ?? null) : null,
-                                    'flavor_names' => $isPizza ? $item->flavors->pluck('name')->toArray() : [],
-                                    'notes' => $item->notes ?? null,
-                                ];
-                            });
-                        })->values()->toArray(),
-                    ] : null,
+                    'active_orders' => $mappedOrders,
+                    'active_order' => $summaryOrder,
                 ];
             })->values();
 
@@ -338,8 +349,8 @@ class FloorController extends Controller
         DB::beginTransaction();
         try {
             // Get active orders with lock to prevent double-charging
-            $orders = Order::where('table_id', $table->id)
-                ->whereNotIn('status', ['completed', 'paid', 'cancelled'])
+            /** @var \Illuminate\Database\Eloquent\Collection<\App\Models\Order> $orders */
+            $orders = $table->activeOrders()
                 ->lockForUpdate()
                 ->get();
 
@@ -365,6 +376,7 @@ class FloorController extends Controller
             $pIndex = 0;
 
             foreach ($orders as $index => $order) {
+                /** @var \App\Models\Order $order */
                 $amountToPayForOrder = (float) $order->total_amount;
 
                 // Distribute payment to this order

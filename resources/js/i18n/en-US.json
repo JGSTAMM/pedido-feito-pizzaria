@@ -819,9 +819,75 @@
             "statusFree": "Free",
             "statusOccupied": "Occupied",
             "currentOrder": "Current Order",
-            "elapsedMinutes": "Time",
+            "elapsedMinutes": ":count min",
+            "orderTime": "Made at :time",
+            "readyAt": "Ready at :time",
+            "leadTime": "Prep: :count min",
             "clickToOpen": "Click to Open",
             "table": "Table"
+        },
+        "drawer": {
+            "orderCode": "Order",
+            "noOrdersTitle": "No active orders",
+            "noOrdersSubtitle": "Click on New Order to add items.",
+            "statusFree": "Free",
+            "statusOccupied": "Occupied",
+            "seats": ":count Seats",
+            "tabs": {
+                "account": "Orders / Bill",
+                "addItems": "New Order"
+            },
+            "cart": {
+                "title": "Cart",
+                "view": "View Cart",
+                "flavors_label": "Flavors",
+                "border_label": "Border",
+                "observations_label": "Observations",
+                "subtotal_label": "Subtotal",
+                "item_singular": "item",
+                "item_plural": "items",
+                "totalToSend": "Total to send",
+                "sending": "Sending...",
+                "sendToKitchen": "Send to Kitchen"
+            },
+            "addItems": {
+                "title": "Item Catalog",
+                "searchPlaceholder": "Search product...",
+                "all": "All",
+                "customPizzaSubtitle": "Customize flavors and ingredients",
+                "emptySearch": "No product found"
+            },
+            "quickItem": {
+                "observationOptional": "Observation (Optional)",
+                "pizzaObservationPlaceholder": "Ex: No onions, well done...",
+                "defaultObservationPlaceholder": "Any special observations?",
+                "addToOrder": "Add to Order"
+            },
+            "methods": {
+                "dinheiro": "Cash",
+                "pix": "Pix",
+                "credito": "Credit",
+                "debito": "Debit"
+            },
+            "checkout": {
+                "title": "Close Bill",
+                "subtitle": "Select methods and finish the bill.",
+                "total_label": "Total Bill",
+                "remaining_label": "Remaining",
+                "change_label": "Change",
+                "payment_method_label": "Payment Method",
+                "payment_amount_label": "Payment Amount",
+                "added_payments_label": "Added Payments",
+                "clear_all": "Clear All",
+                "print_check": "Print Check",
+                "finish_table": "Finish Table",
+                "missing_amount": ":amount missing to finish",
+                "closeAccount": "Close Account",
+                "payment_added": "Payment Added"
+            },
+            "actions": {
+                "closeAccount": "Close Account"
+            }
         }
     },
     "cashRegister": {

@@ -12,11 +12,12 @@ use Inertia\Inertia;
 
 class WaiterController extends Controller
 {
-    public function index()
+    public function index(): \Inertia\Response
     {
         $tables = Table::with(['activeOrders.items.product', 'activeOrders.items.pizzaSize', 'activeOrders.items.flavors'])
             ->get()
             ->map(function ($table) {
+                /** @var \App\Models\Table $table */
                 $activeOrders = $table->activeOrders;
                 $hasActive = $activeOrders->isNotEmpty();
 
@@ -49,19 +50,29 @@ class WaiterController extends Controller
                             })->values()->toArray(),
                         ];
                     })->values()->toArray(),
-                    // Consolidate for backward compatibility in the grid
+                    // Consolidate for backward compatibility in the grid and ReceiptPrint
                     'active_order' => $hasActive ? [
                         'id' => $activeOrders->first()->id,
+                        'table_id' => $table->id,
+                        'table_name' => $table->name,
                         'short_code' => $activeOrders->first()->short_code,
                         'total' => (float) $activeOrders->sum('total_amount'),
                         'elapsed_minutes' => (int) $activeOrders->first()->created_at->diffInMinutes(now()),
                         'items' => $activeOrders->flatMap(function ($order) {
                             return $order->items->map(function ($item) {
+                                $isPizza = $item->type === 'pizza_custom';
                                 return [
                                     'id' => $item->id,
                                     'quantity' => $item->quantity,
                                     'name' => $item->description ?? $item->product?->name ?? 'Item',
+                                    'price' => (float) $item->unit_price, // Needed for ReceiptPrint
+                                    'unit_price' => (float) $item->unit_price,
                                     'subtotal' => (float) $item->subtotal,
+                                    'type' => $item->type ?? 'product',
+                                    'is_pizza' => $isPizza,
+                                    'size_name' => $isPizza ? ($item->pizzaSize?->name ?? null) : null,
+                                    'flavor_names' => $isPizza ? $item->flavors->pluck('name')->toArray() : [],
+                                    'notes' => $item->notes ?? null,
                                 ];
                             });
                         })->values()->toArray(),
