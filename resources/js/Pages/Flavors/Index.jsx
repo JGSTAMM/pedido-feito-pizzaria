@@ -35,7 +35,9 @@ export default function Index({ flavors = [] }) {
     const { data, setData, post, put, delete: destroy, processing, errors, reset, clearErrors } = useForm({
         name: '',
         base_price: '',
-        is_active: true,
+        is_active_delivery: true,
+        is_active_pos: true,
+        ingredients_json: [],
     });
 
     const formatBRL = (v) => `R$ ${Number(v).toFixed(2).replace('.', ',')}`;
@@ -56,7 +58,9 @@ export default function Index({ flavors = [] }) {
         setData({
             name: flavor.name,
             base_price: flavor.base_price,
-            is_active: Boolean(flavor.is_active ?? true),
+            is_active_delivery: Boolean(flavor.is_active_delivery ?? true),
+            is_active_pos: Boolean(flavor.is_active_pos ?? true),
+            ingredients_json: Array.isArray(flavor.ingredients_json) ? flavor.ingredients_json : [],
         });
         setEditingId(flavor.id);
         setIsFormOpen(true);
@@ -72,6 +76,24 @@ export default function Index({ flavors = [] }) {
         router.patch(`/flavors/${id}/toggle-status`, {}, {
             preserveScroll: true
         });
+    };
+
+    const addIngredient = (name) => {
+        if (!name.trim()) return;
+        const newIngredients = [...(data.ingredients_json || []), { name, is_available: true }];
+        setData('ingredients_json', newIngredients);
+    };
+
+    const removeIngredient = (index) => {
+        const newIngredients = data.ingredients_json.filter((_, i) => i !== index);
+        setData('ingredients_json', newIngredients);
+    };
+
+    const toggleIngredientAvailability = (index) => {
+        const newIngredients = data.ingredients_json.map((ing, i) =>
+            i === index ? { ...ing, is_available: !ing.is_available } : ing
+        );
+        setData('ingredients_json', newIngredients);
     };
 
     const submit = (e) => {
@@ -136,17 +158,21 @@ export default function Index({ flavors = [] }) {
                                 <div key={flavor.id} className={`grid grid-cols-[1fr_120px_100px_80px] gap-4 px-6 py-4 items-center hover:bg-surface-hover transition-colors ${idx !== filtered.length - 1 ? 'border-b border-border-subtle' : ''}`}>
                                     <div className="font-semibold text-white truncate text-base">{flavor.name}</div>
                                     <div className="font-mono font-bold text-emerald-400">{formatBRL(flavor.base_price)}</div>
-                                    <div>
+                                    <div className="flex items-center gap-3">
                                         <button
                                             onClick={() => toggleStatus(flavor.id)}
-                                            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background-dark ${flavor.is_active !== false ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.3)]' : 'bg-surface-hover'}`}
+                                            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background-dark ${flavor.is_active_delivery || flavor.is_active_pos ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.3)]' : 'bg-surface-hover'}`}
                                         >
                                             <span className="sr-only">{t('flavors.table.toggleStatus')}</span>
                                             <span
                                                 aria-hidden="true"
-                                                className={`pointer-events-none inline-block size-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${flavor.is_active !== false ? 'translate-x-2.5' : '-translate-x-2.5'}`}
+                                                className={`pointer-events-none inline-block size-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${flavor.is_active_delivery || flavor.is_active_pos ? 'translate-x-2.5' : '-translate-x-2.5'}`}
                                             />
                                         </button>
+                                        <div className="flex gap-1">
+                                            {flavor.is_active_delivery && <span className="material-symbols-outlined text-[14px] text-sky-400" title="Delivery">delivery_dining</span>}
+                                            {flavor.is_active_pos && <span className="material-symbols-outlined text-[14px] text-amber-400" title="Salão / Mesa">restaurant</span>}
+                                        </div>
                                     </div>
                                     <div className="flex justify-end gap-2 px-2">
                                         <button onClick={() => openEdit(flavor)} className="text-text-muted hover:text-white transition-colors"><span className="material-symbols-outlined text-[20px]">edit</span></button>
@@ -186,16 +212,85 @@ export default function Index({ flavors = [] }) {
                         />
                         {errors.base_price && <div className="text-red-400 text-xs mt-1">{errors.base_price}</div>}
                     </div>
-                    <div className="flex items-center gap-3 mt-2">
-                        <label className="flex items-center gap-2 cursor-pointer">
+
+                    {/* Ingredients Section */}
+                    <div className="mt-2">
+                        <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-2.5">{t('flavors.form.ingredientsLabel')}</label>
+                        
+                        <div className="flex gap-2 mb-3">
                             <input
-                                type="checkbox"
-                                checked={data.is_active}
-                                onChange={e => setData('is_active', e.target.checked)}
-                                className="w-4 h-4 rounded border-border-subtle text-primary bg-surface focus:ring-primary focus:ring-offset-background-dark"
+                                type="text"
+                                id="new-ingredient"
+                                placeholder={t('flavors.form.ingredientPlaceholder')}
+                                className="flex-1 bg-surface border border-border-subtle rounded-xl px-4 py-2 text-sm text-white focus:border-primary/50 outline-none"
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        e.preventDefault();
+                                        addIngredient(e.target.value);
+                                        e.target.value = '';
+                                    }
+                                }}
                             />
-                            <span className="text-sm text-white font-medium">{t('flavors.form.activeLabel')}</span>
-                        </label>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    const input = document.getElementById('new-ingredient');
+                                    addIngredient(input.value);
+                                    input.value = '';
+                                }}
+                                className="bg-surface-hover hover:bg-primary/20 text-primary p-2 rounded-xl border border-border-subtle transition-colors"
+                            >
+                                <span className="material-symbols-outlined">add</span>
+                            </button>
+                        </div>
+
+                        <div className="flex flex-col gap-2 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
+                            {data.ingredients_json.map((ing, idx) => (
+                                <div key={idx} className="flex items-center justify-between bg-surface-hover/50 p-2 rounded-lg border border-border-subtle">
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => toggleIngredientAvailability(idx)}
+                                            className={`size-2 rounded-full ${ing.is_available ? 'bg-emerald-500 shadow-[0_0_5px_rgba(16,185,129,0.5)]' : 'bg-red-500'}`}
+                                            title={ing.is_available ? 'Disponível' : 'Indisponível'}
+                                        />
+                                        <span className={`text-sm ${ing.is_available ? 'text-white' : 'text-text-muted line-through'}`}>{ing.name}</span>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => removeIngredient(idx)}
+                                        className="text-text-muted hover:text-red-400 transition-colors"
+                                    >
+                                        <span className="material-symbols-outlined text-lg">close</span>
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Channel Visibility */}
+                    <div className="bg-black/20 p-4 rounded-2xl border border-border-subtle flex flex-col gap-3">
+                        <label className="block text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mb-1 italic">Visibilidade por Canal</label>
+                        <div className="flex gap-6">
+                            <label className="flex items-center gap-2 cursor-pointer group">
+                                <input
+                                    type="checkbox"
+                                    checked={data.is_active_delivery}
+                                    onChange={e => setData('is_active_delivery', e.target.checked)}
+                                    className="w-4 h-4 rounded border-border-subtle text-primary bg-surface focus:ring-primary focus:ring-offset-background-dark"
+                                />
+                                <span className="text-sm text-white group-hover:text-primary transition-colors">Delivery</span>
+                            </label>
+                            <label className="flex items-center gap-2 cursor-pointer group">
+                                <input
+                                    type="checkbox"
+                                    checked={data.is_active_pos}
+                                    onChange={e => setData('is_active_pos', e.target.checked)}
+                                    className="w-4 h-4 rounded border-border-subtle text-primary bg-surface focus:ring-primary focus:ring-offset-background-dark"
+                                />
+                                <span className="text-sm text-white group-hover:text-primary transition-colors">Salão / Mesa</span>
+                            </label>
+                        </div>
                     </div>
 
                     <div className="mt-4 flex justify-end gap-3 pt-4 border-t border-border-subtle">

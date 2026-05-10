@@ -37,7 +37,9 @@ export default function Index({ products = [] }) {
         category: '',
         price: '',
         description: '',
-        is_active: true,
+        is_active_delivery: true,
+        is_active_pos: true,
+        variations: [],
     });
 
     const formatBRL = (v) => `R$ ${Number(v).toFixed(2).replace('.', ',')}`;
@@ -61,7 +63,9 @@ export default function Index({ products = [] }) {
             category: product.category,
             price: product.price,
             description: product.description || '',
-            is_active: Boolean(product.is_active ?? true),
+            is_active_delivery: Boolean(product.is_active_delivery ?? true),
+            is_active_pos: Boolean(product.is_active_pos ?? true),
+            variations: Array.isArray(product.variations) ? product.variations : [],
         });
         setEditingId(product.id);
         setIsFormOpen(true);
@@ -79,6 +83,23 @@ export default function Index({ products = [] }) {
         });
     };
 
+    const addVariation = () => {
+        const newVariations = [...(data.variations || []), { name: '', price: '' }];
+        setData('variations', newVariations);
+    };
+
+    const removeVariation = (index) => {
+        const newVariations = data.variations.filter((_, i) => i !== index);
+        setData('variations', newVariations);
+    };
+
+    const updateVariation = (index, field, value) => {
+        const newVariations = data.variations.map((v, i) => 
+            i === index ? { ...v, [field]: value } : v
+        );
+        setData('variations', newVariations);
+    };
+
     const submit = (e) => {
         e.preventDefault();
         if (editingId) {
@@ -94,7 +115,7 @@ export default function Index({ products = [] }) {
 
     return (
         <AppLayout>
-            <div className="flex-1 overflow-y-auto w-full max-w-7xl mx-auto">
+            <div className="flex-1 overflow-y-auto w-full max-w-7xl mx-auto pb-20">
                 {/* Header */}
                 <header className="flex items-center justify-between px-10 py-6 sticky top-0 bg-background-dark/80 backdrop-blur-md z-10 border-b border-border-subtle">
                     <div className="flex items-center gap-4">
@@ -127,7 +148,7 @@ export default function Index({ products = [] }) {
 
                     {/* Table */}
                     <div className="bg-surface rounded-2xl border border-border-subtle overflow-hidden relative" style={{ background: 'rgba(255,255,255,0.03)' }}>
-                        <div className="grid grid-cols-[60px_1fr_150px_120px_100px_80px] gap-4 px-6 py-4 border-b border-border-subtle bg-black/20 text-xs font-bold text-text-muted uppercase tracking-wider">
+                        <div className="grid grid-cols-[60px_1fr_150px_120px_120px_80px] gap-4 px-6 py-4 border-b border-border-subtle bg-black/20 text-xs font-bold text-text-muted uppercase tracking-wider">
                             <span>{t('products.table.image')}</span>
                             <span>{t('products.table.name')}</span>
                             <span>{t('products.table.category')}</span>
@@ -138,36 +159,50 @@ export default function Index({ products = [] }) {
                         {filtered.length === 0 ? (
                             <div className="p-12 text-center text-text-muted">{t('products.empty')}</div>
                         ) : (
-                            filtered.map((product, idx) => (
-                                <div key={product.id} className={`grid grid-cols-[60px_1fr_150px_120px_100px_80px] gap-4 px-6 py-4 items-center hover:bg-surface-hover transition-colors ${idx !== filtered.length - 1 ? 'border-b border-border-subtle' : ''}`}>
-                                    <div className="w-10 h-10 rounded-lg bg-surface flex items-center justify-center overflow-hidden border border-border-subtle">
-                                        {product.image_url ? (
-                                            <img src={product.image_url.startsWith('http') ? product.image_url : `/storage/${product.image_url}`} alt={product.name} className="w-full h-full object-cover" />
-                                        ) : (
-                                            <span className="material-symbols-outlined text-text-muted text-xl">image</span>
-                                        )}
+                            filtered.map((product, idx) => {
+                                const isActive = product.is_active_delivery || product.is_active_pos;
+                                return (
+                                    <div key={product.id} className={`grid grid-cols-[60px_1fr_150px_120px_120px_80px] gap-4 px-6 py-4 items-center hover:bg-surface-hover transition-colors ${idx !== filtered.length - 1 ? 'border-b border-border-subtle' : ''}`}>
+                                        <div className="w-10 h-10 rounded-lg bg-surface flex items-center justify-center overflow-hidden border border-border-subtle">
+                                            {product.image_url ? (
+                                                <img src={product.image_url.startsWith('http') ? product.image_url : `/storage/${product.image_url}`} alt={product.name} className="w-full h-full object-cover" />
+                                            ) : (
+                                                <span className="material-symbols-outlined text-text-muted text-xl">image</span>
+                                            )}
+                                        </div>
+                                        <div>
+                                            <div className="font-semibold text-white truncate">{product.name}</div>
+                                            {product.variations?.length > 0 && (
+                                                <div className="text-[10px] text-primary font-bold uppercase tracking-widest mt-0.5">
+                                                    {product.variations.length} {t('products.form.variationsLabel')}
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="text-sm text-text-muted truncate capitalize">{product.category}</div>
+                                        <div className="font-mono font-bold text-emerald-400">{formatBRL(product.price)}</div>
+                                        <div className="flex items-center gap-3">
+                                            <button
+                                                onClick={() => toggleStatus(product.id)}
+                                                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background-dark ${isActive ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.3)]' : 'bg-surface-hover'}`}
+                                            >
+                                                <span className="sr-only">{t('products.table.toggleStatus')}</span>
+                                                <span
+                                                    aria-hidden="true"
+                                                    className={`pointer-events-none inline-block size-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${isActive ? 'translate-x-2.5' : '-translate-x-2.5'}`}
+                                                />
+                                            </button>
+                                            <div className="flex gap-1">
+                                                {product.is_active_delivery && <span className="material-symbols-outlined text-[14px] text-sky-400" title={t('products.form.activeDeliveryLabel')}>delivery_dining</span>}
+                                                {product.is_active_pos && <span className="material-symbols-outlined text-[14px] text-amber-400" title={t('products.form.activePosLabel')}>restaurant</span>}
+                                            </div>
+                                        </div>
+                                        <div className="flex justify-end gap-2">
+                                            <button onClick={() => openEdit(product)} className="text-text-muted hover:text-white transition-colors"><span className="material-symbols-outlined text-[20px]">edit</span></button>
+                                            <button onClick={() => handleDelete(product.id)} className="text-text-muted hover:text-red-400 transition-colors"><span className="material-symbols-outlined text-[20px]">delete</span></button>
+                                        </div>
                                     </div>
-                                    <div className="font-semibold text-white truncate">{product.name}</div>
-                                    <div className="text-sm text-text-muted truncate capitalize">{product.category}</div>
-                                    <div className="font-mono font-bold text-emerald-400">{formatBRL(product.price)}</div>
-                                    <div>
-                                        <button
-                                            onClick={() => toggleStatus(product.id)}
-                                            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background-dark ${product.is_active !== false ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.3)]' : 'bg-surface-hover'}`}
-                                        >
-                                            <span className="sr-only">{t('products.table.toggleStatus')}</span>
-                                            <span
-                                                aria-hidden="true"
-                                                className={`pointer-events-none inline-block size-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${product.is_active !== false ? 'translate-x-2.5' : '-translate-x-2.5'}`}
-                                            />
-                                        </button>
-                                    </div>
-                                    <div className="flex justify-end gap-2">
-                                        <button onClick={() => openEdit(product)} className="text-text-muted hover:text-white transition-colors"><span className="material-symbols-outlined text-[20px]">edit</span></button>
-                                        <button onClick={() => handleDelete(product.id)} className="text-text-muted hover:text-red-400 transition-colors"><span className="material-symbols-outlined text-[20px]">delete</span></button>
-                                    </div>
-                                </div>
-                            ))
+                                );
+                            })
                         )}
                     </div>
                 </div>
@@ -182,11 +217,13 @@ export default function Index({ products = [] }) {
                             type="text"
                             value={data.name}
                             onChange={e => setData('name', e.target.value)}
+                            placeholder={t('products.form.namePlaceholder')}
                             className="w-full bg-surface border border-border-subtle rounded-xl px-4 py-2.5 text-sm text-white focus:border-primary/50 outline-none"
                             required
                         />
                         {errors.name && <div className="text-red-400 text-xs mt-1">{errors.name}</div>}
                     </div>
+                    
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-1.5">{t('products.form.category')}</label>
@@ -194,7 +231,7 @@ export default function Index({ products = [] }) {
                                 type="text"
                                 value={data.category}
                                 onChange={e => setData('category', e.target.value)}
-                                placeholder={t('products.form.categoryPlaceholder')}
+                                placeholder="Ex: Bebidas"
                                 className="w-full bg-surface border border-border-subtle rounded-xl px-4 py-2.5 text-sm text-white focus:border-primary/50 outline-none"
                                 required
                             />
@@ -213,6 +250,7 @@ export default function Index({ products = [] }) {
                             {errors.price && <div className="text-red-400 text-xs mt-1">{errors.price}</div>}
                         </div>
                     </div>
+
                     <div>
                         <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-1.5">{t('products.form.description')}</label>
                         <textarea
@@ -221,19 +259,86 @@ export default function Index({ products = [] }) {
                             className="w-full bg-surface border border-border-subtle rounded-xl px-4 py-2.5 text-sm text-white focus:border-primary/50 outline-none resize-none h-20"
                         />
                     </div>
-                    <div className="flex items-center gap-3">
-                        <label className="flex items-center gap-2 cursor-pointer">
-                            <input
-                                type="checkbox"
-                                checked={data.is_active}
-                                onChange={e => setData('is_active', e.target.checked)}
-                                className="w-4 h-4 rounded border-border-subtle text-primary bg-surface focus:ring-primary focus:ring-offset-background-dark"
-                            />
-                            <span className="text-sm text-white font-medium">{t('products.form.activeLabel')}</span>
-                        </label>
+
+                    {/* Channel Visibility */}
+                    <div className="bg-black/20 p-4 rounded-2xl border border-border-subtle flex flex-col gap-3">
+                        <label className="block text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mb-1 italic">Visibilidade por Canal</label>
+                        <div className="flex gap-6">
+                            <label className="flex items-center gap-2 cursor-pointer group">
+                                <input
+                                    type="checkbox"
+                                    checked={data.is_active_delivery}
+                                    onChange={e => setData('is_active_delivery', e.target.checked)}
+                                    className="w-4 h-4 rounded border-border-subtle text-primary bg-surface focus:ring-primary focus:ring-offset-background-dark"
+                                />
+                                <span className="text-sm text-white group-hover:text-primary transition-colors">Delivery</span>
+                            </label>
+                            <label className="flex items-center gap-2 cursor-pointer group">
+                                <input
+                                    type="checkbox"
+                                    checked={data.is_active_pos}
+                                    onChange={e => setData('is_active_pos', e.target.checked)}
+                                    className="w-4 h-4 rounded border-border-subtle text-primary bg-surface focus:ring-primary focus:ring-offset-background-dark"
+                                />
+                                <span className="text-sm text-white group-hover:text-primary transition-colors">Salão / Mesa</span>
+                            </label>
+                        </div>
                     </div>
 
-                    <div className="mt-4 flex justify-end gap-3 pt-4 border-t border-border-subtle">
+                    {/* Variations Section */}
+                    <div className="mt-2">
+                        <div className="flex items-center justify-between mb-2.5">
+                            <label className="block text-xs font-bold text-text-muted uppercase tracking-wider">{t('products.form.variationsLabel')}</label>
+                            <button
+                                type="button"
+                                onClick={addVariation}
+                                className="text-xs font-bold text-primary hover:text-white transition-colors flex items-center gap-1"
+                            >
+                                <span className="material-symbols-outlined text-sm">add</span>
+                                {t('products.form.addVariation')}
+                            </button>
+                        </div>
+                        
+                        <div className="flex flex-col gap-2 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
+                            {data.variations.map((v, idx) => (
+                                <div key={idx} className="flex gap-2 items-start bg-surface-hover/30 p-3 rounded-xl border border-border-subtle">
+                                    <div className="flex-1">
+                                        <input
+                                            type="text"
+                                            value={v.name}
+                                            onChange={e => updateVariation(idx, 'name', e.target.value)}
+                                            placeholder={t('products.form.variationPlaceholder')}
+                                            className="w-full bg-surface border border-border-subtle rounded-lg px-3 py-1.5 text-xs text-white focus:border-primary/50 outline-none"
+                                        />
+                                    </div>
+                                    <div className="w-24">
+                                        <input
+                                            type="number"
+                                            step="0.01"
+                                            value={v.price}
+                                            onChange={e => updateVariation(idx, 'price', e.target.value)}
+                                            placeholder="0,00"
+                                            className="w-full bg-surface border border-border-subtle rounded-lg px-3 py-1.5 text-xs text-white focus:border-primary/50 outline-none"
+                                        />
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => removeVariation(idx)}
+                                        className="text-text-muted hover:text-red-400 p-1.5"
+                                    >
+                                        <span className="material-symbols-outlined text-lg">delete</span>
+                                    </button>
+                                </div>
+                            ))}
+                            {data.variations.length === 0 && (
+                                <div className="py-4 text-center text-xs text-text-muted italic bg-black/10 rounded-xl border border-dashed border-border-subtle">
+                                    Nenhuma variação adicionada
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="mt-6 flex justify-end gap-3 pt-4 border-t border-border-subtle">
                         <button
                             type="button"
                             onClick={() => setIsFormOpen(false)}
@@ -246,7 +351,7 @@ export default function Index({ products = [] }) {
                             disabled={processing}
                             className="px-4 py-2 rounded-xl text-sm font-bold bg-primary text-white hover:bg-primary-dark transition-colors disabled:opacity-50"
                         >
-                            {processing ? t('products.form.saving') : t('products.form.save')}
+                            {processing ? 'Salvando...' : t('products.form.save')}
                         </button>
                     </div>
                 </form>

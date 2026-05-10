@@ -22,7 +22,9 @@ class FlavorController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'base_price' => 'required|numeric|min:0',
-            'is_active' => 'boolean',
+            'is_active_delivery' => 'boolean',
+            'is_active_pos' => 'boolean',
+            'ingredients_json' => 'nullable|array',
         ]);
 
         PizzaFlavor::create($validated);
@@ -35,7 +37,9 @@ class FlavorController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'base_price' => 'required|numeric|min:0',
-            'is_active' => 'boolean',
+            'is_active_delivery' => 'boolean',
+            'is_active_pos' => 'boolean',
+            'ingredients_json' => 'nullable|array',
         ]);
 
         $flavor->update($validated);
@@ -45,7 +49,11 @@ class FlavorController extends Controller
 
     public function toggleStatus(PizzaFlavor $flavor)
     {
-        $flavor->update(['is_active' => ! $flavor->is_active]);
+        $newStatus = ! ($flavor->is_active_delivery || $flavor->is_active_pos);
+        $flavor->update([
+            'is_active_delivery' => $newStatus,
+            'is_active_pos' => $newStatus,
+        ]);
 
         return redirect()->back()->with('success', 'Status do sabor alterado com sucesso.');
     }

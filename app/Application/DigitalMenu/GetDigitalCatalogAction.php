@@ -18,12 +18,13 @@ class GetDigitalCatalogAction
     public function execute(): array
     {
         $flavors = PizzaFlavor::query()
-            ->where('is_active', true)
+            ->where('is_active_delivery', true)
             ->where('show_on_digital_menu', true)
             ->orderBy('name')
             ->get();
 
         $products = Product::query()
+            ->where('is_active_delivery', true)
             ->where('show_on_digital_menu', true)
             ->orderBy('category')
             ->orderBy('name')

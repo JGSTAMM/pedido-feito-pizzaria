@@ -34,7 +34,8 @@ class PosController extends Controller
     public function index()
     {
         // Load products (exclude archived categories)
-        $products = Product::whereNotIn('category', ['Arquivo', 'arquivo', 'Extras', 'extras'])
+        $products = Product::where('is_active_pos', true)
+            ->whereNotIn('category', ['Arquivo', 'arquivo', 'Extras', 'extras'])
             ->orderBy('name')
             ->get()
             ->map(fn ($p) => [
@@ -47,7 +48,7 @@ class PosController extends Controller
             ]);
 
         // Load active pizza flavors
-        $pizzaFlavors = PizzaFlavor::where('is_active', true)
+        $pizzaFlavors = PizzaFlavor::where('is_active_pos', true)
             ->orderBy('name')
             ->get()
             ->map(fn ($f) => [

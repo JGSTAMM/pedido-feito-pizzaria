@@ -101,6 +101,10 @@
             "namePlaceholder": "Ex: Pepperoni",
             "basePrice": "Base Price ($)",
             "activeLabel": "Active Flavor in Menu",
+            "ingredientsLabel": "Ingredients (Recipe)",
+            "addIngredient": "Add Ingredient",
+            "ingredientName": "Ingredient Name",
+            "ingredientPlaceholder": "Ex: Mozzarella",
             "cancel": "Cancel",
             "saving": "Saving...",
             "save": "Save Flavor"
@@ -139,6 +143,13 @@
             "category": "Category",
             "price": "Selling Price ($)",
             "activeLabel": "Active Product",
+            "activeDeliveryLabel": "Available for Delivery",
+            "activePosLabel": "Available for Dine-in/POS",
+            "variationsLabel": "Product Variations",
+            "addVariation": "Add Variation",
+            "variationName": "Variation Name",
+            "variationPrice": "Variation Price",
+            "variationPlaceholder": "Ex: 350ml Can",
             "cancel": "Cancel",
             "save": "Save Product"
         }

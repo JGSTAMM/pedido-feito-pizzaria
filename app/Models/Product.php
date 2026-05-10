@@ -11,9 +11,10 @@ class Product extends Model
 {
     use HasFactory, HasUuids;
 
-    protected $fillable = ['name', 'price', 'category', 'is_active_delivery', 'is_active_pos', 'variations', 'show_on_digital_menu', 'image'];
+    protected $fillable = ['name', 'description', 'price', 'category', 'is_active', 'is_active_delivery', 'is_active_pos', 'variations', 'show_on_digital_menu', 'image'];
 
     protected $casts = [
+        'is_active'            => 'boolean',
         'is_active_delivery'   => 'boolean',
         'is_active_pos'        => 'boolean',
         'variations'           => 'array',

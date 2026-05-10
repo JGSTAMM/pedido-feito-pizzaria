@@ -22,8 +22,11 @@ class ProductController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'category' => 'required|string|max:255',
+            'description' => 'nullable|string',
             'price' => 'required|numeric|min:0',
-            'is_active' => 'boolean',
+            'is_active_delivery' => 'boolean',
+            'is_active_pos' => 'boolean',
+            'variations' => 'nullable|array',
         ]);
 
         Product::create($validated);
@@ -36,8 +39,11 @@ class ProductController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'category' => 'required|string|max:255',
+            'description' => 'nullable|string',
             'price' => 'required|numeric|min:0',
-            'is_active' => 'boolean',
+            'is_active_delivery' => 'boolean',
+            'is_active_pos' => 'boolean',
+            'variations' => 'nullable|array',
         ]);
 
         $product->update($validated);
@@ -47,7 +53,11 @@ class ProductController extends Controller
 
     public function toggleStatus(Product $product)
     {
-        $product->update(['is_active' => ! $product->is_active]);
+        $newStatus = ! ($product->is_active_delivery || $product->is_active_pos);
+        $product->update([
+            'is_active_delivery' => $newStatus,
+            'is_active_pos' => $newStatus,
+        ]);
 
         return redirect()->back()->with('success', 'Status do produto alterado com sucesso.');
     }

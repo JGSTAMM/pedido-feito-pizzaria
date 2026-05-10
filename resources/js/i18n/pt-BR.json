@@ -101,6 +101,10 @@
             "namePlaceholder": "Ex: Calabresa",
             "basePrice": "Preço Base (R$)",
             "activeLabel": "Sabor Ativo no Cardápio",
+            "ingredientsLabel": "Ingredientes (Receita)",
+            "addIngredient": "Adicionar Ingrediente",
+            "ingredientName": "Nome do Ingrediente",
+            "ingredientPlaceholder": "Ex: Mussarela",
             "cancel": "Cancelar",
             "saving": "Salvando...",
             "save": "Salvar Sabor"
@@ -139,6 +143,13 @@
             "category": "Categoria",
             "price": "Preço de Venda (R$)",
             "activeLabel": "Produto Ativo",
+            "activeDeliveryLabel": "Disponível Delivery",
+            "activePosLabel": "Disponível no Salão (Mesa/Balcão)",
+            "variationsLabel": "Variações do Produto",
+            "addVariation": "Adicionar Variação",
+            "variationName": "Nome da Variação",
+            "variationPrice": "Preço da Variação",
+            "variationPlaceholder": "Ex: Lata 350ml",
             "cancel": "Cancelar",
             "save": "Salvar Produto"
         }
