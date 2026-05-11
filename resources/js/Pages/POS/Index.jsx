@@ -65,22 +65,26 @@ const CartItem = ({ item, getCartImageSrc, formatBRL, updateQuantity }) => {
             </div>
 
             {/* Expanded Details Block */}
-            {isExpanded && item.type === 'pizza_custom' && (
+            {isExpanded && (
                 <div className="mt-1 bg-white/5 p-2.5 rounded border border-white/10 flex flex-col gap-1.5 animate-in slide-in-from-top-2">
                     {item.observation ? (
                         item.observation.split('|').map((obs, idx) => {
                             const trimmed = obs.trim();
                             if (!trimmed) return null;
-                            if (trimmed.startsWith('Obs:')) {
-                                return (
-                                    <div key={idx} className="text-xs text-gray-400 italic mt-0.5">
-                                        {trimmed}
-                                    </div>
-                                );
-                            }
+                            
+                            const isPizza = item.type === 'pizza_custom';
+
                             return (
-                                <div key={idx} className="flex items-start gap-1.5 text-xs text-red-400/90 font-medium">
-                                    <span className="material-symbols-outlined text-[14px] mt-0.5">warning</span>
+                                <div 
+                                    key={idx} 
+                                    className={`flex items-start gap-1.5 text-xs font-bold uppercase tracking-wide px-2 py-1 rounded
+                                        ${isPizza 
+                                            ? 'bg-red-500/10 text-red-500 border border-red-500/50 shadow-[0_0_10px_rgba(239,68,68,0.1)]' 
+                                            : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'}`}
+                                >
+                                    <span className="material-symbols-outlined text-[14px] mt-0.5">
+                                        {isPizza ? 'warning' : 'info'}
+                                    </span>
                                     <span className="leading-snug">{trimmed}</span>
                                 </div>
                             );

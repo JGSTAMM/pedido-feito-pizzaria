@@ -1,12 +1,46 @@
 import React from 'react';
 import useI18n from '@/hooks/useI18n';
 
+/**
+ * Pizza Symbol SVG Component
+ * Renders high-contrast B&W symbols for pizza configurations
+ */
+const PizzaSymbol = ({ type, size = 24 }) => {
+    // type: 1 (inteira), 2 (meia), 3 (3-sabores), 4 (broto)
+    const strokeWidth = 2;
+    const color = "black";
+
+    return (
+        <svg width={size} height={size} viewBox="0 0 24 24" className="inline-block align-middle mr-1" style={{ flexShrink: 0 }}>
+            {/* Base Circle */}
+            {type !== 4 && <circle cx="12" cy="12" r="10" fill="none" stroke={color} strokeWidth={strokeWidth} />}
+            
+            {/* Inteira (1 sabor) - Full circle with center dot */}
+            {type === 1 && <circle cx="12" cy="12" r="2" fill={color} />}
+
+            {/* Meio a Meio (2 sabores) - Vertical line */}
+            {type === 2 && <line x1="12" y1="2" x2="12" y2="22" stroke={color} strokeWidth={strokeWidth} />}
+
+            {/* 3 Sabores (Mercedes) */}
+            {type === 3 && (
+                <>
+                    <line x1="12" y1="12" x2="12" y2="2" stroke={color} strokeWidth={strokeWidth} />
+                    <line x1="12" y1="12" x2="20.66" y2="17" stroke={color} strokeWidth={strokeWidth} />
+                    <line x1="12" y1="12" x2="3.34" y2="17" stroke={color} strokeWidth={strokeWidth} />
+                </>
+            )}
+
+            {/* Broto (Semicircle) */}
+            {type === 4 && <path d="M2,12 A10,10 0 0,1 22,12 Z" fill="none" stroke={color} strokeWidth={strokeWidth} />}
+        </svg>
+    );
+};
+
 export default function KitchenReceiptPrint({ order }) {
     const { t, locale } = useI18n();
     if (!order) return null;
 
-    const isNamedCustomer =
-        order.customer_name && order.customer_name !== t('receipt.fallback.defaultCustomerName');
+    const items = order.items || [];
     const productionTime = new Intl.DateTimeFormat(locale, {
         hour: '2-digit',
         minute: '2-digit',
@@ -14,88 +48,98 @@ export default function KitchenReceiptPrint({ order }) {
     }).format(new Date());
 
     return (
-        <div className="hidden print:block bg-white text-black font-mono p-0 m-0 w-[80mm] leading-snug">
-            {/* Cabecalho Cozinha */}
-            <div className="text-center mb-4 border-b-2 border-black pb-2">
-                <h2 className="text-2xl font-black uppercase tracking-widest mb-1">
-                    {order.table_name
-                        ? t('receipt.shared.tableLabelWithValue', { table: order.table_name })
-                        : t('receipt.kitchen.counterOrDeliveryLabel')}
-                </h2>
-                <h3 className="text-xl font-bold border border-black inline-block px-4 py-1 mt-1">
-                    {t('receipt.shared.orderPrefix')} #{order.short_code || String(order.id).substring(0, 5).toUpperCase()}
-                </h3>
-                {isNamedCustomer && (
-                    <p className="mt-2 font-bold text-sm uppercase">
-                        {t('receipt.customer.customerLineWithName', { name: order.customer_name })}
-                    </p>
-                )}
-                <p className="text-[12px] mt-2 font-bold uppercase">
-                    {t('receipt.kitchen.productionCopyWithTime', { time: productionTime })}
-                </p>
+        <div className="hidden print:block font-mono bg-white text-black p-0 m-0 w-[80mm] leading-tight text-[12px]">
+            {/* Header: Order Info */}
+            <div className="text-center border-b-2 border-black pb-2 mb-2">
+                <h1 className="text-2xl font-black uppercase mb-1">COZINHA</h1>
+                <div className="flex justify-between px-2 font-bold text-lg">
+                    <span>#{order.short_code || String(order.id).substring(0, 5).toUpperCase()}</span>
+                    <span>{order.table_name || 'BALCÃO'}</span>
+                </div>
+                <p className="text-[10px] mt-1 font-bold">{productionTime}</p>
             </div>
 
-            <div className="border-b-2 border-black border-dashed mb-2"></div>
+            {/* Customer/Delivery Context */}
+            {order.customer_name && (
+                <div className="border-b border-black border-dashed pb-1 mb-2 px-1">
+                    <p className="font-bold uppercase text-[10px]">CLIENTE:</p>
+                    <p className="font-black text-sm uppercase">{order.customer_name}</p>
+                </div>
+            )}
 
-            {/* Itens */}
-            <table className="w-full text-left mb-2 text-sm">
-                <thead>
-                    <tr className="border-b border-black">
-                        <th className="py-2 w-8 font-black text-lg">{t('receipt.shared.quantityShort')}</th>
-                        <th className="py-2 font-black text-lg">{t('receipt.shared.productLabel')}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {order.items?.map((item, index) => (
-                        <tr key={index} className="border-b border-gray-300">
-                            <td className="py-3 align-top font-black text-xl text-center">{item.quantity}</td>
-                            <td className="py-3 align-top">
-                                <span className="font-black text-lg uppercase">{item.name}</span>
-                                {item.is_pizza && item.flavor_names?.length > 0 && (
-                                    <div className="text-base mt-1 font-bold uppercase">
-                                        {t('receipt.kitchen.flavorPrefixSymbol')} {item.flavor_names.join(', ')}
-                                    </div>
-                                )}
-                                {item.notes && (
-                                    <div className="mt-2 p-1 border-2 border-black font-black text-base uppercase">
-                                        {item.notes.split('|').map((note, idx) => (
-                                            <div key={idx} className="mb-0.5">{t('receipt.kitchen.notesDecoratedWithValue', { note: note.trim() })}</div>
-                                        ))}
-                                    </div>
-                                )}
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
+            {/* Items Section */}
+            <div className="mb-4">
+                {items.map((item, index) => {
+                    const isPizza = item.is_pizza;
+                    const flavorsCount = item.flavor_names?.length || 0;
+                    
+                    // Logic for symbol: 
+                    // 1. Broto name -> 4
+                    // 2. Else by flavor count
+                    let symbolType = null;
+                    if (isPizza) {
+                        if (item.name?.toLowerCase().includes('broto')) symbolType = 4;
+                        else if (flavorsCount === 3) symbolType = 3;
+                        else if (flavorsCount === 2) symbolType = 2;
+                        else symbolType = 1;
+                    }
 
-            {/* Rodapé Cozinha */}
-            <div className="text-center text-[12px] mt-6 pt-2 border-t-2 border-black font-black uppercase">
-                <p>{t('receipt.kitchen.endOfOrderTitle')}</p>
+                    return (
+                        <div key={index} className="border-b border-black border-dashed py-2 px-1">
+                            <div className="flex items-start">
+                                <span className="text-2xl font-black mr-2 leading-none">{item.quantity}x</span>
+                                <div className="flex-1">
+                                    <div className="flex items-center flex-wrap">
+                                        {symbolType && <PizzaSymbol type={symbolType} size={18} />}
+                                        <span className="text-lg font-black uppercase leading-tight">{item.name}</span>
+                                    </div>
+                                    
+                                    {isPizza && item.flavor_names?.length > 0 && (
+                                        <div className="mt-1 ml-1 font-bold italic uppercase text-[11px] leading-tight">
+                                            {item.flavor_names.map((f, i) => (
+                                                <div key={i}>• {f}</div>
+                                            ))}
+                                        </div>
+                                    )}
+
+                                    {item.notes && (
+                                        <div className="mt-2 ml-1 bg-black text-white p-1 font-black uppercase text-[10px] leading-tight">
+                                            {item.notes.split('|').map((note, idx) => {
+                                                const trimmed = note.trim();
+                                                const isExclusion = trimmed.toLowerCase().startsWith('sem ') || 
+                                                                  trimmed.toLowerCase().startsWith('retirar ') ||
+                                                                  trimmed.toLowerCase().startsWith('no ');
+                                                return (
+                                                    <div key={idx} className={isExclusion ? "underline decoration-1" : ""}>
+                                                        {isExclusion ? "❌ " : "⚠️ "}{trimmed}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })}
             </div>
 
-            {/* Estilo Global exclusivo para Impressão 80mm */}
+            {/* Footer */}
+            <div className="text-center mt-4 border-t-2 border-black pt-2">
+                <p className="font-bold uppercase tracking-widest text-[10px]">Fim do Pedido</p>
+                <div className="mt-2 border-t border-black border-dashed pt-4 h-8"></div>
+            </div>
+
             <style>
                 {`
                     @media print {
-                        @page {
-                            margin: 0;
-                            size: 80mm auto;
-                        }
-                        body * {
-                            visibility: hidden;
-                        }
-                        .print\\:block, .print\\:block * {
-                            visibility: visible;
-                        }
-                        .print\\:block {
-                            position: absolute;
-                            left: 0;
-                            top: 0;
-                            width: 80mm !important;
-                            margin: 0;
-                            padding: 0;
-                            font-size: 14px;
+                        @page { margin: 0; size: 80mm auto; }
+                        body * { visibility: hidden; }
+                        .print\\:block, .print\\:block * { visibility: visible; }
+                        .print\\:block { 
+                            position: absolute; left: 0; top: 0; width: 80mm !important; 
+                            background: white !important; color: black !important;
+                            padding: 0; margin: 0;
                         }
                     }
                 `}

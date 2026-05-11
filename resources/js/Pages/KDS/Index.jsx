@@ -199,12 +199,23 @@ function OrderDetailModal({ order, isOpen, onClose }) {
                             </h4>
                             <div className="space-y-2">
                                 {beverages.map((item, i) => (
-                                    <div key={i} className="bg-blue-500/5 p-3 rounded-xl border border-blue-500/10 flex items-center justify-between">
-                                        <div className="flex items-center gap-3">
-                                            <span className="text-blue-400 font-black">{item.quantity}x</span>
-                                            <span className="text-white font-bold text-sm uppercase tracking-tight">{item.name}</span>
+                                    <div key={i} className="bg-blue-500/5 p-3 rounded-xl border border-blue-500/10 flex flex-col gap-1">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-3">
+                                                <span className="text-blue-400 font-black">{item.quantity}x</span>
+                                                <span className="text-white font-bold text-sm uppercase tracking-tight">{item.name}</span>
+                                            </div>
+                                            <span className="material-symbols-outlined text-blue-400/50 text-sm">local_bar</span>
                                         </div>
-                                        <span className="material-symbols-outlined text-blue-400/50">local_bar</span>
+                                        {item.notes && (
+                                            <div className="ml-8 mt-1 flex flex-wrap gap-1">
+                                                {item.notes.split('|').map((note, idx) => (
+                                                    <span key={idx} className="bg-amber-500/10 text-amber-400 text-[10px] font-black uppercase px-1.5 py-0.5 rounded border border-amber-500/20">
+                                                        {note.trim()}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
                                 ))}
                             </div>

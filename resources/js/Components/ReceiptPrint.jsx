@@ -1,141 +1,147 @@
 import React from 'react';
-
 import { usePage } from '@inertiajs/react';
 import useI18n from '@/hooks/useI18n';
 
-// Estilos de impressão injetados globalmente ou via classe isolada para afetar apenas este componente
+/**
+ * Pizza Symbol SVG Component
+ */
+const PizzaSymbol = ({ type, size = 16 }) => {
+    const strokeWidth = 2;
+    const color = "black";
+    return (
+        <svg width={size} height={size} viewBox="0 0 24 24" className="inline-block align-middle mr-1" style={{ flexShrink: 0 }}>
+            {type !== 4 && <circle cx="12" cy="12" r="10" fill="none" stroke={color} strokeWidth={strokeWidth} />}
+            {type === 1 && <circle cx="12" cy="12" r="2" fill={color} />}
+            {type === 2 && <line x1="12" y1="2" x2="12" y2="22" stroke={color} strokeWidth={strokeWidth} />}
+            {type === 3 && (
+                <>
+                    <line x1="12" y1="12" x2="12" y2="2" stroke={color} strokeWidth={strokeWidth} />
+                    <line x1="12" y1="12" x2="20.66" y2="17" stroke={color} strokeWidth={strokeWidth} />
+                    <line x1="12" y1="12" x2="3.34" y2="17" stroke={color} strokeWidth={strokeWidth} />
+                </>
+            )}
+            {type === 4 && <path d="M2,12 A10,10 0 0,1 22,12 Z" fill="none" stroke={color} strokeWidth={strokeWidth} />}
+        </svg>
+    );
+};
+
 export default function ReceiptPrint({ order }) {
     const { storeSetting } = usePage().props;
     const { t, formatCurrency, locale } = useI18n();
     if (!order) return null;
 
-    const header1 =
-        storeSetting?.receipt_header_1 ||
-        storeSetting?.store_name ||
-        t('receipt.customer.headerLine1Fallback');
-    const header2 = storeSetting?.receipt_header_2 || t('receipt.customer.headerLine2Fallback');
-    const footerMsg = storeSetting?.receipt_footer || t('receipt.customer.footerMessageFallback');
-    const showCnpj = storeSetting?.receipt_show_cnpj ?? true;
-    const isNamedCustomer =
-        order.customer_name && order.customer_name !== t('receipt.fallback.defaultCustomerName');
+    const header1 = storeSetting?.receipt_header_1 || storeSetting?.store_name || "PEDIDO FEITO";
+    const header2 = storeSetting?.receipt_header_2 || "";
+    const footerMsg = storeSetting?.receipt_footer || "";
+    
     const datePart = new Intl.DateTimeFormat(locale).format(new Date());
-    const timePart = new Intl.DateTimeFormat(locale, {
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-    }).format(new Date());
+    const timePart = new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit' }).format(new Date());
 
     return (
-        <div className="hidden print:block font-mono bg-white text-black p-0 m-0 w-[80mm] leading-snug">
-            {/* Cabecalho */}
-            <div className="text-center mb-4 border-b border-black pb-2 border-dashed">
-                <h2 className="text-xl font-bold uppercase tracking-widest mb-1">{header1}</h2>
-                <p className="text-[10px] uppercase font-bold">{header2}</p>
-                {showCnpj && storeSetting?.cnpj && (
-                    <p className="text-[10px] uppercase font-bold mt-0.5">
-                        {t('receipt.shared.cnpjLabel')}: {storeSetting.cnpj}
-                    </p>
+        <div className="hidden print:block font-mono bg-white text-black p-0 m-0 w-[80mm] leading-tight text-[11px]">
+            {/* Header */}
+            <div className="text-center border-b border-black border-dashed pb-2 mb-2">
+                <h2 className="text-lg font-black uppercase mb-0.5">{header1}</h2>
+                {header2 && <p className="text-[9px] uppercase font-bold">{header2}</p>}
+                {storeSetting?.cnpj && (
+                    <p className="text-[9px] uppercase font-bold">CNPJ: {storeSetting.cnpj}</p>
                 )}
-                <p className="text-[10px] mt-1">
-                    {datePart} {timePart}
-                </p>
+                <p className="text-[9px] mt-1">{datePart} {timePart}</p>
             </div>
 
-            {/* Identificacao do Pedido */}
-            <div className="text-center mb-4">
-                <h3 className="text-lg font-bold mb-1">
-                    {order.table_name
-                        ? t('receipt.shared.tableLabelWithValue', { table: order.table_name })
-                        : t('receipt.customer.counterOrderTitle')}
+            {/* Order Ident */}
+            <div className="text-center mb-2">
+                <h3 className="text-base font-black">
+                    {order.table_name ? `MESA: ${order.table_name}` : 'PEDIDO BALCÃO'}
                 </h3>
-                <p className="border border-black inline-block px-3 py-1 font-bold text-sm tracking-widest">
+                <p className="border border-black inline-block px-3 py-0.5 font-black text-sm mt-1">
                     #{order.short_code || String(order.id).substring(0, 5).toUpperCase()}
                 </p>
-                {isNamedCustomer && (
-                    <p className="mt-2 font-bold text-sm uppercase">
-                        {t('receipt.customer.customerLineWithName', { name: order.customer_name })}
-                    </p>
+                {order.customer_name && (
+                    <p className="mt-1 font-bold text-[10px] uppercase">{order.customer_name}</p>
                 )}
             </div>
 
             <div className="border-b border-black border-dashed mb-2"></div>
 
-            {/* Itens */}
-            <table className="w-full text-left mb-2 text-[11px]">
+            {/* Items */}
+            <table className="w-full text-left mb-2 text-[10px]">
                 <thead>
-                    <tr className="border-b border-black border-dashed">
-                        <th className="py-1 w-8 font-bold">{t('receipt.shared.quantityShort')}</th>
-                        <th className="py-1 font-bold">{t('receipt.shared.itemLabel')}</th>
-                        <th className="py-1 text-right font-bold w-12">{t('receipt.shared.totalLabel')}</th>
+                    <tr className="border-b border-black pb-1">
+                        <th className="font-black w-6">QTD</th>
+                        <th className="font-black">ITEM</th>
+                        <th className="font-black text-right">TOTAL</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {order.items?.map((item, index) => (
-                        <tr key={index}>
-                            <td className="py-1 align-top pt-1 text-center font-bold">{item.quantity}</td>
-                            <td className="py-1 align-top pt-1">
-                                <span className="font-bold">{item.name}</span>
-                                {item.is_pizza && item.flavor_names?.length > 0 && (
-                                    <div className="text-[9px] mt-0.5 leading-tight pl-1">
-                                        {t('receipt.shared.flavorsLabel')}: {item.flavor_names.join(', ')}
+                    {order.items?.map((item, index) => {
+                        const isPizza = item.is_pizza;
+                        const flavorsCount = item.flavor_names?.length || 0;
+                        let symbolType = null;
+                        if (isPizza) {
+                            if (item.name?.toLowerCase().includes('broto')) symbolType = 4;
+                            else if (flavorsCount === 3) symbolType = 3;
+                            else if (flavorsCount === 2) symbolType = 2;
+                            else symbolType = 1;
+                        }
+
+                        return (
+                            <tr key={index} className="align-top border-b border-black/10">
+                                <td className="py-1 font-black">{item.quantity}</td>
+                                <td className="py-1">
+                                    <div className="flex items-center flex-wrap">
+                                        {symbolType && <PizzaSymbol type={symbolType} size={12} />}
+                                        <span className="font-bold uppercase leading-tight">{item.name}</span>
                                     </div>
-                                )}
-                                {item.notes && (
-                                    <div className="text-[9px] mt-0.5 leading-tight pl-1 font-bold uppercase">
-                                        {t('receipt.shared.notesLabel')}:
-                                        <div className="mt-0.5 ml-1">
+                                    {isPizza && item.flavor_names?.length > 0 && (
+                                        <div className="text-[9px] italic mt-0.5 pl-1 leading-tight">
+                                            {item.flavor_names.join(' / ')}
+                                        </div>
+                                    )}
+                                    {item.notes && (
+                                        <div className="text-[8px] mt-0.5 pl-1 font-bold leading-tight uppercase">
                                             {item.notes.split('|').map((note, idx) => (
-                                                <div key={idx} className="block">{note.trim()}</div>
+                                                <div key={idx}>• {note.trim()}</div>
                                             ))}
                                         </div>
-                                    </div>
-                                )}
-                            </td>
-                            <td className="py-1 align-top pt-1 text-right">
-                                {formatCurrency(Number(item.price || 0) * Number(item.quantity || 0))}
-                            </td>
-                        </tr>
-                    ))}
+                                    )}
+                                </td>
+                                <td className="py-1 text-right font-bold">
+                                    {formatCurrency(Number(item.price || 0) * Number(item.quantity || 0))}
+                                </td>
+                            </tr>
+                        );
+                    })}
                 </tbody>
             </table>
 
             <div className="border-b border-black border-dashed mb-2"></div>
 
-            {/* Totalizadores */}
-            <div className="flex justify-between items-center text-sm font-black uppercase mb-4">
-                <span>{t('receipt.customer.totalToPay')}</span>
-                <span className="text-base">{formatCurrency(order.total)}</span>
+            {/* Totals */}
+            <div className="space-y-1 mb-4">
+                <div className="flex justify-between font-black text-xs uppercase">
+                    <span>TOTAL</span>
+                    <span>{formatCurrency(order.total)}</span>
+                </div>
             </div>
 
-            {/* Rodapé */}
-            <div className="text-center text-[10px] mt-6 pt-4 border-t border-black border-dashed space-y-1">
-                <p className="font-bold uppercase tracking-widest">{t('receipt.customer.tableConferenceTitle')}</p>
-                <p>{t('receipt.shared.notFiscalDocument')}</p>
-                {footerMsg && <p className="mt-2 text-[10px] !mt-4 whitespace-pre-wrap leading-tight">{footerMsg}</p>}
+            {/* Footer */}
+            <div className="text-center text-[9px] mt-4 border-t border-black border-dashed pt-2 space-y-1">
+                <p className="font-bold uppercase tracking-wider italic">Conferência de Mesa</p>
+                <p className="opacity-70 italic">*** NÃO É DOCUMENTO FISCAL ***</p>
+                {footerMsg && <p className="mt-2 whitespace-pre-wrap leading-tight">{footerMsg}</p>}
             </div>
 
-            {/* Estilo Global exclusivo para Impressão */}
             <style>
                 {`
                     @media print {
-                        @page {
-                            margin: 0;
-                            size: 80mm auto;
-                        }
-                        body * {
-                            visibility: hidden;
-                        }
-                        .print\\:block, .print\\:block * {
-                            visibility: visible;
-                        }
-                        .print\\:block {
-                            position: absolute;
-                            left: 0;
-                            top: 0;
-                            width: 80mm !important;
-                            margin: 0;
-                            padding: 0;
-                            font-size: 11px;
+                        @page { margin: 0; size: 80mm auto; }
+                        body * { visibility: hidden; }
+                        .print\\:block, .print\\:block * { visibility: visible; }
+                        .print\\:block { 
+                            position: absolute; left: 0; top: 0; width: 80mm !important; 
+                            background: white !important; color: black !important;
+                            padding: 0; margin: 0;
                         }
                     }
                 `}

@@ -71,9 +71,20 @@ const WaiterCartItem = ({ item, updateQty, removeFromCart, formatCurrency, t }) 
                             <p className="text-[10px] uppercase font-bold text-text-muted tracking-wider">{t('floor.drawer.cart.observations_label')}</p>
                             {notesArray.map((note, i) => {
                                 const isExclusion = note.toLowerCase().startsWith('sem ') || note.toLowerCase().startsWith('retirar ') || note.toLowerCase().startsWith('no ');
+                                const isPizza = item.type === 'pizza_custom';
+                                
                                 return (
-                                    <div key={i} className={`text-xs ${isExclusion ? 'text-red-400 font-medium' : 'text-white/80'}`}>
-                                        • {note}
+                                    <div 
+                                        key={i} 
+                                        className={`text-[11px] px-2 py-1 rounded flex items-center gap-1.5 font-bold uppercase tracking-wide
+                                            ${isPizza 
+                                                ? 'bg-red-500/10 text-red-500 border border-red-500/50 shadow-[0_0_10px_rgba(239,68,68,0.1)]' 
+                                                : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'}`}
+                                    >
+                                        <span className="material-symbols-outlined text-[14px]">
+                                            {isPizza ? 'warning' : 'info'}
+                                        </span>
+                                        {note}
                                     </div>
                                 );
                             })}
@@ -492,13 +503,22 @@ export default function TableOrderDrawer({
                                                                     </p>
                                                                 )}
                                                                 {item.notes && (
-                                                                    <div className="mt-2 space-y-1 bg-red-500/10 p-2.5 rounded-lg border border-red-500/30">
-                                                                        {item.notes.split('|').map((note, idx) => (
-                                                                            <div key={idx} className="flex items-start gap-1.5 text-[11px] text-red-400 font-bold uppercase tracking-wide leading-tight">
-                                                                                <span className="material-symbols-outlined text-[14px] flex-shrink-0 mt-0.5">warning</span>
-                                                                                <span className="flex-1">{note.trim().replace(/^⚠️\s*/, '')}</span>
-                                                                            </div>
-                                                                        ))}
+                                                                    <div className="mt-2 space-y-1">
+                                                                        {item.notes.split('|').map((note, idx) => {
+                                                                            const isPizzaItem = item.is_pizza;
+
+                                                                            return (
+                                                                                <div key={idx} className={`flex items-start gap-1.5 p-2 rounded-lg border text-[11px] font-bold uppercase tracking-wide leading-tight
+                                                                                    ${isPizzaItem 
+                                                                                        ? 'bg-red-500/10 text-red-500 border-red-500/50 shadow-[0_0_10px_rgba(239,68,68,0.1)]' 
+                                                                                        : 'bg-amber-500/10 text-amber-400 border-amber-500/30'}`}>
+                                                                                    <span className="material-symbols-outlined text-[14px] flex-shrink-0 mt-0.5">
+                                                                                        {isPizzaItem ? 'warning' : 'info'}
+                                                                                    </span>
+                                                                                    <span className="flex-1">{note.trim().replace(/^⚠️\s*/, '')}</span>
+                                                                                </div>
+                                                                            );
+                                                                        })}
                                                                     </div>
                                                                 )}
                                                             </div>
