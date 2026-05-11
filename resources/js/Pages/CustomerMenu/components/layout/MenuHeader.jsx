@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Link } from '@inertiajs/react';
 import LanguageSwitcher from '../shared/LanguageSwitcher';
 
@@ -31,7 +31,7 @@ function StoryProgressBars({ stories, activeIndex, progress }) {
  * - `isAmbient=true`  → blurred background fill, desktop-only (YouTube Shorts edge effect).
  * - `isAmbient=false` → primary media: `object-cover` on mobile, `object-contain` on desktop.
  */
-function StoryMedia({ url, type, isAmbient, onMediaLoad, isActive = true }) {
+function StoryMedia({ url, type, isAmbient, onMediaLoad, index, isActive = true }) {
     let className = isAmbient
         ? "absolute inset-0 w-full h-full object-cover blur-[120px] opacity-40 scale-125 z-0 hidden md:block"
         : "absolute inset-0 w-full h-full object-cover md:object-contain";
@@ -46,9 +46,6 @@ function StoryMedia({ url, type, isAmbient, onMediaLoad, isActive = true }) {
 
     const handleVideoRef = (el) => {
         videoRef.current = el;
-        if (el && el.readyState >= 3 && onMediaLoad) {
-            onMediaLoad();
-        }
     };
 
     useEffect(() => {
@@ -62,6 +59,15 @@ function StoryMedia({ url, type, isAmbient, onMediaLoad, isActive = true }) {
         }
     }, [isActive, type]);
 
+    // Mount check for cached/completed video elements
+    useEffect(() => {
+        if (type === 'video' && videoRef.current) {
+            if (videoRef.current.readyState >= 3 && onMediaLoad) {
+                onMediaLoad(index);
+            }
+        }
+    }, [type, onMediaLoad, index]);
+
     if (type === 'video') {
         return (
             <video
@@ -71,7 +77,7 @@ function StoryMedia({ url, type, isAmbient, onMediaLoad, isActive = true }) {
                 muted
                 playsInline
                 className={className}
-                onCanPlay={onMediaLoad}
+                onCanPlay={() => onMediaLoad && onMediaLoad(index)}
             />
         );
     }
@@ -81,7 +87,7 @@ function StoryMedia({ url, type, isAmbient, onMediaLoad, isActive = true }) {
             src={url} 
             alt="Story" 
             className={className} 
-            onLoad={onMediaLoad} 
+            onLoad={() => onMediaLoad && onMediaLoad(index)} 
         />
     );
 }
@@ -100,9 +106,12 @@ export default function MenuHeader({ storeSetting, t, todayHours, dynamicHoursSu
 
     const isMediaLoaded = loadedStatus[activeIndex] || false;
 
-    const handleMediaLoad = (index) => {
-        setLoadedStatus(prev => ({ ...prev, [index]: true }));
-    };
+    const handleMediaLoad = useCallback((index) => {
+        setLoadedStatus(prev => {
+            if (prev[index]) return prev; // Guard Clause: avoid infinite loop state updates
+            return { ...prev, [index]: true };
+        });
+    }, []);
 
     useEffect(() => {
         if (!hasStories || !isMediaLoaded) return;
@@ -149,7 +158,8 @@ export default function MenuHeader({ storeSetting, t, todayHours, dynamicHoursSu
                                 type={story.type} 
                                 isAmbient={false} 
                                 isActive={idx === activeIndex}
-                                onMediaLoad={() => handleMediaLoad(idx)} 
+                                index={idx}
+                                onMediaLoad={handleMediaLoad} 
                             />
                         ))}
 
