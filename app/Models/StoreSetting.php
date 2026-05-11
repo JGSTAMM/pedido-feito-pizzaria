@@ -15,8 +15,7 @@ class StoreSetting extends Model
         'cnpj',
         'cover_image',
         'logo_image',
-        'background_media_url',
-        'background_media_type',
+        'story_media',
         'description',
         'is_open',
         'opening_hours',
@@ -36,6 +35,7 @@ class StoreSetting extends Model
         'opening_hours' => 'array',
         'receipt_show_cnpj' => 'boolean',
         'payment_methods' => 'array',
+        'story_media' => 'array',
     ];
 
     protected $appends = ['logo_url', 'cover_url'];
@@ -66,18 +66,22 @@ class StoreSetting extends Model
         return null;
     }
 
-    public function getBackgroundMediaUrlAttribute($value)
+    public function getStoryMediaAttribute($value)
     {
-        if ($value) {
-            if (str_starts_with($value, 'http')) {
-                return $value;
-            }
-
-            return asset('storage/'.$value);
+        if (is_string($value)) {
+            $value = json_decode($value, true);
         }
+        
+        if (!is_array($value)) return [];
 
-        return null;
+        return array_map(function ($media) {
+            if (isset($media['url']) && !str_starts_with($media['url'], 'http')) {
+                $media['url'] = asset('storage/' . $media['url']);
+            }
+            return $media;
+        }, $value);
     }
+
 
     protected static function booted()
     {

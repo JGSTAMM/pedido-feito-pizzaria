@@ -1,35 +1,117 @@
-import React from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from '@inertiajs/react';
 import LanguageSwitcher from '../shared/LanguageSwitcher';
 
+/** Duration (ms) each story is displayed before auto-advancing. */
+const STORY_DURATION = 8000;
+
+/**
+ * Instagram-style progress bars at the top of the header.
+ * Each story gets a thin line; the active one animates its fill.
+ */
+function StoryProgressBars({ stories, activeIndex, progress }) {
+    return (
+        <div className="absolute top-3 left-3 right-3 flex gap-1 z-30">
+            {stories.map((_, i) => (
+                <div key={i} className="flex-1 h-[2.5px] rounded-full bg-white/25 overflow-hidden">
+                    <div
+                        className="h-full bg-white rounded-full transition-[width] duration-100 ease-linear"
+                        style={{
+                            width: i < activeIndex ? '100%' : i === activeIndex ? `${progress}%` : '0%'
+                        }}
+                    />
+                </div>
+            ))}
+        </div>
+    );
+}
+
+/**
+ * Renders a single media element (video or image).
+ * - `isAmbient=true`  → blurred background fill, desktop-only (YouTube Shorts edge effect).
+ * - `isAmbient=false` → primary media: `object-cover` on mobile, `object-contain` on desktop.
+ */
+function StoryMedia({ url, type, isAmbient }) {
+    const className = isAmbient
+        ? "absolute inset-0 w-full h-full object-cover blur-[120px] opacity-40 scale-125 z-0 hidden md:block"
+        : "absolute inset-0 w-full h-full object-cover md:object-contain z-[1]";
+
+    if (type === 'video') {
+        return (
+            <video
+                src={url}
+                autoPlay
+                loop
+                muted
+                playsInline
+                className={className}
+            />
+        );
+    }
+
+    return <img src={url} alt="Story" className={className} />;
+}
+
 export default function MenuHeader({ storeSetting, t, todayHours, dynamicHoursSummary, scrolled }) {
+    // Extract stories from store settings
+    const stories = useMemo(() => {
+        if (!storeSetting?.story_media || !Array.isArray(storeSetting.story_media)) return [];
+        return storeSetting.story_media;
+    }, [storeSetting?.story_media]);
+
+    const [activeIndex, setActiveIndex] = useState(0);
+    const [progress, setProgress] = useState(0);
+    const hasStories = stories.length > 0;
+
+    useEffect(() => {
+        if (!hasStories) return;
+
+        const tick = 100; // ms between updates
+        const increment = (tick / STORY_DURATION) * 100;
+
+        const interval = setInterval(() => {
+            setProgress(prev => {
+                const next = prev + increment;
+                if (next >= 100) {
+                    // Single story: fill bar and hold. Multiple: cycle.
+                    if (stories.length > 1) {
+                        setActiveIndex(i => (i + 1) % stories.length);
+                        return 0;
+                    }
+                    return 100;
+                }
+                return next;
+            });
+        }, tick);
+
+        return () => clearInterval(interval);
+    }, [hasStories, stories.length]);
+
+    const activeStory = stories[activeIndex];
+
     return (
         <>
             {/* Expanded Header - Scrolls with content */}
-            <header className="relative h-auto bg-[#0D0D12] px-6 pt-12 pb-8 flex flex-col items-center text-center gap-6 border-b border-white/5 overflow-hidden">
-                {/* Background Media */}
-                {storeSetting?.background_media_url && (
+            <header className={`relative bg-[#0D0D12] px-6 pt-12 pb-8 flex flex-col items-center text-center gap-6 border-b border-white/5 overflow-hidden ${hasStories ? 'min-h-[300px]' : ''}`}>
+
+                {/* ── Stories Background ────────────────────────── */}
+                {hasStories && (
                     <>
-                        {storeSetting.background_media_type === 'video' ? (
-                            <video 
-                                src={storeSetting.background_media_url} 
-                                autoPlay 
-                                loop 
-                                muted 
-                                playsInline 
-                                className="absolute inset-0 w-full h-full object-cover z-0" 
-                            />
-                        ) : (
-                            <img 
-                                src={storeSetting.background_media_url} 
-                                alt="Background" 
-                                className="absolute inset-0 w-full h-full object-cover z-0" 
-                            />
-                        )}
-                        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm z-10"></div>
+                        {/* Ambient Backdrop — blurred fill for desktop vertical video edges */}
+                        <StoryMedia url={activeStory.url} type={activeStory.type} isAmbient={true} />
+
+                        {/* Primary Story Media — fills on mobile, centers on desktop */}
+                        <StoryMedia url={activeStory.url} type={activeStory.type} isAmbient={false} />
+
+                        {/* Light gradient — food stays appetizing, text stays readable */}
+                        <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-[#0D0D12] z-[2]" />
+
+                        {/* Story Progress Bars */}
+                        <StoryProgressBars stories={stories} activeIndex={activeIndex} progress={progress} />
                     </>
                 )}
 
+                {/* ── Header Content ───────────────────────────── */}
                 <div className="flex flex-col items-center gap-6 w-full z-20 relative">
                     {/* Logo Section */}
                     <div className="relative rounded-[1.2rem] border-2 border-white/10 bg-white shadow-2xl overflow-hidden shrink-0 w-24 h-24">

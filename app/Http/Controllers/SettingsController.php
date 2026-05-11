@@ -86,15 +86,13 @@ class SettingsController extends Controller
         $request->validate([
             'cover_image' => 'nullable|file|mimes:jpeg,png,jpg,gif,svg,webp|max:5120',
             'logo_image' => 'nullable|file|mimes:jpeg,png,jpg,gif,svg,webp|max:5120',
-            'background_media' => 'nullable|file|mimes:jpeg,png,jpg,gif,svg,webp,mp4,webm,ogg|max:10240',
+            'story_media' => 'nullable|array|max:5',
+            'update_stories' => 'nullable|boolean',
             'description' => 'nullable|string|max:500',
             'remove_logo' => 'nullable|boolean',
             'remove_cover' => 'nullable|boolean',
-            'remove_background' => 'nullable|boolean',
         ], [
-            'background_media.mimes' => 'O formato de mídia não é suportado. Envie uma imagem ou um vídeo (MP4/WebM).',
-            'background_media.max' => 'O arquivo de fundo não pode ter mais que 10MB.',
-            'background_media.uploaded' => 'O arquivo é muito grande para o servidor ou possui um formato inválido.',
+            'story_media.max' => 'Você pode adicionar no máximo 5 histórias.',
             'cover_image.max' => 'A imagem de capa não pode ter mais que 5MB.',
             'logo_image.max' => 'A logo não pode ter mais que 5MB.',
         ]);
@@ -114,14 +112,31 @@ class SettingsController extends Controller
             $data['logo_image'] = null;
         }
 
-        if ($request->hasFile('background_media')) {
-            $file = $request->file('background_media');
-            $data['background_media_url'] = $file->store('branding', 'public');
-            $mime = $file->getMimeType();
-            $data['background_media_type'] = str_starts_with($mime, 'video') ? 'video' : 'image';
-        } elseif ($request->boolean('remove_background')) {
-            $data['background_media_url'] = null;
-            $data['background_media_type'] = null;
+        if ($request->boolean('update_stories')) {
+            $newStoryMedia = [];
+            if ($request->has('story_media') && is_array($request->story_media)) {
+                foreach ($request->story_media as $item) {
+                    if ($item instanceof \Illuminate\Http\UploadedFile) {
+                        $path = $item->store('branding', 'public');
+                        $mime = $item->getMimeType();
+                        $newStoryMedia[] = [
+                            'url' => $path,
+                            'type' => str_starts_with($mime, 'video') ? 'video' : 'image',
+                        ];
+                    } else if (is_array($item) && isset($item['url'])) {
+                        // Strip absolute domain and 'storage/' prefix if present to save only the relative path
+                        $url = $item['url'];
+                        if (str_contains($url, '/storage/')) {
+                            $url = explode('/storage/', $url)[1];
+                        }
+                        $newStoryMedia[] = [
+                            'url' => $url,
+                            'type' => $item['type'] ?? 'image',
+                        ];
+                    }
+                }
+            }
+            $data['story_media'] = $newStoryMedia;
         }
 
         if ($request->has('description')) {

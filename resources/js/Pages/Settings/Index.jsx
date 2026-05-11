@@ -146,30 +146,46 @@ function TabPerfil({ settings }) {
     const brandingForm = useForm({
         logo_image: null,
         cover_image: null,
-        background_media: null,
+        story_media: settings.story_media || [],
+        update_stories: false,
         remove_logo: false,
         remove_cover: false,
-        remove_background: false,
     });
 
     const saveBranding = (e) => {
         e.preventDefault();
-        brandingForm.post('/settings/branding', { preserveScroll: true, forceFormData: true, onSuccess: () => brandingForm.reset() });
+        brandingForm.post('/settings/branding', { preserveScroll: true, forceFormData: true, onSuccess: () => brandingForm.reset('logo_image', 'cover_image', 'update_stories') });
     };
 
     const handleRemoveLogo = () => {
-        brandingForm.setData({ ...brandingForm.data, logo_image: null, remove_logo: true });
-        brandingForm.post('/settings/branding', { preserveScroll: true, forceFormData: true, onSuccess: () => brandingForm.reset() });
+        router.post('/settings/branding', { remove_logo: true }, { preserveScroll: true, forceFormData: true });
     };
 
     const handleRemoveCover = () => {
-        brandingForm.setData({ ...brandingForm.data, cover_image: null, remove_cover: true });
-        brandingForm.post('/settings/branding', { preserveScroll: true, forceFormData: true, onSuccess: () => brandingForm.reset() });
+        router.post('/settings/branding', { remove_cover: true }, { preserveScroll: true, forceFormData: true });
     };
 
-    const handleRemoveBackgroundMedia = () => {
-        brandingForm.setData({ ...brandingForm.data, background_media: null, remove_background: true });
-        brandingForm.post('/settings/branding', { preserveScroll: true, forceFormData: true, onSuccess: () => brandingForm.reset() });
+    const handleAddStory = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        if (brandingForm.data.story_media.length >= 5) return;
+        
+        brandingForm.setData({
+            ...brandingForm.data,
+            story_media: [...brandingForm.data.story_media, file],
+            update_stories: true
+        });
+        e.target.value = ''; // Reset input so same file can be uploaded again if needed
+    };
+
+    const handleRemoveStory = (index) => {
+        const newStories = [...brandingForm.data.story_media];
+        newStories.splice(index, 1);
+        brandingForm.setData({
+            ...brandingForm.data,
+            story_media: newStories,
+            update_stories: true
+        });
     };
 
     const togglePaymentMethod = (method) => {
@@ -264,30 +280,49 @@ function TabPerfil({ settings }) {
                             {brandingForm.errors.cover_image && <p className="text-red-400 text-xs mt-2">{brandingForm.errors.cover_image}</p>}
                             <p className="text-[11px] text-text-muted mt-2 leading-tight">Formato: Retangular (16:9). Recomendado: JPG ou WebP. Máx: 2MB.</p>
                         </div>
-                        <div>
-                            <Label>Background (Mídia Dinâmica)</Label>
-                            {settings.background_media_url && !brandingForm.data.remove_background ? (
-                                <div className="relative w-full h-32 group rounded-xl overflow-hidden border border-border-subtle bg-background-dark flex items-center justify-center">
-                                    {settings.background_media_type === 'video' ? (
-                                        <video src={settings.background_media_url} className="w-full h-full object-cover" muted loop autoPlay playsInline />
-                                    ) : (
-                                        <img src={settings.background_media_url} alt="Background Media" className="w-full h-full object-cover" />
-                                    )}
-                                    <button type="button" onClick={handleRemoveBackgroundMedia} className="absolute inset-0 bg-red-500/80 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <span className="material-symbols-outlined text-white text-3xl">delete</span>
-                                    </button>
+                        <div className="col-span-1 md:col-span-3 mt-4 pt-6 border-t border-border-subtle">
+                            <div className="flex items-center justify-between mb-4">
+                                <div>
+                                    <Label className="mb-0 text-lg">Stories (Mídia Dinâmica)</Label>
+                                    <p className="text-[12px] text-text-muted mt-1 leading-tight">Formato: Vertical (9:16) ou Retangular. Máx: 10MB por arquivo. Adicione fotos e vídeos curtos (MP4/WebM) para impressionar seus clientes.</p>
                                 </div>
-                            ) : (
-                                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-border-subtle hover:border-primary/50 rounded-xl bg-background-dark cursor-pointer transition-colors group">
-                                    <span className="material-symbols-outlined text-3xl text-text-muted group-hover:text-primary transition-colors">movie</span>
-                                    <span className="text-xs font-bold text-text-muted mt-2 group-hover:text-white transition-colors text-center px-2">
-                                        {brandingForm.data.background_media ? brandingForm.data.background_media.name : 'Clique para enviar vídeo/imagem'}
-                                    </span>
-                                    <input type="file" className="hidden" accept="image/*,video/mp4,video/webm" onChange={e => brandingForm.setData({ ...brandingForm.data, background_media: e.target.files[0], remove_background: false })} />
-                                </label>
-                            )}
-                            {brandingForm.errors.background_media && <p className="text-red-400 text-xs mt-2">{brandingForm.errors.background_media}</p>}
-                            <p className="text-[11px] text-text-muted mt-2 leading-tight">Formato: Vídeo (MP4/WebM) ou Imagem. Máx: 5MB para boa performance mobile.</p>
+                                <span className="text-xs font-bold text-primary bg-primary/10 px-2 py-1 rounded-md">{brandingForm.data.story_media.length}/5 stories</span>
+                            </div>
+                            
+                            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                                {brandingForm.data.story_media.map((media, index) => {
+                                    const isFile = media instanceof File;
+                                    const url = isFile ? URL.createObjectURL(media) : media.url;
+                                    const isVideo = isFile ? media.type.startsWith('video/') : media.type === 'video';
+                                    
+                                    return (
+                                        <div key={index} className="relative w-full aspect-[9/16] group rounded-xl overflow-hidden border border-border-subtle bg-background-dark flex items-center justify-center">
+                                            {isVideo ? (
+                                                <video src={url} className="w-full h-full object-cover" muted loop autoPlay playsInline />
+                                            ) : (
+                                                <img src={url} alt={`Story ${index}`} className="w-full h-full object-cover" />
+                                            )}
+                                            <div className="absolute top-2 left-2 bg-black/60 text-white text-[10px] font-bold px-2 py-0.5 rounded-full backdrop-blur-sm">
+                                                {index + 1}
+                                            </div>
+                                            <button type="button" onClick={() => handleRemoveStory(index)} className="absolute inset-0 bg-red-500/80 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <span className="material-symbols-outlined text-white text-3xl">delete</span>
+                                            </button>
+                                        </div>
+                                    );
+                                })}
+
+                                {brandingForm.data.story_media.length < 5 && (
+                                    <label className="flex flex-col items-center justify-center w-full aspect-[9/16] border-2 border-dashed border-border-subtle hover:border-primary/50 rounded-xl bg-background-dark cursor-pointer transition-colors group">
+                                        <span className="material-symbols-outlined text-3xl text-text-muted group-hover:text-primary transition-colors">add_photo_alternate</span>
+                                        <span className="text-xs font-bold text-text-muted mt-2 group-hover:text-white transition-colors text-center px-2">
+                                            Adicionar Story
+                                        </span>
+                                        <input type="file" className="hidden" accept="image/*,video/mp4,video/webm" onChange={handleAddStory} />
+                                    </label>
+                                )}
+                            </div>
+                            {brandingForm.errors.story_media && <p className="text-red-400 text-xs mt-2">{brandingForm.errors.story_media}</p>}
                         </div>
                     </div>
                     <div className="flex justify-end pt-4 border-t border-border-subtle">
