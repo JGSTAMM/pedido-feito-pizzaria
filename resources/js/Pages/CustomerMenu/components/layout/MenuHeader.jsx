@@ -6,8 +6,31 @@ export default function MenuHeader({ storeSetting, t, todayHours, dynamicHoursSu
     return (
         <>
             {/* Expanded Header - Scrolls with content */}
-            <header className="relative h-auto bg-[#0D0D12] px-6 pt-12 pb-8 flex flex-col items-center text-center gap-6 border-b border-white/5">
-                <div className="flex flex-col items-center gap-6 w-full">
+            <header className="relative h-auto bg-[#0D0D12] px-6 pt-12 pb-8 flex flex-col items-center text-center gap-6 border-b border-white/5 overflow-hidden">
+                {/* Background Media */}
+                {storeSetting?.background_media_url && (
+                    <>
+                        {storeSetting.background_media_type === 'video' ? (
+                            <video 
+                                src={storeSetting.background_media_url} 
+                                autoPlay 
+                                loop 
+                                muted 
+                                playsInline 
+                                className="absolute inset-0 w-full h-full object-cover z-0" 
+                            />
+                        ) : (
+                            <img 
+                                src={storeSetting.background_media_url} 
+                                alt="Background" 
+                                className="absolute inset-0 w-full h-full object-cover z-0" 
+                            />
+                        )}
+                        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm z-10"></div>
+                    </>
+                )}
+
+                <div className="flex flex-col items-center gap-6 w-full z-20 relative">
                     {/* Logo Section */}
                     <div className="relative rounded-[1.2rem] border-2 border-white/10 bg-white shadow-2xl overflow-hidden shrink-0 w-24 h-24">
                         {storeSetting?.logo_url ? (

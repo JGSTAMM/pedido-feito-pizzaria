@@ -146,8 +146,10 @@ function TabPerfil({ settings }) {
     const brandingForm = useForm({
         logo_image: null,
         cover_image: null,
+        background_media: null,
         remove_logo: false,
         remove_cover: false,
+        remove_background: false,
     });
 
     const saveBranding = (e) => {
@@ -162,6 +164,11 @@ function TabPerfil({ settings }) {
 
     const handleRemoveCover = () => {
         brandingForm.setData({ ...brandingForm.data, cover_image: null, remove_cover: true });
+        brandingForm.post('/settings/branding', { preserveScroll: true, forceFormData: true, onSuccess: () => brandingForm.reset() });
+    };
+
+    const handleRemoveBackgroundMedia = () => {
+        brandingForm.setData({ ...brandingForm.data, background_media: null, remove_background: true });
         brandingForm.post('/settings/branding', { preserveScroll: true, forceFormData: true, onSuccess: () => brandingForm.reset() });
     };
 
@@ -214,12 +221,12 @@ function TabPerfil({ settings }) {
                     </div>
                 </div>
                 <form onSubmit={saveBranding} className="space-y-6" encType="multipart/form-data">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div>
                             <Label>Logo da Loja</Label>
                             {settings.logo_url && !brandingForm.data.remove_logo ? (
-                                <div className="relative w-32 h-32 group rounded-xl overflow-hidden border border-border-subtle bg-background-dark flex items-center justify-center">
-                                    <img src={settings.logo_url} alt="Logo" className="w-full h-full object-cover" />
+                                <div className="relative w-full h-32 group rounded-xl overflow-hidden border border-border-subtle bg-background-dark flex items-center justify-center">
+                                    <img src={settings.logo_url} alt="Logo" className="w-full h-full object-contain p-2" />
                                     <button type="button" onClick={handleRemoveLogo} className="absolute inset-0 bg-red-500/80 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                                         <span className="material-symbols-outlined text-white text-3xl">delete</span>
                                     </button>
@@ -227,13 +234,14 @@ function TabPerfil({ settings }) {
                             ) : (
                                 <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-border-subtle hover:border-primary/50 rounded-xl bg-background-dark cursor-pointer transition-colors group">
                                     <span className="material-symbols-outlined text-3xl text-text-muted group-hover:text-primary transition-colors">cloud_upload</span>
-                                    <span className="text-xs font-bold text-text-muted mt-2 group-hover:text-white transition-colors">
+                                    <span className="text-xs font-bold text-text-muted mt-2 group-hover:text-white transition-colors text-center px-2">
                                         {brandingForm.data.logo_image ? brandingForm.data.logo_image.name : 'Clique para enviar o logo'}
                                     </span>
                                     <input type="file" className="hidden" accept="image/*" onChange={e => brandingForm.setData({ ...brandingForm.data, logo_image: e.target.files[0], remove_logo: false })} />
                                 </label>
                             )}
                             {brandingForm.errors.logo_image && <p className="text-red-400 text-xs mt-2">{brandingForm.errors.logo_image}</p>}
+                            <p className="text-[11px] text-text-muted mt-2 leading-tight">Formato: Quadrado (1:1). Recomendado: PNG transparente. Máx: 2MB.</p>
                         </div>
                         <div>
                             <Label>Imagem de Fundo (Capa)</Label>
@@ -247,13 +255,39 @@ function TabPerfil({ settings }) {
                             ) : (
                                 <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-border-subtle hover:border-primary/50 rounded-xl bg-background-dark cursor-pointer transition-colors group">
                                     <span className="material-symbols-outlined text-3xl text-text-muted group-hover:text-primary transition-colors">wallpaper</span>
-                                    <span className="text-xs font-bold text-text-muted mt-2 group-hover:text-white transition-colors">
+                                    <span className="text-xs font-bold text-text-muted mt-2 group-hover:text-white transition-colors text-center px-2">
                                         {brandingForm.data.cover_image ? brandingForm.data.cover_image.name : 'Clique para enviar a capa'}
                                     </span>
                                     <input type="file" className="hidden" accept="image/*" onChange={e => brandingForm.setData({ ...brandingForm.data, cover_image: e.target.files[0], remove_cover: false })} />
                                 </label>
                             )}
                             {brandingForm.errors.cover_image && <p className="text-red-400 text-xs mt-2">{brandingForm.errors.cover_image}</p>}
+                            <p className="text-[11px] text-text-muted mt-2 leading-tight">Formato: Retangular (16:9). Recomendado: JPG ou WebP. Máx: 2MB.</p>
+                        </div>
+                        <div>
+                            <Label>Background (Mídia Dinâmica)</Label>
+                            {settings.background_media_url && !brandingForm.data.remove_background ? (
+                                <div className="relative w-full h-32 group rounded-xl overflow-hidden border border-border-subtle bg-background-dark flex items-center justify-center">
+                                    {settings.background_media_type === 'video' ? (
+                                        <video src={settings.background_media_url} className="w-full h-full object-cover" muted loop autoPlay playsInline />
+                                    ) : (
+                                        <img src={settings.background_media_url} alt="Background Media" className="w-full h-full object-cover" />
+                                    )}
+                                    <button type="button" onClick={handleRemoveBackgroundMedia} className="absolute inset-0 bg-red-500/80 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <span className="material-symbols-outlined text-white text-3xl">delete</span>
+                                    </button>
+                                </div>
+                            ) : (
+                                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-border-subtle hover:border-primary/50 rounded-xl bg-background-dark cursor-pointer transition-colors group">
+                                    <span className="material-symbols-outlined text-3xl text-text-muted group-hover:text-primary transition-colors">movie</span>
+                                    <span className="text-xs font-bold text-text-muted mt-2 group-hover:text-white transition-colors text-center px-2">
+                                        {brandingForm.data.background_media ? brandingForm.data.background_media.name : 'Clique para enviar vídeo/imagem'}
+                                    </span>
+                                    <input type="file" className="hidden" accept="image/*,video/mp4,video/webm" onChange={e => brandingForm.setData({ ...brandingForm.data, background_media: e.target.files[0], remove_background: false })} />
+                                </label>
+                            )}
+                            {brandingForm.errors.background_media && <p className="text-red-400 text-xs mt-2">{brandingForm.errors.background_media}</p>}
+                            <p className="text-[11px] text-text-muted mt-2 leading-tight">Formato: Vídeo (MP4/WebM) ou Imagem. Máx: 5MB para boa performance mobile.</p>
                         </div>
                     </div>
                     <div className="flex justify-end pt-4 border-t border-border-subtle">

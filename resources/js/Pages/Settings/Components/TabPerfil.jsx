@@ -16,8 +16,9 @@ export default function TabPerfil({ settings, days }) {
 
     // Form: Branding
     const identityForm = useForm({
-        logo: null,
-        cover: null,
+        logo_image: null,
+        cover_image: null,
+        background_media: null,
     });
 
     // Form: Hours
@@ -39,7 +40,7 @@ export default function TabPerfil({ settings, days }) {
 
     const submitIdentity = (e) => {
         e.preventDefault();
-        identityForm.post('/settings/identity', { preserveScroll: true });
+        identityForm.post('/settings/branding', { preserveScroll: true });
     };
 
     const submitHours = (e) => {
@@ -80,16 +81,32 @@ export default function TabPerfil({ settings, days }) {
                                 <Label>Logotipo</Label>
                                 <div className="size-24 rounded-2xl bg-background-dark border-2 border-dashed border-border-subtle flex items-center justify-center overflow-hidden relative group-hover:border-primary/50 transition-colors">
                                     {settings.logo_url ? <img src={settings.logo_url} className="size-full object-contain" /> : <span className="material-symbols-outlined text-text-muted text-3xl">add_photo_alternate</span>}
-                                    <input type="file" onChange={e => identityForm.setData('logo', e.target.files[0])} className="absolute inset-0 opacity-0 cursor-pointer" />
+                                    <input type="file" onChange={e => identityForm.setData('logo_image', e.target.files[0])} className="absolute inset-0 opacity-0 cursor-pointer" />
                                 </div>
                             </div>
                             <div className="flex-1">
                                 <Label>Capa do Cardápio</Label>
                                 <div className="h-24 w-full rounded-2xl bg-background-dark border-2 border-dashed border-border-subtle flex items-center justify-center overflow-hidden relative group-hover:border-primary/50 transition-colors">
                                     {settings.cover_url ? <img src={settings.cover_url} className="size-full object-cover" /> : <span className="material-symbols-outlined text-text-muted text-3xl">add_photo_alternate</span>}
-                                    <input type="file" onChange={e => identityForm.setData('cover', e.target.files[0])} className="absolute inset-0 opacity-0 cursor-pointer" />
+                                    <input type="file" onChange={e => identityForm.setData('cover_image', e.target.files[0])} className="absolute inset-0 opacity-0 cursor-pointer" />
                                 </div>
                             </div>
+                        </div>
+                        <div className="flex-1">
+                            <Label>Background do Menu (Mídia Dinâmica)</Label>
+                            <div className="h-24 w-full rounded-2xl bg-background-dark border-2 border-dashed border-border-subtle flex items-center justify-center overflow-hidden relative group-hover:border-primary/50 transition-colors">
+                                {settings.background_media_url ? (
+                                    settings.background_media_type === 'video' ? (
+                                        <video src={settings.background_media_url} className="size-full object-cover" muted loop autoPlay playsInline />
+                                    ) : (
+                                        <img src={settings.background_media_url} className="size-full object-cover" />
+                                    )
+                                ) : (
+                                    <span className="material-symbols-outlined text-text-muted text-3xl">add_photo_alternate</span>
+                                )}
+                                <input type="file" accept="image/*,video/mp4,video/webm" onChange={e => identityForm.setData('background_media', e.target.files[0])} className="absolute inset-0 opacity-0 cursor-pointer" />
+                            </div>
+                            <p className="text-xs text-text-muted mt-2">Formato sugerido: WebP ou MP4 (Máx 5MB) para melhor performance</p>
                         </div>
                         <div className="flex justify-end pt-4 border-t border-border-subtle">
                             <button type="submit" disabled={identityForm.processing} className="px-5 py-2 bg-primary text-white text-sm font-bold rounded-xl hover:bg-primary-dark transition-all disabled:opacity-50">Salvar Imagens</button>
