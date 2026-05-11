@@ -15,6 +15,8 @@ class StoreSetting extends Model
         'cnpj',
         'cover_image',
         'logo_image',
+        'background_media_url',
+        'background_media_type',
         'description',
         'is_open',
         'opening_hours',
@@ -59,6 +61,19 @@ class StoreSetting extends Model
             }
 
             return asset('storage/'.$this->cover_image);
+        }
+
+        return null;
+    }
+
+    public function getBackgroundMediaUrlAttribute($value)
+    {
+        if ($value) {
+            if (str_starts_with($value, 'http')) {
+                return $value;
+            }
+
+            return asset('storage/'.$value);
         }
 
         return null;

@@ -86,9 +86,17 @@ class SettingsController extends Controller
         $request->validate([
             'cover_image' => 'nullable|file|mimes:jpeg,png,jpg,gif,svg,webp|max:5120',
             'logo_image' => 'nullable|file|mimes:jpeg,png,jpg,gif,svg,webp|max:5120',
+            'background_media' => 'nullable|file|mimes:jpeg,png,jpg,gif,svg,webp,mp4,webm,ogg|max:10240',
             'description' => 'nullable|string|max:500',
             'remove_logo' => 'nullable|boolean',
             'remove_cover' => 'nullable|boolean',
+            'remove_background' => 'nullable|boolean',
+        ], [
+            'background_media.mimes' => 'O formato de mídia não é suportado. Envie uma imagem ou um vídeo (MP4/WebM).',
+            'background_media.max' => 'O arquivo de fundo não pode ter mais que 10MB.',
+            'background_media.uploaded' => 'O arquivo é muito grande para o servidor ou possui um formato inválido.',
+            'cover_image.max' => 'A imagem de capa não pode ter mais que 5MB.',
+            'logo_image.max' => 'A logo não pode ter mais que 5MB.',
         ]);
 
         $settings = StoreSetting::first();
@@ -104,6 +112,16 @@ class SettingsController extends Controller
             $data['logo_image'] = $request->file('logo_image')->store('branding', 'public');
         } elseif ($request->boolean('remove_logo')) {
             $data['logo_image'] = null;
+        }
+
+        if ($request->hasFile('background_media')) {
+            $file = $request->file('background_media');
+            $data['background_media_url'] = $file->store('branding', 'public');
+            $mime = $file->getMimeType();
+            $data['background_media_type'] = str_starts_with($mime, 'video') ? 'video' : 'image';
+        } elseif ($request->boolean('remove_background')) {
+            $data['background_media_url'] = null;
+            $data['background_media_type'] = null;
         }
 
         if ($request->has('description')) {
