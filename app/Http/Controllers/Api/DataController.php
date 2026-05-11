@@ -22,7 +22,7 @@ class DataController extends Controller
                 PizzaFlavor::where('is_active', true)->get()
             ),
             'products' => ProductResource::collection(
-                Product::where('is_active', true)->get()
+                Product::where('is_active_pos', true)->get()
             ),
         ]);
     }

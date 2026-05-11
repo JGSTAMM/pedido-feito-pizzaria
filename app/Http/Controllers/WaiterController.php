@@ -95,6 +95,7 @@ class WaiterController extends Controller
                 'price' => (float) $p->price,
                 'category' => $p->category,
                 'image_url' => $p->image_url,
+                'variations' => $p->variations,
                 'type' => 'product',
             ]);
 
