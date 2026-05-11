@@ -209,11 +209,19 @@ function OrderDetailModal({ order, isOpen, onClose }) {
                                         </div>
                                         {item.notes && (
                                             <div className="ml-8 mt-1 flex flex-wrap gap-1">
-                                                {item.notes.split('|').map((note, idx) => (
-                                                    <span key={idx} className="bg-amber-500/10 text-amber-400 text-[10px] font-black uppercase px-1.5 py-0.5 rounded border border-amber-500/20">
-                                                        {note.trim()}
-                                                    </span>
-                                                ))}
+                                                {item.notes.split('|').map((note, idx) => {
+                                                    const trimmedNote = note.trim();
+                                                    if (!trimmedNote) return null;
+                                                    
+                                                    // Deduplicate: if the note (variation) is already in the name, don't show the pill
+                                                    if (item.name.toLowerCase().includes(trimmedNote.toLowerCase())) return null;
+
+                                                    return (
+                                                        <span key={idx} className="bg-amber-500/10 text-amber-400 text-[10px] font-black uppercase px-1.5 py-0.5 rounded border border-amber-500/20">
+                                                            {trimmedNote}
+                                                        </span>
+                                                    );
+                                                })}
                                             </div>
                                         )}
                                     </div>
