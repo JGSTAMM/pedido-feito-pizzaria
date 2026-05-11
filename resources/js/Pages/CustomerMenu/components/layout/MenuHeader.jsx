@@ -11,7 +11,7 @@ const STORY_DURATION = 8000;
  */
 function StoryProgressBars({ stories, activeIndex, progress }) {
     return (
-        <div className="absolute top-3 left-3 right-3 flex gap-1 z-30">
+        <div className="absolute top-2 left-0 w-full z-30 px-2 flex gap-1">
             {stories.map((_, i) => (
                 <div key={i} className="flex-1 h-[2.5px] rounded-full bg-white/25 overflow-hidden">
                     <div
@@ -175,7 +175,7 @@ export default function MenuHeader({ storeSetting, t, todayHours, dynamicHoursSu
     return (
         <>
             {/* Expanded Header - Scrolls with content */}
-            <header className={`relative bg-[#0D0D12] px-6 pt-12 pb-8 flex flex-col items-center text-center gap-6 border-b border-white/5 overflow-hidden ${hasStories ? 'min-h-[300px]' : ''}`}>
+            <header className={`relative bg-[#0D0D12] px-6 pt-12 pb-8 flex flex-col items-center text-center gap-6 overflow-hidden ${hasStories ? 'min-h-[300px]' : ''}`}>
 
                 {/* ── Stories Background ────────────────────────── */}
                 {hasStories && (
