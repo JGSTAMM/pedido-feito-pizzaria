@@ -31,25 +31,40 @@ function StoryProgressBars({ stories, activeIndex, progress }) {
  * - `isAmbient=true`  → blurred background fill, desktop-only (YouTube Shorts edge effect).
  * - `isAmbient=false` → primary media: `object-cover` on mobile, `object-contain` on desktop.
  */
-function StoryMedia({ url, type, isAmbient }) {
+function StoryMedia({ url, type, isAmbient, onMediaLoad }) {
     const className = isAmbient
         ? "absolute inset-0 w-full h-full object-cover blur-[120px] opacity-40 scale-125 z-0 hidden md:block"
         : "absolute inset-0 w-full h-full object-cover md:object-contain z-[1]";
 
+    const handleVideoRef = (el) => {
+        if (el && el.readyState >= 3 && onMediaLoad) {
+            onMediaLoad();
+        }
+    };
+
     if (type === 'video') {
         return (
             <video
+                ref={handleVideoRef}
                 src={url}
                 autoPlay
                 loop
                 muted
                 playsInline
                 className={className}
+                onCanPlay={onMediaLoad}
             />
         );
     }
 
-    return <img src={url} alt="Story" className={className} />;
+    return (
+        <img 
+            src={url} 
+            alt="Story" 
+            className={className} 
+            onLoad={onMediaLoad} 
+        />
+    );
 }
 
 export default function MenuHeader({ storeSetting, t, todayHours, dynamicHoursSummary, scrolled }) {
@@ -61,10 +76,15 @@ export default function MenuHeader({ storeSetting, t, todayHours, dynamicHoursSu
 
     const [activeIndex, setActiveIndex] = useState(0);
     const [progress, setProgress] = useState(0);
+    const [isMediaLoaded, setIsMediaLoaded] = useState(false);
     const hasStories = stories.length > 0;
 
     useEffect(() => {
-        if (!hasStories) return;
+        setIsMediaLoaded(false);
+    }, [activeIndex]);
+
+    useEffect(() => {
+        if (!hasStories || !isMediaLoaded) return;
 
         const tick = 100; // ms between updates
         const increment = (tick / STORY_DURATION) * 100;
@@ -85,7 +105,7 @@ export default function MenuHeader({ storeSetting, t, todayHours, dynamicHoursSu
         }, tick);
 
         return () => clearInterval(interval);
-    }, [hasStories, stories.length]);
+    }, [hasStories, stories.length, isMediaLoaded]);
 
     const activeStory = stories[activeIndex];
 
@@ -98,10 +118,17 @@ export default function MenuHeader({ storeSetting, t, todayHours, dynamicHoursSu
                 {hasStories && (
                     <>
                         {/* Ambient Backdrop — blurred fill for desktop vertical video edges */}
-                        <StoryMedia url={activeStory.url} type={activeStory.type} isAmbient={true} />
+                        <StoryMedia key={`ambient-${activeIndex}`} url={activeStory.url} type={activeStory.type} isAmbient={true} />
 
                         {/* Primary Story Media — fills on mobile, centers on desktop */}
-                        <StoryMedia url={activeStory.url} type={activeStory.type} isAmbient={false} />
+                        <StoryMedia key={`primary-${activeIndex}`} url={activeStory.url} type={activeStory.type} isAmbient={false} onMediaLoad={() => setIsMediaLoaded(true)} />
+
+                        {/* Loading Spinner */}
+                        {!isMediaLoaded && (
+                            <div className="absolute inset-0 flex items-center justify-center z-[3]">
+                                <div className="w-8 h-8 border-2 border-white/20 border-t-white/80 rounded-full animate-spin backdrop-blur-sm" />
+                            </div>
+                        )}
 
                         {/* Light gradient — food stays appetizing, text stays readable */}
                         <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-[#0D0D12] z-[2]" />
