@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Link } from '@inertiajs/react';
 import LanguageSwitcher from '../shared/LanguageSwitcher';
 
@@ -31,23 +31,42 @@ function StoryProgressBars({ stories, activeIndex, progress }) {
  * - `isAmbient=true`  → blurred background fill, desktop-only (YouTube Shorts edge effect).
  * - `isAmbient=false` → primary media: `object-cover` on mobile, `object-contain` on desktop.
  */
-function StoryMedia({ url, type, isAmbient, onMediaLoad }) {
-    const className = isAmbient
+function StoryMedia({ url, type, isAmbient, onMediaLoad, isActive = true }) {
+    let className = isAmbient
         ? "absolute inset-0 w-full h-full object-cover blur-[120px] opacity-40 scale-125 z-0 hidden md:block"
-        : "absolute inset-0 w-full h-full object-cover md:object-contain z-[1]";
+        : "absolute inset-0 w-full h-full object-cover md:object-contain";
+
+    if (!isAmbient) {
+        className += isActive 
+            ? " z-[1] opacity-100 transition-opacity duration-500" 
+            : " z-0 opacity-0 pointer-events-none";
+    }
+
+    const videoRef = useRef(null);
 
     const handleVideoRef = (el) => {
+        videoRef.current = el;
         if (el && el.readyState >= 3 && onMediaLoad) {
             onMediaLoad();
         }
     };
+
+    useEffect(() => {
+        if (type === 'video' && videoRef.current) {
+            if (isActive) {
+                videoRef.current.currentTime = 0;
+                videoRef.current.play().catch(() => {});
+            } else {
+                videoRef.current.pause();
+            }
+        }
+    }, [isActive, type]);
 
     if (type === 'video') {
         return (
             <video
                 ref={handleVideoRef}
                 src={url}
-                autoPlay
                 loop
                 muted
                 playsInline
@@ -76,12 +95,14 @@ export default function MenuHeader({ storeSetting, t, todayHours, dynamicHoursSu
 
     const [activeIndex, setActiveIndex] = useState(0);
     const [progress, setProgress] = useState(0);
-    const [isMediaLoaded, setIsMediaLoaded] = useState(false);
+    const [loadedStatus, setLoadedStatus] = useState({});
     const hasStories = stories.length > 0;
 
-    useEffect(() => {
-        setIsMediaLoaded(false);
-    }, [activeIndex]);
+    const isMediaLoaded = loadedStatus[activeIndex] || false;
+
+    const handleMediaLoad = (index) => {
+        setLoadedStatus(prev => ({ ...prev, [index]: true }));
+    };
 
     useEffect(() => {
         if (!hasStories || !isMediaLoaded) return;
@@ -118,10 +139,19 @@ export default function MenuHeader({ storeSetting, t, todayHours, dynamicHoursSu
                 {hasStories && (
                     <>
                         {/* Ambient Backdrop — blurred fill for desktop vertical video edges */}
-                        <StoryMedia key={`ambient-${activeIndex}`} url={activeStory.url} type={activeStory.type} isAmbient={true} />
+                        <StoryMedia key={`ambient-${activeStory.url}`} url={activeStory.url} type={activeStory.type} isAmbient={true} isActive={true} />
 
-                        {/* Primary Story Media — fills on mobile, centers on desktop */}
-                        <StoryMedia key={`primary-${activeIndex}`} url={activeStory.url} type={activeStory.type} isAmbient={false} onMediaLoad={() => setIsMediaLoaded(true)} />
+                        {/* Primary Story Media — pre-rendered and hidden until active */}
+                        {stories.map((story, idx) => (
+                            <StoryMedia 
+                                key={`primary-${story.url}-${idx}`} 
+                                url={story.url} 
+                                type={story.type} 
+                                isAmbient={false} 
+                                isActive={idx === activeIndex}
+                                onMediaLoad={() => handleMediaLoad(idx)} 
+                            />
+                        ))}
 
                         {/* Loading Spinner */}
                         {!isMediaLoaded && (
