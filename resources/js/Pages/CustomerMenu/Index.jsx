@@ -21,6 +21,7 @@ import CatalogList from './components/menu/CatalogList';
 import FeaturedSection from './components/menu/FeaturedSection';
 import PizzaBuilderModal from './components/menu/PizzaBuilderModal';
 import FlavorDetailModal from './components/menu/FlavorDetailModal';
+import CartSheet from './components/cart/CartSheet';
 
 export default function CustomerMenu() {
     const { t, formatCurrency, translateDynamic } = useI18n();
@@ -37,6 +38,7 @@ export default function CustomerMenu() {
     const [variationProduct, setVariationProduct] = useState(null);
     const [preSelectedPizzaInstance, setPreSelectedPizzaInstance] = useState(null);
     const [scrolled, setScrolled] = useState(false);
+    const [isCartOpen, setIsCartOpen] = useState(false);
 
     useEffect(() => {
         const handleScroll = () => {
@@ -46,7 +48,7 @@ export default function CustomerMenu() {
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
-    const { addItem, cartItemCount, cartTotal } = useCart();
+    const { addItem, removeItem, updateQuantity, clearCart, items, cartItemCount, cartTotal } = useCart();
     const { todayHours, dynamicHoursSummary } = useStoreHours(storeSetting?.opening_hours);
 
     useEffect(() => {
@@ -149,7 +151,11 @@ export default function CustomerMenu() {
             {/* Float Cart Button Mobile */}
             {cartItemCount > 0 && (
                 <div className="fixed bottom-24 left-4 right-4 z-40 animate-in slide-in-from-bottom-10 fade-in duration-500">
-                    <Link href="/menu/checkout" className="w-full bg-primary hover:bg-primary-hover text-white rounded-2xl py-3.5 px-5 flex items-center justify-between shadow-[0_8px_30px_rgba(139,92,246,0.3)] transition-transform active:scale-95">
+                    <button
+                        type="button"
+                        onClick={() => setIsCartOpen(true)}
+                        className="w-full bg-primary hover:bg-primary-hover text-white rounded-2xl py-3.5 px-5 flex items-center justify-between shadow-[0_8px_30px_rgba(139,92,246,0.3)] transition-transform active:scale-95"
+                    >
                         <div className="flex items-center gap-2">
                             <div className="w-8 h-8 rounded-full bg-black/20 flex items-center justify-center font-black text-sm">
                                 {cartItemCount}
@@ -157,7 +163,7 @@ export default function CustomerMenu() {
                             <span className="text-sm font-bold tracking-wide">{t('digital_menu.cart.open_cart')?.toUpperCase()}</span>
                         </div>
                         <span className="font-black text-lg">{formatCurrency(cartTotal)}</span>
-                    </Link>
+                    </button>
                 </div>
             )}
 
@@ -195,6 +201,17 @@ export default function CustomerMenu() {
                 onClose={() => setVariationProduct(null)}
                 product={variationProduct}
                 onConfirm={handleVariationConfirm}
+            />
+
+            <CartSheet
+                isOpen={isCartOpen}
+                onClose={() => setIsCartOpen(false)}
+                items={items}
+                cartTotal={cartTotal}
+                cartItemCount={cartItemCount}
+                updateQuantity={updateQuantity}
+                removeItem={removeItem}
+                clearCart={clearCart}
             />
 
             <BottomNav onOpenProfile={() => {

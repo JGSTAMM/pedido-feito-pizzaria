@@ -197,12 +197,16 @@ export default function TableOrderDrawer({
             return;
         }
 
-        // Check if the product has variations (robust check for JSON or Array)
-        const hasVariations = item.variations && 
-            (Array.isArray(item.variations) ? item.variations.length > 0 : false);
+        // Robust check: backend may send variations as a JSON string OR a parsed Array.
+        let variations = item.variations;
+        if (typeof variations === 'string') {
+            try { variations = JSON.parse(variations); } catch { variations = []; }
+        }
+        const hasVariations = Array.isArray(variations) && variations.length > 0;
 
         if (hasVariations) {
-            setProductToVariate(item);
+            // Normalise the item so ProductVariationModal always receives an Array
+            setProductToVariate({ ...item, variations });
             setShowVariationModal(true);
             return;
         }
