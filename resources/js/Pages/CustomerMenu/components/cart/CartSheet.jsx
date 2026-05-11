@@ -56,6 +56,15 @@ export default function CartSheet({
                                         <div>
                                             <h3 className="text-sm font-semibold text-white sm:text-base">{item.name}</h3>
                                             <p className="mt-1 text-xs text-text-muted">{formatCurrency(item.price)}</p>
+                                            
+                                            {item.observation && (
+                                                <div className="mt-2 flex flex-wrap gap-1">
+                                                    <span className="bg-amber-500/10 text-amber-400 text-[10px] font-black uppercase px-2 py-0.5 rounded border border-amber-500/20 flex items-center gap-1">
+                                                        <span className="material-symbols-outlined text-[12px]">info</span>
+                                                        {item.observation}
+                                                    </span>
+                                                </div>
+                                            )}
                                         </div>
                                         <button
                                             type="button"

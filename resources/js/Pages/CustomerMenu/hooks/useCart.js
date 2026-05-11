@@ -44,9 +44,9 @@ export function useCart() {
             const productId = product.id;
             const isPizza = product.type === 'pizza';
 
-            // Pizzas with the same customPizzaId can stack; regular products merge by id
+            // Regular products merge by id AND observation (for variations)
             const existingItem = !isPizza
-                ? currentItems.find((item) => item.id === productId)
+                ? currentItems.find((item) => item.id === productId && item.observation === product.observation)
                 : null;
 
             if (existingItem) {
@@ -65,6 +65,7 @@ export function useCart() {
                     name: product.name,
                     price: toNumber(product.price),
                     imageUrl: product.image_url ?? product.imageUrl ?? null,
+                    observation: product.observation ?? null,
                     quantity: parsedQuantity,
                 },
             ];

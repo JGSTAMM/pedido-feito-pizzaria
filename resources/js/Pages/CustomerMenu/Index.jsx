@@ -4,6 +4,7 @@ import useI18n from '@/hooks/useI18n';
 import { useCart } from './hooks/useCart';
 import { useDigitalMenuQuery } from './hooks/useDigitalMenuQuery';
 import { useStoreHours } from './hooks/useStoreHours';
+import ProductVariationModal from '@/Pages/POS/ProductVariationModal';
 import { buildCatalogCategories, buildFeaturedProducts, injectBaseIngredients } from './utils/menuHelpers';
 
 // Layout Components
@@ -33,6 +34,7 @@ export default function CustomerMenu() {
     const [activeCategory, setActiveCategory] = useState('all');
     const [isPizzaBuilderOpen, setIsPizzaBuilderOpen] = useState(false);
     const [flavorDetailProduct, setFlavorDetailProduct] = useState(null);
+    const [variationProduct, setVariationProduct] = useState(null);
     const [preSelectedPizzaInstance, setPreSelectedPizzaInstance] = useState(null);
     const [scrolled, setScrolled] = useState(false);
 
@@ -76,9 +78,20 @@ export default function CustomerMenu() {
                 id: item.id || `historical-${Math.random()}`,
                 name: translateDynamic(item.name),
                 price: parseFloat(item.price || 0),
-                type: 'product'
+                type: 'product',
+                observation: item.notes
             }, item.quantity);
         });
+    };
+
+    const handleVariationConfirm = (product, variation) => {
+        addItem({
+            ...product,
+            name: `${product.name} (${variation.name})`,
+            price: variation.price,
+            observation: variation.name,
+        }, 1);
+        setVariationProduct(null);
     };
 
     return (
@@ -121,7 +134,13 @@ export default function CustomerMenu() {
                     filteredCategories={filteredCategories}
                     t={t}
                     formatCurrency={formatCurrency}
-                    onAddItem={addItem}
+                    onAddItem={(p) => {
+                        if (p.variations && Array.isArray(p.variations) && p.variations.length > 0) {
+                            setVariationProduct(p);
+                        } else {
+                            addItem(p, 1);
+                        }
+                    }}
                     onOpenFlavorDetail={setFlavorDetailProduct}
                     onOpenPizzaBuilder={() => setIsPizzaBuilderOpen(true)}
                 />
@@ -169,6 +188,13 @@ export default function CustomerMenu() {
                     setFlavorDetailProduct(null);
                     setIsPizzaBuilderOpen(true);
                 }}
+            />
+
+            <ProductVariationModal
+                isOpen={!!variationProduct}
+                onClose={() => setVariationProduct(null)}
+                product={variationProduct}
+                onConfirm={handleVariationConfirm}
             />
 
             <BottomNav onOpenProfile={() => {

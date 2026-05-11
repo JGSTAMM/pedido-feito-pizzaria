@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { router } from '@inertiajs/react';
 import { norm } from '@/utils/normalize';
 import PizzaBuilderModal from '@/Pages/POS/PizzaBuilderModal';
-import ProductVariationModal from '@/Pages/Pos/ProductVariationModal';
+import ProductVariationModal from '@/Pages/POS/ProductVariationModal';
 import ReceiptPrint from '@/Components/ReceiptPrint';
 import useI18n from '@/hooks/useI18n';
 
@@ -190,15 +190,18 @@ export default function TableOrderDrawer({
 
     // Smart Shortcut: If it's a pizza flavor, open the builder. Otherwise open quick observation modal.
     const handleQuickItemClick = (item) => {
-        const isPizza = pizzaFlavors.some(f => f.id === item.id && f.name === item.name) || item.category === 'Pizzas';
+        const isPizza = item.type === 'pizza_flavor' || item.category === 'Pizzas';
         if (isPizza) {
             setInitialPizzaFlavor(item);
             setShowPizzaBuilder(true);
             return;
         }
 
-        // Check if the product has variations
-        if (item.variations && Array.isArray(item.variations) && item.variations.length > 0) {
+        // Check if the product has variations (robust check for JSON or Array)
+        const hasVariations = item.variations && 
+            (Array.isArray(item.variations) ? item.variations.length > 0 : false);
+
+        if (hasVariations) {
             setProductToVariate(item);
             setShowVariationModal(true);
             return;

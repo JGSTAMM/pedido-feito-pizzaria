@@ -103,9 +103,17 @@ export default function Checkout() {
                     <div className="space-y-4 mb-6 pt-2">
                         {items.map((item) => (
                             <div key={item.id} className="flex justify-between items-start gap-3 text-sm">
-                                <span className="text-white font-semibold leading-tight">
-                                    <span className="text-primary mr-1">{item.quantity}x</span> {item.name}
-                                </span>
+                                <div className="flex flex-col gap-1 flex-1">
+                                    <span className="text-white font-semibold leading-tight">
+                                        <span className="text-primary mr-1">{item.quantity}x</span> {item.name}
+                                    </span>
+                                    {item.observation && (
+                                        <div className="mt-1 flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/50 text-[10px] text-amber-500 font-black uppercase tracking-wider w-fit">
+                                            <span className="material-symbols-outlined text-[12px]">info</span>
+                                            {item.observation}
+                                        </div>
+                                    )}
+                                </div>
                                 <span className="text-text-muted whitespace-nowrap font-bold">
                                     {formatCurrency(item.price * item.quantity)}
                                 </span>

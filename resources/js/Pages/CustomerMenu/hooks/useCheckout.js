@@ -39,7 +39,7 @@ function mapCartItemsToPayload(items) {
             pizza_size_id: isPizza ? (item.pizza_size_id ?? item.pizzaSizeId ?? null) : undefined,
             flavor_ids: isPizza ? flavorIds : undefined,
             quantity: item.quantity,
-            notes: item.notes || undefined,
+            notes: (item.notes || item.observation || '').trim() || undefined,
             description: item.description || undefined,
         };
     });
