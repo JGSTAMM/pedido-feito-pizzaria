@@ -31,7 +31,7 @@ function StoryProgressBars({ stories, activeIndex, progress }) {
  * - `isAmbient=true`  → blurred background fill, desktop-only (YouTube Shorts edge effect).
  * - `isAmbient=false` → primary media: `object-cover` on mobile, `object-contain` on desktop.
  */
-function StoryMedia({ url, type, isAmbient, onMediaLoad, index, isActive = true }) {
+function StoryMedia({ url, type, isAmbient, onMediaLoad, onTimeUpdate, onVideoEnded, index, isActive = true }) {
     let className = isAmbient
         ? "absolute inset-0 w-full h-full object-cover blur-[120px] opacity-40 scale-125 z-0 hidden md:block"
         : "absolute inset-0 w-full h-full object-cover md:object-contain";
@@ -68,16 +68,30 @@ function StoryMedia({ url, type, isAmbient, onMediaLoad, index, isActive = true 
         }
     }, [type, onMediaLoad, index]);
 
+    const handleTimeUpdate = (e) => {
+        if (!isAmbient && isActive && onTimeUpdate) {
+            onTimeUpdate(e.target.currentTime, e.target.duration);
+        }
+    };
+
+    const handleEnded = () => {
+        if (!isAmbient && isActive && onVideoEnded) {
+            onVideoEnded();
+        }
+    };
+
     if (type === 'video') {
         return (
             <video
                 ref={handleVideoRef}
                 src={url}
-                loop
+                loop={isAmbient}
                 muted
                 playsInline
                 className={className}
                 onCanPlay={() => onMediaLoad && onMediaLoad(index)}
+                onTimeUpdate={handleTimeUpdate}
+                onEnded={handleEnded}
             />
         );
     }
@@ -105,6 +119,7 @@ export default function MenuHeader({ storeSetting, t, todayHours, dynamicHoursSu
     const hasStories = stories.length > 0;
 
     const isMediaLoaded = loadedStatus[activeIndex] || false;
+    const activeStory = stories[activeIndex];
 
     const handleMediaLoad = useCallback((index) => {
         setLoadedStatus(prev => {
@@ -113,17 +128,37 @@ export default function MenuHeader({ storeSetting, t, todayHours, dynamicHoursSu
         });
     }, []);
 
-    useEffect(() => {
-        if (!hasStories || !isMediaLoaded) return;
+    const handleVideoTimeUpdate = useCallback((currentTime, duration) => {
+        if (duration) {
+            setProgress((currentTime / duration) * 100);
+        }
+    }, []);
 
+    const handleVideoEnded = useCallback(() => {
+        if (stories.length > 1) {
+            setActiveIndex(i => (i + 1) % stories.length);
+        } else {
+            setProgress(100);
+        }
+    }, [stories.length]);
+
+    // Reset progress when active index changes
+    useEffect(() => {
+        setProgress(0);
+    }, [activeIndex]);
+
+    // Timer only for Images (15 seconds default)
+    useEffect(() => {
+        if (!hasStories || !isMediaLoaded || activeStory?.type !== 'image') return;
+
+        const IMAGE_DURATION = 15000;
         const tick = 100; // ms between updates
-        const increment = (tick / STORY_DURATION) * 100;
+        const increment = (tick / IMAGE_DURATION) * 100;
 
         const interval = setInterval(() => {
             setProgress(prev => {
                 const next = prev + increment;
                 if (next >= 100) {
-                    // Single story: fill bar and hold. Multiple: cycle.
                     if (stories.length > 1) {
                         setActiveIndex(i => (i + 1) % stories.length);
                         return 0;
@@ -135,9 +170,7 @@ export default function MenuHeader({ storeSetting, t, todayHours, dynamicHoursSu
         }, tick);
 
         return () => clearInterval(interval);
-    }, [hasStories, stories.length, isMediaLoaded]);
-
-    const activeStory = stories[activeIndex];
+    }, [hasStories, stories.length, isMediaLoaded, activeStory?.type]);
 
     return (
         <>
@@ -160,6 +193,8 @@ export default function MenuHeader({ storeSetting, t, todayHours, dynamicHoursSu
                                 isActive={idx === activeIndex}
                                 index={idx}
                                 onMediaLoad={handleMediaLoad} 
+                                onTimeUpdate={handleVideoTimeUpdate}
+                                onVideoEnded={handleVideoEnded}
                             />
                         ))}
 
