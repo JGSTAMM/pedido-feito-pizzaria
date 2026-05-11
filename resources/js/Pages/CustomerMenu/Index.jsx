@@ -124,7 +124,17 @@ export default function CustomerMenu() {
                 featuredProducts={featuredProducts}
                 t={t}
                 formatCurrency={formatCurrency}
-                onAddItem={addItem}
+                onAddItem={(p) => {
+                    let variations = p.variations;
+                    if (typeof variations === 'string') {
+                        try { variations = JSON.parse(variations); } catch { variations = []; }
+                    }
+                    if (Array.isArray(variations) && variations.length > 0) {
+                        setVariationProduct({ ...p, variations });
+                    } else {
+                        addItem(p, 1);
+                    }
+                }}
                 onRepeatLastOrder={repeatLastOrder}
                 activeCategory={activeCategory}
             />

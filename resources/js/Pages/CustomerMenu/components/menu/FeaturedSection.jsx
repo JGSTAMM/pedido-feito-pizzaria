@@ -40,7 +40,7 @@ export default function FeaturedSection({ lastOrder, featuredProducts, t, format
                         {featuredProducts.map(product => (
                             <button
                                 key={product.id}
-                                onClick={() => onAddItem(product, 1)}
+                                onClick={() => onAddItem(product)}
                                 className="w-40 flex-shrink-0 text-left group"
                             >
                                 <div className="w-full aspect-square bg-white/5 rounded-[1.5rem] border border-white/5 mb-3 overflow-hidden relative">
