@@ -14,7 +14,12 @@ export default function ProductVariationModal({ isOpen, onClose, onConfirm, prod
 
     if (!isOpen || !product) return null;
 
-    const variations = Array.isArray(product.variations) ? product.variations : [];
+    // Safety: backend (Inertia/Laravel) may serialize variations as a JSON string.
+    let variations = product.variations;
+    if (typeof variations === 'string') {
+        try { variations = JSON.parse(variations); } catch { variations = []; }
+    }
+    if (!Array.isArray(variations)) variations = [];
 
     const handleConfirm = () => {
         if (!selectedVariation) return;
