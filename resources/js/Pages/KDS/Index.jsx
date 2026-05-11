@@ -209,19 +209,33 @@ function OrderDetailModal({ order, isOpen, onClose }) {
                                         </div>
                                         {item.notes && (
                                             <div className="ml-8 mt-1 flex flex-wrap gap-1">
-                                                {item.notes.split('|').map((note, idx) => {
-                                                    const trimmedNote = note.trim();
-                                                    if (!trimmedNote) return null;
+                                                {(() => {
+                                                    const rawNotes = item.notes.split('|').map(n => n.trim()).filter(Boolean);
+                                                    const uniqueNotes = Array.from(new Set(rawNotes));
                                                     
-                                                    // Deduplicate: if the note (variation) is already in the name, don't show the pill
-                                                    if (item.name.toLowerCase().includes(trimmedNote.toLowerCase())) return null;
+                                                    return uniqueNotes.filter((note, idx) => {
+                                                        const lowerNote = note.toLowerCase();
+                                                        const lowerName = item.name.toLowerCase();
+                                                        
+                                                        // 1. Hide if the item name already contains the note (most common for variations)
+                                                        if (lowerName.includes(lowerNote)) return false;
+                                                        
+                                                        // 2. Hide if the note is exactly the item name
+                                                        if (lowerNote === lowerName) return false;
 
-                                                    return (
+                                                        // 3. Hide if this note is a substring of another note in the same list
+                                                        // (Aggressive deduplication between pills)
+                                                        const isRedundant = uniqueNotes.some((other, oIdx) => 
+                                                            oIdx !== idx && other.toLowerCase().includes(lowerNote)
+                                                        );
+
+                                                        return !isRedundant;
+                                                    }).map((note, idx) => (
                                                         <span key={idx} className="bg-amber-500/10 text-amber-400 text-[10px] font-black uppercase px-1.5 py-0.5 rounded border border-amber-500/20">
-                                                            {trimmedNote}
+                                                            {note}
                                                         </span>
-                                                    );
-                                                })}
+                                                    ));
+                                                })()}
                                             </div>
                                         )}
                                     </div>
