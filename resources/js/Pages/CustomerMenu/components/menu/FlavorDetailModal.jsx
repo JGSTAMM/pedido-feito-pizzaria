@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import useI18n from '@/hooks/useI18n';
 import { luccheseMenuTheme } from '../../theme/luccheseMenuTheme';
-
+import AppImage from '@/Components/AppImage';
 function parseIngredients(rawIngredients) {
     if (Array.isArray(rawIngredients)) return rawIngredients.map(v => String(v).trim()).filter(Boolean);
     if (typeof rawIngredients !== 'string') return [];
@@ -74,7 +74,7 @@ export default function FlavorDetailModal({ isOpen, onClose, product, onAddFlavo
                 {/* Hero Image */}
                 <div className="relative aspect-[16/10] w-full overflow-hidden bg-black/20">
                     {imageUrl ? (
-                        <img src={imageUrl.startsWith('http') ? imageUrl : `/storage/${imageUrl}`} alt={translateDynamic(product.name)} className="w-full h-full object-cover" />
+                        <AppImage src={imageUrl} alt={translateDynamic(product.name)} className="w-full h-full object-cover" />
                     ) : (
                         <div className="w-full h-full flex items-center justify-center bg-[radial-gradient(circle_at_top,rgba(139,92,246,0.2),rgba(10,10,11,0.6)_60%)]">
                             <span className="material-symbols-outlined text-6xl text-primary/50">local_pizza</span>

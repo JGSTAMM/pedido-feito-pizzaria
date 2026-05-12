@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Link } from '@inertiajs/react';
 import LanguageSwitcher from '../shared/LanguageSwitcher';
+import { resolveMediaPath } from '@/utils/media';
+import AppImage from '@/Components/AppImage';
 
 /** Duration (ms) each story is displayed before auto-advancing. */
 const STORY_DURATION = 8000;
@@ -80,11 +82,13 @@ function StoryMedia({ url, type, isAmbient, onMediaLoad, onTimeUpdate, onVideoEn
         }
     };
 
+    const resolvedUrl = resolveMediaPath(url);
+
     if (type === 'video') {
         return (
             <video
                 ref={handleVideoRef}
-                src={url}
+                src={resolvedUrl}
                 loop={isAmbient}
                 muted
                 playsInline
@@ -97,7 +101,7 @@ function StoryMedia({ url, type, isAmbient, onMediaLoad, onTimeUpdate, onVideoEn
     }
 
     return (
-        <img 
+        <AppImage 
             src={url} 
             alt="Story" 
             className={className} 
@@ -218,7 +222,7 @@ export default function MenuHeader({ storeSetting, t, todayHours, dynamicHoursSu
                     {/* Logo Section */}
                     <div className="relative rounded-[1.2rem] border-2 border-white/10 bg-white shadow-2xl overflow-hidden shrink-0 w-24 h-24">
                         {storeSetting?.logo_url ? (
-                            <img src={storeSetting.logo_url} alt="Logo" className="w-full h-full object-cover" />
+                            <AppImage src={storeSetting.logo_url} alt="Logo" className="w-full h-full object-cover" />
                         ) : (
                             <div className="w-full h-full bg-primary/20 flex items-center justify-center">
                                 <span className="material-symbols-outlined text-primary text-4xl">restaurant</span>
@@ -278,7 +282,7 @@ export default function MenuHeader({ storeSetting, t, todayHours, dynamicHoursSu
                 <div className="flex items-center w-full">
                     <div className="relative rounded-xl border border-white/10 bg-white overflow-hidden shrink-0 w-10 h-10">
                         {storeSetting?.logo_url ? (
-                            <img src={storeSetting.logo_url} alt="Logo" className="w-full h-full object-cover" />
+                            <AppImage src={storeSetting.logo_url} alt="Logo" className="w-full h-full object-cover" />
                         ) : (
                             <div className="w-full h-full bg-primary/20 flex items-center justify-center">
                                 <span className="material-symbols-outlined text-primary text-lg">restaurant</span>

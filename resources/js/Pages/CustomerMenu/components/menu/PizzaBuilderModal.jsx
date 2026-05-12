@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import useI18n from '@/hooks/useI18n';
+import AppImage from '@/Components/AppImage';
 import { luccheseMenuTheme } from '../../theme/luccheseMenuTheme';
 import { useCart } from '../../hooks/useCart';
 import { norm } from '@/utils/normalize';
@@ -283,7 +284,7 @@ export default function PizzaBuilderModal({
                                     onClick={() => flavor && setActiveInstanceIndex(index)}
                                 >
                                     {flavor ? (
-                                        <img src={flavorImg} alt={translateDynamic(flavor.name)} className="w-full h-full object-cover" />
+                                        <AppImage src={flavorImg} alt={translateDynamic(flavor.name)} className="w-full h-full object-cover" />
                                     ) : (
                                         <div className="w-full h-full bg-black/60 flex items-center justify-center">
                                             <span
