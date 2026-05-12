@@ -269,7 +269,7 @@ export default function PizzaBuilderModal({
 
                             const instance = selectedFlavorInstances[index];
                             const flavor = instance ? flavorProductsMap.get(String(instance.flavorId)) : null;
-                            const flavorImg = flavor?.image_url || 'https://images.unsplash.com/photo-1604381536136-57f99201f92e?q=80&w=800&auto=format&fit=crop';
+                            const flavorImg = flavor?.image_url ? (flavor.image_url.startsWith('http') ? flavor.image_url : `/storage/${flavor.image_url}`) : 'https://images.unsplash.com/photo-1604381536136-57f99201f92e?q=80&w=800&auto=format&fit=crop';
 
                             return (
                                 <div

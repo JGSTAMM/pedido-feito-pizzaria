@@ -38,6 +38,8 @@ export default function Index({ flavors = [] }) {
         is_active_delivery: true,
         is_active_pos: true,
         ingredients_json: [],
+        image: null,
+        clear_image: false,
     });
 
     const formatBRL = (v) => `R$ ${Number(v).toFixed(2).replace('.', ',')}`;
@@ -61,6 +63,8 @@ export default function Index({ flavors = [] }) {
             is_active_delivery: Boolean(flavor.is_active_delivery ?? true),
             is_active_pos: Boolean(flavor.is_active_pos ?? true),
             ingredients_json: Array.isArray(flavor.ingredients_json) ? flavor.ingredients_json : [],
+            image: null,
+            clear_image: false,
         });
         setEditingId(flavor.id);
         setIsFormOpen(true);
@@ -99,19 +103,34 @@ export default function Index({ flavors = [] }) {
     const submit = (e) => {
         e.preventDefault();
         if (editingId) {
-            put(`/flavors/${editingId}`, {
+            // Inertia doesn't support multipart files on PUT requests directly.
+            // We use router.post with a _method: 'PUT' field to spoof the request.
+            router.post(`/flavors/${editingId}`, {
+                _method: 'PUT',
+                name: data.name,
+                base_price: data.base_price,
+                is_active_delivery: data.is_active_delivery,
+                is_active_pos: data.is_active_pos,
+                ingredients_json: data.ingredients_json,
+                image: data.image,
+                clear_image: data.clear_image,
+            }, {
+                forceFormData: true,
                 onSuccess: () => setIsFormOpen(false),
             });
         } else {
             post('/flavors', {
+                forceFormData: true,
                 onSuccess: () => setIsFormOpen(false),
             });
         }
     };
 
+    const currentFlavor = flavors.find(f => f.id === editingId);
+
     return (
         <AppLayout>
-            <div className="flex-1 overflow-y-auto w-full max-w-5xl mx-auto">
+            <div className="flex-1 overflow-y-auto w-full max-w-5xl mx-auto pb-20">
                 {/* Header */}
                 <header className="flex items-center justify-between px-10 py-6 sticky top-0 bg-background-dark/80 backdrop-blur-md z-10 border-b border-border-subtle">
                     <div className="flex items-center gap-4">
@@ -145,7 +164,8 @@ export default function Index({ flavors = [] }) {
                     {/* Table */}
                     <div className="bg-surface rounded-2xl border border-border-subtle overflow-hidden relative" style={{ background: 'rgba(255,255,255,0.03)' }}>
                         <div className="absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent"></div>
-                        <div className="grid grid-cols-[1fr_120px_100px_80px] gap-4 px-6 py-4 border-b border-border-subtle bg-black/20 text-xs font-bold text-text-muted uppercase tracking-wider">
+                        <div className="grid grid-cols-[60px_1fr_120px_100px_80px] gap-4 px-6 py-4 border-b border-border-subtle bg-black/20 text-xs font-bold text-text-muted uppercase tracking-wider">
+                            <span>Imagem</span>
                             <span>{t('flavors.table.name')}</span>
                             <span>{t('flavors.table.basePrice')}</span>
                             <span>{t('flavors.table.status')}</span>
@@ -155,7 +175,14 @@ export default function Index({ flavors = [] }) {
                             <div className="p-12 text-center text-text-muted">{t('flavors.empty')}</div>
                         ) : (
                             filtered.map((flavor, idx) => (
-                                <div key={flavor.id} className={`grid grid-cols-[1fr_120px_100px_80px] gap-4 px-6 py-4 items-center hover:bg-surface-hover transition-colors ${idx !== filtered.length - 1 ? 'border-b border-border-subtle' : ''}`}>
+                                <div key={flavor.id} className={`grid grid-cols-[60px_1fr_120px_100px_80px] gap-4 px-6 py-4 items-center hover:bg-surface-hover transition-colors ${idx !== filtered.length - 1 ? 'border-b border-border-subtle' : ''}`}>
+                                    <div className="w-10 h-10 rounded-lg bg-surface flex items-center justify-center overflow-hidden border border-border-subtle">
+                                        {flavor.image_url ? (
+                                            <img src={flavor.image_url} alt={flavor.name} className="w-full h-full object-cover" />
+                                        ) : (
+                                            <span className="material-symbols-outlined text-text-muted text-xl">image</span>
+                                        )}
+                                    </div>
                                     <div className="font-semibold text-white truncate text-base">{flavor.name}</div>
                                     <div className="font-mono font-bold text-emerald-400">{formatBRL(flavor.base_price)}</div>
                                     <div className="flex items-center gap-3">
@@ -211,6 +238,61 @@ export default function Index({ flavors = [] }) {
                             required
                         />
                         {errors.base_price && <div className="text-red-400 text-xs mt-1">{errors.base_price}</div>}
+                    </div>
+
+                    {/* Image Upload Box (Dark Glassmorphism) */}
+                    <div className="bg-[#111115]/50 backdrop-blur-md border border-border-subtle p-4 rounded-2xl flex flex-col gap-3">
+                        <label className="block text-xs font-bold text-text-muted uppercase tracking-wider">Imagem do Sabor</label>
+                        
+                        <div className="flex items-center gap-4">
+                            {/* Preview/Thumbnail */}
+                            <div className="size-16 rounded-xl bg-surface border border-border-subtle overflow-hidden flex items-center justify-center shrink-0">
+                                {data.image ? (
+                                    <img src={URL.createObjectURL(data.image)} alt="Preview" className="w-full h-full object-cover" />
+                                ) : (currentFlavor?.image_url && !data.clear_image) ? (
+                                    <img src={currentFlavor.image_url} alt="Preview" className="w-full h-full object-cover" />
+                                ) : (
+                                    <span className="material-symbols-outlined text-text-muted text-2xl">image</span>
+                                )}
+                            </div>
+
+                            {/* Actions */}
+                            <div className="flex-1 flex flex-col gap-2">
+                                <div className="flex gap-2">
+                                    <label className="cursor-pointer px-4 py-2 bg-surface hover:bg-surface-hover border border-border-subtle text-white text-xs font-bold rounded-xl transition-all flex items-center gap-1.5">
+                                        <span className="material-symbols-outlined text-base">upload</span>
+                                        <span>Selecionar</span>
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={e => {
+                                                const file = e.target.files[0];
+                                                if (file) {
+                                                    setData(prev => ({ ...prev, image: file, clear_image: false }));
+                                                }
+                                            }}
+                                            className="hidden"
+                                        />
+                                    </label>
+                                    {((currentFlavor?.image_url && !data.clear_image) || data.image) && (
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setData(prev => ({ ...prev, image: null, clear_image: true }));
+                                            }}
+                                            className="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 text-xs font-bold rounded-xl transition-all flex items-center gap-1.5"
+                                        >
+                                            <span className="material-symbols-outlined text-base">delete</span>
+                                            <span>Remover</span>
+                                        </button>
+                                    )}
+                                </div>
+                                <p className="text-text-muted text-[10px] leading-relaxed">
+                                    Adicione imagem para o produto/sabor. Formato sugerido: WebP ou JPG quadrado para melhor performance e qualidade.
+                                </p>
+                            </div>
+                        </div>
+                        {errors.image && <div className="text-red-400 text-xs mt-1">{errors.image}</div>}
                     </div>
 
                     {/* Ingredients Section */}

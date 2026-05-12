@@ -39,13 +39,18 @@ export default function ProductVariationModal({ isOpen, onClose, onConfirm, prod
                 
                 {/* Header */}
                 <div className="p-6 sm:p-8 border-b border-white/5 flex items-start justify-between bg-white/[0.02]">
-                    <div className="flex-1 min-w-0 pr-4">
-                        <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-1">
-                            {product.category || 'PRODUTO'}
-                        </p>
-                        <h3 className="text-2xl font-black text-white tracking-tight leading-tight">
-                            {product.name}
-                        </h3>
+                    <div className="flex items-center gap-4 flex-1 min-w-0 pr-4">
+                        {product.image_url && (
+                            <img src={product.image_url.startsWith('http') ? product.image_url : `/storage/${product.image_url}`} alt={product.name} className="w-16 h-16 rounded-xl object-cover shrink-0 border border-white/10" />
+                        )}
+                        <div>
+                            <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mb-1">
+                                {product.category || 'PRODUTO'}
+                            </p>
+                            <h3 className="text-2xl font-black text-white tracking-tight leading-tight">
+                                {product.name}
+                            </h3>
+                        </div>
                     </div>
                     <button 
                         onClick={onClose}

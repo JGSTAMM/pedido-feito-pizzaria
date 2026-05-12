@@ -45,7 +45,7 @@ export default function FeaturedSection({ lastOrder, featuredProducts, t, format
                             >
                                 <div className="w-full aspect-square bg-white/5 rounded-[1.5rem] border border-white/5 mb-3 overflow-hidden relative">
                                     {product.image_url ? (
-                                        <img src={product.image_url} alt={product.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                                        <img src={product.image_url.startsWith('http') ? product.image_url : `/storage/${product.image_url}`} alt={product.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
                                     ) : (
                                         <div className="w-full h-full flex items-center justify-center">
                                             <span className="material-symbols-outlined text-4xl text-white/10">restaurant_menu</span>

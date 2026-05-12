@@ -15,7 +15,7 @@ export default function ProductCardPremium({ product, formatCurrency, onAddToCar
             <div className="relative aspect-[16/10] overflow-hidden border-b border-border-subtle bg-black/20">
                 {imageUrl ? (
                     <img
-                        src={imageUrl}
+                        src={imageUrl.startsWith('http') ? imageUrl : `/storage/${imageUrl}`}
                         alt={product?.name || t('digital_menu.catalog.view_details')}
                         className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                         loading="lazy"

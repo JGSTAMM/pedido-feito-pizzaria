@@ -40,6 +40,8 @@ export default function Index({ products = [] }) {
         is_active_delivery: true,
         is_active_pos: true,
         variations: [],
+        image: null,
+        clear_image: false,
     });
 
     const formatBRL = (v) => `R$ ${Number(v).toFixed(2).replace('.', ',')}`;
@@ -66,6 +68,8 @@ export default function Index({ products = [] }) {
             is_active_delivery: Boolean(product.is_active_delivery ?? true),
             is_active_pos: Boolean(product.is_active_pos ?? true),
             variations: Array.isArray(product.variations) ? product.variations : [],
+            image: null,
+            clear_image: false,
         });
         setEditingId(product.id);
         setIsFormOpen(true);
@@ -103,15 +107,32 @@ export default function Index({ products = [] }) {
     const submit = (e) => {
         e.preventDefault();
         if (editingId) {
-            put(`/products/${editingId}`, {
+            // Inertia doesn't support multipart files on PUT requests directly.
+            // We use router.post with a _method: 'PUT' field to spoof the request.
+            router.post(`/products/${editingId}`, {
+                _method: 'PUT',
+                name: data.name,
+                category: data.category,
+                price: data.price,
+                description: data.description,
+                is_active_delivery: data.is_active_delivery,
+                is_active_pos: data.is_active_pos,
+                variations: data.variations,
+                image: data.image,
+                clear_image: data.clear_image,
+            }, {
+                forceFormData: true,
                 onSuccess: () => setIsFormOpen(false),
             });
         } else {
             post('/products', {
+                forceFormData: true,
                 onSuccess: () => setIsFormOpen(false),
             });
         }
     };
+
+    const currentProduct = products.find(p => p.id === editingId);
 
     return (
         <AppLayout>
@@ -165,7 +186,7 @@ export default function Index({ products = [] }) {
                                     <div key={product.id} className={`grid grid-cols-[60px_1fr_150px_120px_120px_80px] gap-4 px-6 py-4 items-center hover:bg-surface-hover transition-colors ${idx !== filtered.length - 1 ? 'border-b border-border-subtle' : ''}`}>
                                         <div className="w-10 h-10 rounded-lg bg-surface flex items-center justify-center overflow-hidden border border-border-subtle">
                                             {product.image_url ? (
-                                                <img src={product.image_url.startsWith('http') ? product.image_url : `/storage/${product.image_url}`} alt={product.name} className="w-full h-full object-cover" />
+                                                <img src={product.image_url.startsWith('http') ? product.image_url : product.image_url} alt={product.name} className="w-full h-full object-cover" />
                                             ) : (
                                                 <span className="material-symbols-outlined text-text-muted text-xl">image</span>
                                             )}
@@ -258,6 +279,61 @@ export default function Index({ products = [] }) {
                             onChange={e => setData('description', e.target.value)}
                             className="w-full bg-surface border border-border-subtle rounded-xl px-4 py-2.5 text-sm text-white focus:border-primary/50 outline-none resize-none h-20"
                         />
+                    </div>
+
+                    {/* Image Upload Box (Dark Glassmorphism) */}
+                    <div className="bg-[#111115]/50 backdrop-blur-md border border-border-subtle p-4 rounded-2xl flex flex-col gap-3">
+                        <label className="block text-xs font-bold text-text-muted uppercase tracking-wider">Imagem do Produto</label>
+                        
+                        <div className="flex items-center gap-4">
+                            {/* Preview/Thumbnail */}
+                            <div className="size-16 rounded-xl bg-surface border border-border-subtle overflow-hidden flex items-center justify-center shrink-0">
+                                {data.image ? (
+                                    <img src={URL.createObjectURL(data.image)} alt="Preview" className="w-full h-full object-cover" />
+                                ) : (currentProduct?.image_url && !data.clear_image) ? (
+                                    <img src={currentProduct.image_url} alt="Preview" className="w-full h-full object-cover" />
+                                ) : (
+                                    <span className="material-symbols-outlined text-text-muted text-2xl">image</span>
+                                )}
+                            </div>
+
+                            {/* Actions */}
+                            <div className="flex-1 flex flex-col gap-2">
+                                <div className="flex gap-2">
+                                    <label className="cursor-pointer px-4 py-2 bg-surface hover:bg-surface-hover border border-border-subtle text-white text-xs font-bold rounded-xl transition-all flex items-center gap-1.5">
+                                        <span className="material-symbols-outlined text-base">upload</span>
+                                        <span>Selecionar</span>
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={e => {
+                                                const file = e.target.files[0];
+                                                if (file) {
+                                                    setData(prev => ({ ...prev, image: file, clear_image: false }));
+                                                }
+                                            }}
+                                            className="hidden"
+                                        />
+                                    </label>
+                                    {((currentProduct?.image_url && !data.clear_image) || data.image) && (
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setData(prev => ({ ...prev, image: null, clear_image: true }));
+                                            }}
+                                            className="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 text-xs font-bold rounded-xl transition-all flex items-center gap-1.5"
+                                        >
+                                            <span className="material-symbols-outlined text-base">delete</span>
+                                            <span>Remover</span>
+                                        </button>
+                                    )}
+                                </div>
+                                <p className="text-text-muted text-[10px] leading-relaxed">
+                                    Adicione imagem para o produto/sabor. Formato sugerido: WebP ou JPG quadrado para melhor performance e qualidade.
+                                </p>
+                            </div>
+                        </div>
+                        {errors.image && <div className="text-red-400 text-xs mt-1">{errors.image}</div>}
                     </div>
 
                     {/* Channel Visibility */}

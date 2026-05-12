@@ -27,7 +27,13 @@ class ProductController extends Controller
             'is_active_delivery' => 'boolean',
             'is_active_pos' => 'boolean',
             'variations' => 'nullable|array',
+            'image' => 'nullable|image|max:5120',
         ]);
+
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')->store('products', 'public');
+            $validated['image'] = $path;
+        }
 
         Product::create($validated);
 
@@ -44,7 +50,21 @@ class ProductController extends Controller
             'is_active_delivery' => 'boolean',
             'is_active_pos' => 'boolean',
             'variations' => 'nullable|array',
+            'image' => 'nullable|image|max:5120',
         ]);
+
+        if ($request->hasFile('image')) {
+            if ($product->image) {
+                \Storage::disk('public')->delete($product->image);
+            }
+            $path = $request->file('image')->store('products', 'public');
+            $validated['image'] = $path;
+        } elseif ($request->boolean('clear_image')) {
+            if ($product->image) {
+                \Storage::disk('public')->delete($product->image);
+            }
+            $validated['image'] = null;
+        }
 
         $product->update($validated);
 

@@ -25,7 +25,13 @@ class FlavorController extends Controller
             'is_active_delivery' => 'boolean',
             'is_active_pos' => 'boolean',
             'ingredients_json' => 'nullable|array',
+            'image' => 'nullable|image|max:5120',
         ]);
+
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')->store('flavors', 'public');
+            $validated['image'] = $path;
+        }
 
         PizzaFlavor::create($validated);
 
@@ -40,7 +46,21 @@ class FlavorController extends Controller
             'is_active_delivery' => 'boolean',
             'is_active_pos' => 'boolean',
             'ingredients_json' => 'nullable|array',
+            'image' => 'nullable|image|max:5120',
         ]);
+
+        if ($request->hasFile('image')) {
+            if ($flavor->image) {
+                \Storage::disk('public')->delete($flavor->image);
+            }
+            $path = $request->file('image')->store('flavors', 'public');
+            $validated['image'] = $path;
+        } elseif ($request->boolean('clear_image')) {
+            if ($flavor->image) {
+                \Storage::disk('public')->delete($flavor->image);
+            }
+            $validated['image'] = null;
+        }
 
         $flavor->update($validated);
 

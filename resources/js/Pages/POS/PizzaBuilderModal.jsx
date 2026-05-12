@@ -335,8 +335,12 @@ export default function PizzaBuilderModal({ isOpen, onClose, onConfirm, pizzaFla
                                                     </div>
                                                 )}
                                             </div>
-                                            <h4 className="text-white font-semibold text-sm truncate pr-14 leading-relaxed mb-0.5">{flavor.name}</h4>
-                                            <p className="text-emerald-400 font-bold text-[13px] mt-1 font-mono">{formatBRL(flavor.price)}</p>
+                                            <div className="flex items-center gap-3">
+                                                <div className="flex-1 min-w-0">
+                                                    <h4 className="text-white font-semibold text-sm truncate pr-14 leading-relaxed mb-0.5">{flavor.name}</h4>
+                                                    <p className="text-emerald-400 font-bold text-[13px] mt-1 font-mono">{formatBRL(flavor.price)}</p>
+                                                </div>
+                                            </div>
                                         </button>
                                     );
                                 })}
@@ -484,8 +488,12 @@ export default function PizzaBuilderModal({ isOpen, onClose, onConfirm, pizzaFla
                 {/* ─── Customization Sub-Modal (Step 2.5) ─── */}
                 {customizingFlavor && (
                     <div className="absolute inset-0 z-50 bg-[#120F1D] flex flex-col animate-slide-in-right">
-                        <div className="w-full h-44 bg-surface-hover flex items-center justify-center relative shrink-0">
-                            <span className="material-symbols-outlined text-4xl text-white/5">image</span>
+                        <div className="w-full h-44 bg-surface-hover flex items-center justify-center relative shrink-0 overflow-hidden">
+                            {customizingFlavor.image_url ? (
+                                <img src={customizingFlavor.image_url.startsWith('http') ? customizingFlavor.image_url : `/storage/${customizingFlavor.image_url}`} alt={customizingFlavor.name} className="w-full h-full object-cover" />
+                            ) : (
+                                <span className="material-symbols-outlined text-4xl text-white/5">image</span>
+                            )}
                             <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-[#120F1D] to-transparent"></div>
                             <button onClick={() => setCustomizingFlavor(null)} className="absolute top-4 right-4 size-9 flex items-center justify-center rounded-full bg-black/40 backdrop-blur-md text-white/80 hover:text-white transition-colors border border-white/10">
                                 <span className="material-symbols-outlined text-[20px]">close</span>
