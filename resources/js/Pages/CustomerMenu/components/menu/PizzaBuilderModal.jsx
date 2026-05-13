@@ -355,7 +355,23 @@ export default function PizzaBuilderModal({
                                 {selectedFlavorInstances.map((inst, idx) => {
                                     const p = flavorProductsMap.get(String(inst.flavorId));
                                     const isActive = activeInstanceIndex === idx;
-                                    const instIngredients = [...new Set(parseIngredients(p?.ingredients || p?.description))];
+                                    const rawIngredientsJson = p?.ingredients_json;
+                                    let structured = [];
+                                    try {
+                                        const parsed = typeof rawIngredientsJson === 'string'
+                                            ? JSON.parse(rawIngredientsJson)
+                                            : (Array.isArray(rawIngredientsJson) ? rawIngredientsJson : []);
+                                        structured = (parsed || [])
+                                            .filter(i => (i?.is_available ?? true) === true)
+                                            .map(i => i?.name)
+                                            .filter(Boolean);
+                                    } catch {
+                                        structured = [];
+                                    }
+
+                                    const instIngredients = (structured.length === 1 && (/,\s*|\s+e\s+/i.test(structured[0])))
+                                        ? parseIngredients(structured[0])
+                                        : (structured.length > 0 ? structured : [...new Set(parseIngredients(p?.ingredients || p?.description))]);
 
                                     return (
                                         <div key={`inst-${idx}`} className={`flex flex-col p-3 rounded-xl border-2 transition-all ${isActive ? 'bg-primary/10 border-primary/40 shadow-lg shadow-primary/5' : 'bg-white/5 border-transparent'}`}>

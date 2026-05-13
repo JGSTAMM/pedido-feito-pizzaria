@@ -27,6 +27,7 @@ class PizzaFlavorResource extends JsonResource
             'name' => $this->name,
             'description' => $this->description,
             'ingredients' => $ingredients,
+            'ingredients_json' => $this->ingredients_json,
             'flavor_category' => $this->flavor_category,
             'base_price' => $this->base_price,
             'image_url' => $this->image_url,

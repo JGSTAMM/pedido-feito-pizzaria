@@ -6,6 +6,8 @@ use App\Models\Product;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
+use Illuminate\Support\Facades\Storage;
+
 class ProductController extends Controller
 {
     public function index()
@@ -55,13 +57,13 @@ class ProductController extends Controller
 
         if ($request->hasFile('image')) {
             if ($product->image) {
-                \Storage::disk('public')->delete($product->image);
+                Storage::disk('public')->delete($product->image);
             }
             $path = $request->file('image')->store('products', 'public');
             $validated['image'] = $path;
         } elseif ($request->boolean('clear_image')) {
             if ($product->image) {
-                \Storage::disk('public')->delete($product->image);
+                Storage::disk('public')->delete($product->image);
             }
             $validated['image'] = null;
         }

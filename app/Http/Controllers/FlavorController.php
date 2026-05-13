@@ -6,6 +6,8 @@ use App\Models\PizzaFlavor;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
+use Illuminate\Support\Facades\Storage;
+
 class FlavorController extends Controller
 {
     public function index()
@@ -51,13 +53,13 @@ class FlavorController extends Controller
 
         if ($request->hasFile('image')) {
             if ($flavor->image) {
-                \Storage::disk('public')->delete($flavor->image);
+                Storage::disk('public')->delete($flavor->image);
             }
             $path = $request->file('image')->store('flavors', 'public');
             $validated['image'] = $path;
         } elseif ($request->boolean('clear_image')) {
             if ($flavor->image) {
-                \Storage::disk('public')->delete($flavor->image);
+                Storage::disk('public')->delete($flavor->image);
             }
             $validated['image'] = null;
         }

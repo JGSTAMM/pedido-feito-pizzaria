@@ -15,6 +15,27 @@ export default function FlavorDetailModal({ isOpen, onClose, product, onAddFlavo
 
     const ingredientsList = useMemo(() => {
         if (!product) return [];
+        const rawIngredientsJson = product.ingredients_json;
+        let structured = [];
+        try {
+            const parsed = typeof rawIngredientsJson === 'string'
+                ? JSON.parse(rawIngredientsJson)
+                : (Array.isArray(rawIngredientsJson) ? rawIngredientsJson : []);
+            structured = (parsed || [])
+                .filter(i => (i?.is_available ?? true) === true)
+                .map(i => i?.name)
+                .filter(Boolean);
+        } catch {
+            structured = [];
+        }
+
+        // If we got only 1 item and it looks like a compound string, split it
+        if (structured.length === 1 && (/,\s*|\s+e\s+/i.test(structured[0]))) {
+            return parseIngredients(structured[0]);
+        }
+        
+        if (structured.length > 0) return structured;
+
         return parseIngredients(product.ingredients || product.description);
     }, [product]);
 
@@ -61,7 +82,7 @@ export default function FlavorDetailModal({ isOpen, onClose, product, onAddFlavo
                 aria-modal="true"
                 tabIndex="0"
                 onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
-                className="relative w-full max-w-lg bg-[#111116] sm:rounded-[2rem] rounded-t-[2.5rem] border sm:border-slate-800 border-t-slate-800 shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-full sm:slide-in-from-bottom-8 duration-500"
+                className="relative w-full max-h-[95dvh] sm:max-h-[85vh] max-w-lg bg-[#111116] sm:rounded-[2rem] rounded-t-[2.5rem] border sm:border-slate-800 border-t-slate-800 shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-full sm:slide-in-from-bottom-8 duration-500"
             >
                 {/* Close Button Mobile Header Overlay */}
                 <button
@@ -72,34 +93,36 @@ export default function FlavorDetailModal({ isOpen, onClose, product, onAddFlavo
                 </button>
 
                 {/* Hero Image */}
-                <div className="relative aspect-[16/10] w-full overflow-hidden bg-black/20">
+                <div className="relative h-48 sm:h-56 w-full overflow-hidden bg-black/20 shrink-0">
                     {imageUrl ? (
                         <AppImage src={imageUrl} alt={translateDynamic(product.name)} className="w-full h-full object-cover" />
                     ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-[radial-gradient(circle_at_top,rgba(139,92,246,0.2),rgba(10,10,11,0.6)_60%)]">
+                        <div className="w-full h-full flex items-center justify-center bg-[radial-gradient(circle_at_top,rgba(139,92,246,0.2),rgba(17,17,22,0.8)_60%)]">
                             <span className="material-symbols-outlined text-6xl text-primary/50">local_pizza</span>
                         </div>
                     )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#111116] via-transparent to-transparent"></div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#111116] via-[#111116]/40 to-black/20 z-10"></div>
+                    
+                    {/* Category Badge overlay */}
+                    <div className="absolute bottom-14 left-6 z-20">
+                        <span className="inline-block px-3 py-1 rounded-full bg-primary/20 border border-primary/30 backdrop-blur-md text-primary text-[9px] font-black uppercase tracking-widest leading-none">
+                            {t(`digital_menu.pizza_categories.${(product.flavor_category || 'tradicional').toLowerCase()}`)}
+                        </span>
+                    </div>
+
+                    {/* Title & Price overlay */}
+                    <div className="absolute bottom-4 left-6 right-6 z-20 flex items-end justify-between gap-4">
+                        <h3 className="text-xl sm:text-2xl font-black text-white leading-none uppercase italic tracking-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
+                            {translateDynamic(product.name)}
+                        </h3>
+                        <p className="text-xl sm:text-2xl font-black text-primary drop-shadow-[0_2px_12px_rgba(139,92,246,0.6)] shrink-0">
+                            {formatCurrency(product.price || product.base_price)}
+                        </p>
+                    </div>
                 </div>
 
                 {/* Content */}
-                <div className="px-6 pb-28 pt-2 overflow-y-auto no-scrollbar max-h-[50vh]">
-                    <div className="flex items-start justify-between gap-4 mb-6">
-                        <div className="flex-1">
-                            <h3 className="text-2xl font-black text-white leading-tight mb-1 uppercase italic tracking-tight">
-                                {translateDynamic(product.name)}
-                            </h3>
-                            <span className="inline-block px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-[10px] font-black uppercase tracking-widest leading-none">
-                                {t(`digital_menu.pizza_categories.${(product.flavor_category || 'tradicional').toLowerCase()}`)}
-                            </span>
-                        </div>
-                        <div className="text-right">
-                            <p className="text-2xl font-black text-primary drop-shadow-[0_2px_10px_rgba(139,92,246,0.3)]">
-                                {formatCurrency(product.price || product.base_price)}
-                            </p>
-                        </div>
-                    </div>
+                <div className="flex-1 px-6 py-6 overflow-y-auto no-scrollbar">
 
                     {ingredientsList.length > 0 && (
                         <div className="space-y-4">
@@ -137,7 +160,7 @@ export default function FlavorDetailModal({ isOpen, onClose, product, onAddFlavo
                 </div>
 
                 {/* Footer sticky */}
-                <div className="absolute bottom-0 w-full p-6 bg-black/80 backdrop-blur-xl border-t border-white/10 flex gap-4 z-30">
+                <div className="shrink-0 w-full p-6 bg-[#111116] sm:bg-black/80 sm:backdrop-blur-xl border-t border-white/10 flex gap-4 z-30">
                     <button
                         onClick={() => onAddFlavor(product, removedIngredients)}
                         className="flex-1 py-4 bg-primary hover:bg-primary-hover text-white rounded-2xl flex items-center justify-center gap-3 font-black text-sm tracking-widest uppercase transition-all duration-300 shadow-[0_8px_30px_rgba(139,92,246,0.3)] transform hover:scale-[1.02] active:scale-95"

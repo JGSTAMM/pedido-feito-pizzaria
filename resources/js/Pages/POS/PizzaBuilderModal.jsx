@@ -75,11 +75,40 @@ export default function PizzaBuilderModal({ isOpen, onClose, onConfirm, pizzaFla
 
     const flavorIngredientsToToggle = useMemo(() => {
         if (!customizingFlavor) return [];
+        
+        const rawIngredientsJson = customizingFlavor.ingredients_json;
+        let parsedIngredients = [];
+        
+        try {
+            parsedIngredients = typeof rawIngredientsJson === 'string'
+                ? JSON.parse(rawIngredientsJson)
+                : (Array.isArray(rawIngredientsJson) ? rawIngredientsJson : []);
+        } catch (e) {
+            parsedIngredients = [];
+        }
+
+        // --- LAYER 2: Fallback for bundled strings in JSON ---
+        if (parsedIngredients.length === 1 && typeof parsedIngredients[0] === 'string' && (parsedIngredients[0].includes(',') || parsedIngredients[0].toLowerCase().includes(' e '))) {
+            const splitNames = parsedIngredients[0]
+                .split(/(?:,|\s+e\s+)+/i)
+                .map(s => s.trim())
+                .filter(Boolean);
+            parsedIngredients = splitNames.map(name => ({ name, is_available: true }));
+        }
+
+        if (parsedIngredients && parsedIngredients.length > 0) {
+            // Ensure we handle both object {name, is_available} and raw string array
+            return parsedIngredients
+                .map(i => typeof i === 'string' ? i : (i?.name || ''))
+                .filter(Boolean);
+        }
+
+        // Legacy fallback for the 'ingredients' text field
         const parsed = (customizingFlavor.ingredients || '')
             .replace(/\([^)]*\)/g, '')
-            .split(/,|\se\s/)
+            .split(/(?:,|\s+e\s+|\|)+/i)
             .map(s => s.trim())
-            .filter(s => s.length > 0);
+            .filter(Boolean);
         const unique = [...new Set(parsed)];
         if (customizingFlavor.flavor_category === 'salgada') {
             const base = ['Molho Artesanal', 'Queijo Mussarela'];
@@ -488,19 +517,25 @@ export default function PizzaBuilderModal({ isOpen, onClose, onConfirm, pizzaFla
                 {/* ─── Customization Sub-Modal (Step 2.5) ─── */}
                 {customizingFlavor && (
                     <div className="absolute inset-0 z-50 bg-[#120F1D] flex flex-col animate-slide-in-right">
-                        <div className="w-full h-44 bg-surface-hover flex items-center justify-center relative shrink-0 overflow-hidden">
+                        <div className="w-full h-48 sm:h-56 bg-surface-hover flex items-center justify-center relative shrink-0 overflow-hidden">
                             {customizingFlavor.image_url ? (
                                 <img src={customizingFlavor.image_url.startsWith('http') ? customizingFlavor.image_url : `/storage/${customizingFlavor.image_url}`} alt={customizingFlavor.name} className="w-full h-full object-cover" />
                             ) : (
-                                <span className="material-symbols-outlined text-4xl text-white/5">image</span>
+                                <div className="w-full h-full flex items-center justify-center bg-[radial-gradient(circle_at_top,rgba(139,92,246,0.2),rgba(18,15,29,0.8)_60%)]">
+                                    <span className="material-symbols-outlined text-5xl text-primary/40">local_pizza</span>
+                                </div>
                             )}
-                            <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-[#120F1D] to-transparent"></div>
-                            <button onClick={() => setCustomizingFlavor(null)} className="absolute top-4 right-4 size-9 flex items-center justify-center rounded-full bg-black/40 backdrop-blur-md text-white/80 hover:text-white transition-colors border border-white/10">
+                            <div className="absolute inset-0 bg-gradient-to-t from-[#120F1D] via-[#120F1D]/40 to-black/20 z-10"></div>
+                            <button onClick={() => setCustomizingFlavor(null)} className="absolute top-4 right-4 size-9 flex items-center justify-center rounded-full bg-black/40 backdrop-blur-md text-white/80 hover:text-white transition-colors border border-white/10 z-20">
                                 <span className="material-symbols-outlined text-[20px]">close</span>
                             </button>
+                            <div className="absolute bottom-0 left-0 w-full p-5 z-20">
+                                <h3 className="text-xl font-black text-white leading-tight uppercase tracking-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
+                                    {customizingFlavor.name}
+                                </h3>
+                            </div>
                         </div>
                         <div className="p-5 flex-1 overflow-y-auto custom-scrollbar">
-                            <h3 className="text-xl font-bold text-white mb-5 leading-tight">{customizingFlavor.name}</h3>
                             {flavorIngredientsToToggle.length > 0 ? (
                                 <div>
                                     <p className="text-[11px] font-bold text-text-muted uppercase tracking-wider mb-4 border-b border-border-subtle pb-2">
