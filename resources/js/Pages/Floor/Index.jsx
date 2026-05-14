@@ -214,7 +214,9 @@ export default function Index({
                                     <div className="flex justify-between items-start mb-6 pt-2">
                                         <div>
                                             <h3 className="text-2xl font-black text-white mb-1 group-hover:text-primary transition-colors">{table.name}</h3>
-                                            <span className="text-text-muted text-sm">{t('floor.table.seats', { count: table.seats })}</span>
+                                            {(table.capacity || table.seats) && (
+                                                <p className="text-sm text-gray-400">{(table.capacity || table.seats)} Lugares</p>
+                                            )}
                                         </div>
                                         <div className={`px-3 py-1.5 rounded-lg text-xs font-bold border flex items-center gap-1.5 ${table.status === 'occupied' ? 'bg-orange-500/10 text-orange-400 border-orange-500/20' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'}`}>
                                             <span className={`w-1.5 h-1.5 rounded-full ${table.status === 'occupied' ? 'bg-orange-400 animate-pulse' : 'bg-emerald-400'}`}></span>
@@ -288,6 +290,7 @@ export default function Index({
                             className="w-full bg-surface border border-border-subtle rounded-xl px-4 py-2.5 text-sm text-white focus:border-primary/50 outline-none"
                             required
                         />
+                        <p className="text-xs text-text-muted mt-1.5 opacity-70">Ex: Mesa 13, Balcão VIP</p>
                         {errors.name && <div className="text-red-400 text-xs mt-1">{errors.name}</div>}
                     </div>
                     <div>
@@ -300,6 +303,7 @@ export default function Index({
                             className="w-full bg-surface border border-border-subtle rounded-xl px-4 py-2.5 text-sm text-white focus:border-primary/50 outline-none"
                             required
                         />
+                        <p className="text-xs text-text-muted mt-1.5 opacity-70">Ex: 4</p>
                         {errors.capacity && <div className="text-red-400 text-xs mt-1">{errors.capacity}</div>}
                     </div>
 

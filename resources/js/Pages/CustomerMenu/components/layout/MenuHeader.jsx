@@ -179,11 +179,11 @@ export default function MenuHeader({ storeSetting, t, todayHours, dynamicHoursSu
     return (
         <>
             {/* Expanded Header - Scrolls with content */}
-            <header className={`relative bg-[#0D0D12] px-6 pt-12 pb-8 flex flex-col items-center text-center gap-6 overflow-hidden ${hasStories ? 'min-h-[300px]' : ''}`}>
+            <header className={`relative bg-[#0D0D12] px-6 pt-12 pb-8 flex flex-col items-center text-center gap-6 ${hasStories ? 'min-h-[300px]' : ''}`}>
 
                 {/* ── Stories Background ────────────────────────── */}
                 {hasStories && (
-                    <>
+                    <div className="absolute inset-0 overflow-hidden z-0">
                         {/* Ambient Backdrop — blurred fill for desktop vertical video edges */}
                         <StoryMedia key={`ambient-${activeStory.url}`} url={activeStory.url} type={activeStory.type} isAmbient={true} isActive={true} />
 
@@ -214,11 +214,11 @@ export default function MenuHeader({ storeSetting, t, todayHours, dynamicHoursSu
 
                         {/* Story Progress Bars */}
                         <StoryProgressBars stories={stories} activeIndex={activeIndex} progress={progress} />
-                    </>
+                    </div>
                 )}
 
                 {/* ── Header Content ───────────────────────────── */}
-                <div className="flex flex-col items-center gap-6 w-full z-20 relative">
+                <div className="flex flex-col items-center gap-6 w-full z-50 relative">
                     {/* Logo Section */}
                     <div className="relative rounded-[1.2rem] border-2 border-white/10 bg-white shadow-2xl overflow-hidden shrink-0 w-24 h-24">
                         {storeSetting?.logo_url ? (
