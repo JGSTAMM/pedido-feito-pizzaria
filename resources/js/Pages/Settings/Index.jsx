@@ -90,7 +90,7 @@ export default function Index({ settings, printers = [] }) {
                         {activeTab === 'perfil' && <TabPerfil settings={settings} />}
                         {activeTab === 'recibos' && <TabRecibos settings={settings} />}
                         {activeTab === 'impressoras' && <TabImpressoras printers={printers} />}
-                        {activeTab === 'integracoes' && <TabIntegracoes />}
+                        {activeTab === 'integracoes' && <TabIntegracoes settings={settings} />}
                     </div>
                 </div>
             </div>
@@ -753,12 +753,67 @@ function TabImpressoras({ printers }) {
 /* ═══════════════════════════════════════════════════════════════════
    TAB: INTEGRAÇÕES
    ═══════════════════════════════════════════════════════════════════ */
-function TabIntegracoes() {
+function TabIntegracoes({ settings }) {
+    const { data, setData, post, processing } = useForm({
+        ifood_merchant_id: settings.ifood_merchant_id || '',
+        whatsapp_phone_number: settings.whatsapp_phone_number || '',
+        mercadopago_access_token: settings.mercadopago_access_token || '',
+        google_maps_api_key: settings.google_maps_api_key || '',
+    });
+
+    const [showTokens, setShowTokens] = useState({
+        ifood: false,
+        whatsapp: false,
+        mercadopago: false,
+        google_maps: false,
+    });
+
+    const toggleToken = (key) => {
+        setShowTokens(prev => ({ ...prev, [key]: !prev[key] }));
+    };
+
+    const submit = (e) => {
+        e.preventDefault();
+        post('/settings/integrations', { preserveScroll: true });
+    };
+
     const integrations = [
-        { name: 'iFood', desc: 'Receba pedidos do iFood diretamente no PDV.', icon: '🍔', color: 'text-red-400 bg-red-400/10 border-red-400/20' },
-        { name: 'WhatsApp', desc: 'Envie notificações de status do pedido ao cliente.', icon: '💬', color: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20' },
-        { name: 'Mercado Pago', desc: 'Aceite pagamentos via Pix e cartão de crédito.', icon: '💳', color: 'text-blue-400 bg-blue-400/10 border-blue-400/20' },
-        { name: 'Google Maps', desc: 'Calcule taxas de entrega por distância automaticamente.', icon: '📍', color: 'text-amber-400 bg-amber-400/10 border-amber-400/20' },
+        {
+            id: 'ifood',
+            key: 'ifood_merchant_id',
+            name: 'iFood',
+            desc: 'Receba pedidos do iFood diretamente no PDV.',
+            icon: '🍔',
+            label: 'Merchant ID',
+            placeholder: 'Ex: 123e4567-e89b-12d3-a456-426614174000',
+        },
+        {
+            id: 'whatsapp',
+            key: 'whatsapp_phone_number',
+            name: 'WhatsApp',
+            desc: 'Envie notificações de status do pedido ao cliente.',
+            icon: '💬',
+            label: 'Número / Token',
+            placeholder: 'Ex: 5511999999999',
+        },
+        {
+            id: 'mercadopago',
+            key: 'mercadopago_access_token',
+            name: 'Mercado Pago',
+            desc: 'Aceite pagamentos via Pix e cartão de crédito.',
+            icon: '💳',
+            label: 'Access Token',
+            placeholder: 'Ex: APP_USR-123456789...',
+        },
+        {
+            id: 'google_maps',
+            key: 'google_maps_api_key',
+            name: 'Google Maps',
+            desc: 'Calcule taxas de entrega por distância automaticamente.',
+            icon: '📍',
+            label: 'API Key',
+            placeholder: 'Ex: AIzaSyB...',
+        },
     ];
 
     return (
@@ -767,24 +822,59 @@ function TabIntegracoes() {
                 <h3 className="text-lg font-bold text-white mb-1">Integrações</h3>
                 <p className="text-sm text-text-muted">Conecte serviços externos ao seu sistema.</p>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-                {integrations.map(i => (
-                    <div key={i.name} className="relative group p-5 rounded-xl border border-border-subtle bg-background-dark hover:border-border-subtle-hover transition-all">
-                        <div className="flex items-center gap-3 mb-3">
-                            <span className="text-2xl">{i.icon}</span>
-                            <h4 className="text-white font-bold text-sm">{i.name}</h4>
-                        </div>
-                        <p className="text-xs text-text-muted mb-4">{i.desc}</p>
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-surface text-text-muted border border-border-subtle">
-                            <span className="w-1.5 h-1.5 rounded-full bg-text-muted"></span>
-                            Em breve
-                        </span>
-                        <div className="absolute inset-0 rounded-xl bg-background-dark/30 backdrop-blur-[1px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                            <span className="text-sm font-bold text-text-muted">Em breve</span>
-                        </div>
-                    </div>
-                ))}
-            </div>
+            
+            <form onSubmit={submit} className="flex flex-col gap-6">
+                <div className="flex flex-col gap-4">
+                    {integrations.map(i => {
+                        const isConfigured = !!data[i.key];
+                        return (
+                            <div key={i.id} className="p-6 rounded-xl border border-border-subtle bg-background-dark/50">
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-2xl">{i.icon}</span>
+                                        <div>
+                                            <h4 className="text-white font-bold text-sm">{i.name}</h4>
+                                            <p className="text-xs text-text-muted">{i.desc}</p>
+                                        </div>
+                                    </div>
+                                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider ${isConfigured ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-surface text-text-muted border border-border-subtle'}`}>
+                                        <span className={`w-1.5 h-1.5 rounded-full ${isConfigured ? 'bg-emerald-400' : 'bg-text-muted'}`}></span>
+                                        {isConfigured ? 'Configurado' : 'Não configurado'}
+                                    </span>
+                                </div>
+                                
+                                <div>
+                                    <Label>{i.label}</Label>
+                                    <div className="relative">
+                                        <input
+                                            type={showTokens[i.id] ? "text" : "password"}
+                                            value={data[i.key]}
+                                            onChange={e => setData(i.key, e.target.value)}
+                                            placeholder={i.placeholder}
+                                            className="w-full bg-surface border border-border-subtle rounded-xl pl-4 pr-12 py-2.5 text-sm text-white focus:border-primary/50 outline-none"
+                                        />
+                                        <button 
+                                            type="button" 
+                                            onClick={() => toggleToken(i.id)}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-white transition-colors flex items-center justify-center"
+                                        >
+                                            <span className="material-symbols-outlined text-[20px]">
+                                                {showTokens[i.id] ? 'visibility_off' : 'visibility'}
+                                            </span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+                
+                <div className="flex justify-end border-t border-border-subtle pt-6 mt-2">
+                    <button type="submit" disabled={processing} className="px-6 py-2.5 rounded-xl text-sm font-bold bg-primary text-white hover:bg-primary-dark transition-colors disabled:opacity-50">
+                        {processing ? 'Salvando...' : 'Salvar Integrações'}
+                    </button>
+                </div>
+            </form>
         </Card>
     );
 }

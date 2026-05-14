@@ -165,6 +165,45 @@ class SettingsController extends Controller
         return redirect()->back()->with('success', 'Configurações de Recibo atualizadas.');
     }
 
+    // ── Integrations ──
+    public function updateIntegrations(Request $request)
+    {
+        $request->validate([
+            'mercadopago_access_token' => 'nullable|string|max:500',
+            'whatsapp_phone_number' => 'nullable|string|max:500',
+            'google_maps_api_key' => 'nullable|string|max:500',
+            'ifood_merchant_id' => 'nullable|string|max:500',
+        ]);
+
+        StoreSetting::first()->update($request->only(
+            'mercadopago_access_token',
+            'whatsapp_phone_number',
+            'google_maps_api_key',
+            'ifood_merchant_id'
+        ));
+
+        // Update .env for Mercado Pago
+        if ($request->has('mercadopago_access_token')) {
+            $envPath = base_path('.env');
+            if (file_exists($envPath)) {
+                $envContent = file_get_contents($envPath);
+                $oldToken = env('MERCADOPAGO_ACCESS_TOKEN');
+                $newToken = $request->mercadopago_access_token ?? '';
+                
+                // Only write if there's actually an entry or we need to add it
+                if (preg_match('/^MERCADOPAGO_ACCESS_TOKEN=.*$/m', $envContent)) {
+                    $envContent = preg_replace('/^MERCADOPAGO_ACCESS_TOKEN=.*$/m', 'MERCADOPAGO_ACCESS_TOKEN="' . $newToken . '"', $envContent);
+                } else {
+                    $envContent .= "\nMERCADOPAGO_ACCESS_TOKEN=\"" . $newToken . "\"\n";
+                }
+                
+                file_put_contents($envPath, $envContent);
+            }
+        }
+
+        return redirect()->back()->with('success', 'Integrações atualizadas.');
+    }
+
     // ── Printers CRUD ──
     public function storePrinter(Request $request)
     {

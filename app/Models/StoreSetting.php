@@ -28,6 +28,10 @@ class StoreSetting extends Model
         'google_maps_embed_url',
         'payment_methods',
         'custom_info',
+        'mercadopago_access_token',
+        'whatsapp_phone_number',
+        'google_maps_api_key',
+        'ifood_merchant_id',
     ];
 
     protected $casts = [

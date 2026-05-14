@@ -6,9 +6,25 @@ export default function TabRecibos({ settings }) {
     const { data, setData, post, processing, errors } = useForm({
         receipt_header_1: settings?.receipt_header_1 || '',
         receipt_header_2: settings?.receipt_header_2 || '',
+        cnpj: settings?.cnpj || '',
         receipt_footer: settings?.receipt_footer || '',
         receipt_show_cnpj: settings?.receipt_show_cnpj ?? true,
     });
+
+    const maskCNPJ = (value) => {
+        return value
+            .replace(/\D/g, '')
+            .replace(/^(\d{2})(\d)/, '$1.$2')
+            .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
+            .replace(/\.(\d{3})(\d)/, '.$1/$2')
+            .replace(/(\d{4})(\d)/, '$1-$2')
+            .slice(0, 18);
+    };
+
+    const handleCNPJChange = (e) => {
+        const maskedValue = maskCNPJ(e.target.value);
+        setData('cnpj', maskedValue);
+    };
 
     const submit = (e) => {
         e.preventDefault();
@@ -37,6 +53,18 @@ export default function TabRecibos({ settings }) {
                                 <Label>Cabeçalho Linha 2</Label>
                                 <input type="text" value={data.receipt_header_2} onChange={e => setData('receipt_header_2', e.target.value)} placeholder="Ex: Pizzaria Gourmet" className="w-full bg-background border border-border-subtle rounded-xl px-4 py-2.5 text-sm text-white focus:border-primary/50 outline-none" />
                                 {errors.receipt_header_2 && <p className="text-red-400 text-xs mt-1">{errors.receipt_header_2}</p>}
+                            </div>
+
+                            <div>
+                                <Label>CNPJ da Empresa</Label>
+                                <input 
+                                    type="text" 
+                                    value={data.cnpj} 
+                                    onChange={handleCNPJChange} 
+                                    placeholder="00.000.000/0000-00" 
+                                    className="w-full bg-background border border-border-subtle rounded-xl px-4 py-2.5 text-sm text-white focus:border-primary/50 outline-none" 
+                                />
+                                {errors.cnpj && <p className="text-red-400 text-xs mt-1">{errors.cnpj}</p>}
                             </div>
                         </div>
 
@@ -76,7 +104,7 @@ export default function TabRecibos({ settings }) {
                                 <h1 className="text-2xl font-black uppercase text-balance">{data.receipt_header_1 || 'CABEÇALHO 1'}</h1>
                                 <h2 className="text-lg font-bold text-balance mt-1">{data.receipt_header_2 || 'Cabeçalho 2'}</h2>
                                 {data.receipt_show_cnpj && (
-                                    <p className="text-xs mt-2 font-bold">CNPJ: 00.000.000/0001-00</p>
+                                    <p className="text-xs mt-2 font-bold uppercase">CNPJ: {data.cnpj || '00.000.000/0000-00'}</p>
                                 )}
                             </div>
 

@@ -85,6 +85,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/settings/profile', [SettingsController::class, 'updateProfile']);
         Route::post('/settings/branding', [SettingsController::class, 'updateBranding']);
         Route::post('/settings/receipt', [SettingsController::class, 'updateReceipt']);
+        Route::post('/settings/integrations', [SettingsController::class, 'updateIntegrations']);
         Route::post('/settings/printers', [SettingsController::class, 'storePrinter']);
         Route::put('/settings/printers/{printer}', [SettingsController::class, 'updatePrinter']);
         Route::delete('/settings/printers/{printer}', [SettingsController::class, 'destroyPrinter']);
