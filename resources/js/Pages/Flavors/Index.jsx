@@ -3,6 +3,7 @@ import { useForm, router } from '@inertiajs/react';
 import { norm } from '@/utils/normalize';
 import AppLayout from '@/Layouts/AppLayout';
 import useI18n from '@/hooks/useI18n';
+import CustomNumberInput from '@/Components/CustomNumberInput';
 
 function Modal({ isOpen, onClose, title, children }) {
     if (!isOpen) return null;
@@ -229,13 +230,11 @@ export default function Index({ flavors = [] }) {
                     </div>
                     <div>
                         <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-1.5">{t('flavors.form.basePrice')}</label>
-                        <input
-                            type="number"
-                            step="0.01"
+                        <CustomNumberInput 
                             value={data.base_price}
-                            onChange={e => setData('base_price', e.target.value)}
-                            className="w-full bg-surface border border-border-subtle rounded-xl px-4 py-2.5 text-sm text-white focus:border-primary/50 outline-none"
-                            required
+                            onChange={val => setData('base_price', val)}
+                            step={0.01}
+                            min={0}
                         />
                         {errors.base_price && <div className="text-red-400 text-xs mt-1">{errors.base_price}</div>}
                     </div>

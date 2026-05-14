@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useForm, router } from '@inertiajs/react';
 import { norm } from '@/utils/normalize';
 import AppLayout from '@/Layouts/AppLayout';
+import CustomNumberInput from '@/Components/CustomNumberInput';
 
 function Modal({ isOpen, onClose, title, children }) {
     if (!isOpen) return null;
@@ -173,25 +174,19 @@ export default function Index({ sizes = [] }) {
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-1.5">Fatias</label>
-                            <input
-                                type="number"
-                                min="1"
+                            <CustomNumberInput 
                                 value={data.slices}
-                                onChange={e => setData('slices', e.target.value)}
-                                className="w-full bg-surface border border-border-subtle rounded-xl px-4 py-2.5 text-sm text-white focus:border-primary/50 outline-none"
-                                required
+                                onChange={val => setData('slices', val)}
+                                min={1}
                             />
                             {errors.slices && <div className="text-red-400 text-xs mt-1">{errors.slices}</div>}
                         </div>
                         <div>
                             <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-1.5">Máx. Sabores</label>
-                            <input
-                                type="number"
-                                min="1"
+                            <CustomNumberInput 
                                 value={data.max_flavors}
-                                onChange={e => setData('max_flavors', e.target.value)}
-                                className="w-full bg-surface border border-border-subtle rounded-xl px-4 py-2.5 text-sm text-white focus:border-primary/50 outline-none"
-                                required
+                                onChange={val => setData('max_flavors', val)}
+                                min={1}
                             />
                             {errors.max_flavors && <div className="text-red-400 text-xs mt-1">{errors.max_flavors}</div>}
                         </div>

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { router, usePage } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import useI18n from '@/hooks/useI18n';
+import CustomNumberInput from '@/Components/CustomNumberInput';
 
 export default function Index({ register = null, summary = null, history = null, filters = {} }) {
     const { t, formatCurrency } = useI18n();
@@ -95,15 +96,15 @@ export default function Index({ register = null, summary = null, history = null,
                                 <p className="text-text-muted text-sm mb-6">{t('cashRegister.openCard.subtitle')}</p>
                                 <form onSubmit={handleOpen} className="flex flex-col gap-4">
                                     <div className="relative">
-                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted text-sm font-bold">{t('cashRegister.currencyPrefix')}</span>
-                                        <input
-                                            type="number"
-                                            step="0.01"
+                                        <CustomNumberInput
                                             value={openingBalance}
-                                            onChange={(e) => setOpeningBalance(e.target.value)}
-                                            className="w-full bg-surface border border-border-subtle rounded-xl pl-12 pr-4 py-4 text-white text-lg font-bold text-center focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                            onChange={val => setOpeningBalance(val)}
+                                            prefix={t('cashRegister.currencyPrefix')}
+                                            step={0.01}
+                                            min={0}
                                             placeholder={t('cashRegister.zeroPlaceholder')}
                                             required
+                                            className="w-full h-14"
                                         />
                                     </div>
                                     <button
@@ -184,16 +185,16 @@ export default function Index({ register = null, summary = null, history = null,
                                         <div>
                                             <label className="text-sm text-white font-medium mb-2 block">{t('cashRegister.closeForm.countedBalance')}</label>
                                             <div className="relative">
-                                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted text-sm font-bold">{t('cashRegister.currencyPrefix')}</span>
-                                                <input
-                                                    type="number"
-                                                    step="0.01"
-                                                    value={closingBalance}
-                                                    onChange={(e) => setClosingBalance(e.target.value)}
-                                                    className="w-full bg-surface border border-border-subtle rounded-xl pl-12 pr-4 py-3 text-white font-bold focus:outline-none focus:ring-2 focus:ring-primary/50"
-                                                    placeholder={t('cashRegister.zeroPlaceholder')}
-                                                    required
-                                                />
+                                            <CustomNumberInput
+                                                value={closingBalance}
+                                                onChange={val => setClosingBalance(val)}
+                                                prefix={t('cashRegister.currencyPrefix')}
+                                                step={0.01}
+                                                min={0}
+                                                placeholder={t('cashRegister.zeroPlaceholder')}
+                                                required
+                                                className="w-full"
+                                            />
                                             </div>
                                         </div>
                                         <div>

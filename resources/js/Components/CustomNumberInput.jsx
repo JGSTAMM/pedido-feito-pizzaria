@@ -1,56 +1,107 @@
-import React from 'react';
+import React, { useState, useEffect, forwardRef } from 'react';
 
 /**
  * CustomNumberInput - A premium glassmorphic number input with +/- buttons.
- * 
- * @param {Object} props
- * @param {number|string} props.value - The current value
- * @param {function} props.onChange - Callback function for value changes
- * @param {number} props.min - Minimum value (default: 1)
- * @param {number} props.max - Maximum value (default: 100)
- * @param {number} props.step - Increment/decrement step (default: 1)
+ * Supports manual typing, decimal steps, and automatic value sanitization.
  */
-const CustomNumberInput = ({ value, onChange, min = 1, max = 100, step = 1 }) => {
+const CustomNumberInput = forwardRef(({ 
+    value, 
+    onChange, 
+    min = 0, 
+    max = 999999, 
+    step = 1, 
+    className = "",
+    prefix = "",
+    ...props 
+}, ref) => {
+    // Local state to handle typing smoothly (allows empty strings during deletion)
+    const [inputValue, setInputValue] = useState(value);
+
+    // Sync local state when prop changes externally (e.g., parent resets form)
+    useEffect(() => {
+        setInputValue(value);
+    }, [value]);
+
     const handleDecrement = () => {
-        const currentValue = parseInt(value) || 0;
-        const newValue = Math.max(min, currentValue - step);
+        const currentValue = parseFloat(value) || 0;
+        const newValue = Math.max(min, Number((currentValue - step).toFixed(2)));
         onChange(newValue);
     };
 
     const handleIncrement = () => {
-        const currentValue = parseInt(value) || 0;
-        const newValue = Math.min(max, currentValue + step);
+        const currentValue = parseFloat(value) || 0;
+        const newValue = Math.min(max, Number((currentValue + step).toFixed(2)));
         onChange(newValue);
     };
 
+    const handleInputChange = (e) => {
+        const val = e.target.value;
+        setInputValue(val); // Immediate UI feedback for typing
+        
+        // Propagate valid numbers to parent state (e.g., Inertia useForm)
+        const numericVal = parseFloat(val);
+        if (!isNaN(numericVal)) {
+            // Keep it within bounds but allow the user to keep typing
+            onChange(numericVal);
+        }
+    };
+
+    const handleBlur = (e) => {
+        let numericVal = parseFloat(inputValue);
+        
+        // Sanitize on blur
+        if (isNaN(numericVal)) {
+            numericVal = min;
+        } else {
+            numericVal = Math.min(max, Math.max(min, numericVal));
+        }
+        
+        // Force precision and update both states
+        const finalizedVal = Number(numericVal.toFixed(2));
+        setInputValue(finalizedVal);
+        onChange(finalizedVal);
+
+        // Call original onBlur if provided
+        if (props.onBlur) props.onBlur(e);
+    };
+
     return (
-        <div className="flex items-center bg-surface border border-border-subtle rounded-xl overflow-hidden h-11 shadow-lg transition-all focus-within:border-primary/40 focus-within:ring-1 focus-within:ring-primary/20">
+        <div className={`flex items-center bg-surface border border-border-subtle rounded-xl overflow-hidden h-11 shadow-lg transition-all focus-within:border-primary/40 focus-within:ring-1 focus-within:ring-primary/20 ${className}`}>
             <button
                 type="button"
                 onClick={handleDecrement}
-                disabled={parseInt(value) <= min}
+                disabled={parseFloat(value) <= min}
                 className="w-12 h-full flex items-center justify-center hover:bg-white/5 active:bg-white/10 text-gray-400 hover:text-white transition-all disabled:opacity-20 disabled:cursor-not-allowed border-r border-border-subtle"
             >
                 <span className="material-symbols-outlined text-lg select-none">remove</span>
             </button>
             
-            <input
-                type="number"
-                value={value}
-                readOnly
-                className="flex-1 bg-transparent border-none text-center text-base font-bold text-white focus:ring-0 cursor-default [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-            />
+            <div className="flex-1 flex items-center px-4">
+                {prefix && <span className="text-text-muted text-sm font-bold mr-2 select-none">{prefix}</span>}
+                <input
+                    {...props}
+                    ref={ref}
+                    type="number"
+                    value={inputValue}
+                    onChange={handleInputChange}
+                    onBlur={handleBlur}
+                    step={step}
+                    className="flex-1 bg-transparent border-none text-center text-base font-bold text-white focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none p-0"
+                />
+            </div>
             
             <button
                 type="button"
                 onClick={handleIncrement}
-                disabled={parseInt(value) >= max}
+                disabled={parseFloat(value) >= max}
                 className="w-12 h-full flex items-center justify-center hover:bg-white/5 active:bg-white/10 text-gray-400 hover:text-white transition-all disabled:opacity-20 disabled:cursor-not-allowed border-l border-border-subtle"
             >
                 <span className="material-symbols-outlined text-lg select-none">add</span>
             </button>
         </div>
     );
-};
+});
+
+CustomNumberInput.displayName = 'CustomNumberInput';
 
 export default CustomNumberInput;

@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import axios from 'axios';
+import CustomNumberInput from '@/Components/CustomNumberInput';
 
 const PAYMENT_METHODS = [
     { method: 'credito', icon: 'credit_card', label: 'Cartão Crédito' },
@@ -378,20 +379,17 @@ export default function PaymentModal({ isOpen, onClose, onConfirm, total }) {
                         {/* Amount Input — visible when a method is selected  */}
                         {selectedMethod && (
                             <div className="flex gap-2 animate-in fade-in">
-                                <div className="flex-1 relative">
-                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted text-sm font-bold">R$</span>
-                                    <input
+                                    <CustomNumberInput
                                         ref={inputRef}
-                                        type="number"
-                                        step="0.01"
-                                        min="0.01"
                                         value={inputValue}
-                                        onChange={e => setInputValue(e.target.value)}
+                                        onChange={val => setInputValue(val)}
                                         onKeyDown={handleKeyDown}
-                                        className="w-full bg-surface border border-border-subtle rounded-xl pl-12 pr-4 py-3 text-white font-mono font-bold text-lg focus:border-primary/50 outline-none transition-all"
+                                        prefix="R$"
+                                        step={0.01}
+                                        min={0.01}
                                         placeholder="0,00"
+                                        className="w-full"
                                     />
-                                </div>
                                 <button
                                     onClick={addPayment}
                                     disabled={!inputValue || parseFloat(inputValue) <= 0}

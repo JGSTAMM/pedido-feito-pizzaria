@@ -809,6 +809,20 @@
         }
     },
     "floor": {
+        "modal": {
+            "newTitle": "New Table",
+            "editTitle": "Edit Table"
+        },
+        "form": {
+            "name": "Table Name",
+            "namePlaceholder": "Ex: Table 01",
+            "nameHelper": "Ex: Table 13, VIP Counter",
+            "capacity": "Number of Seats",
+            "capacityHelper": "Ex: 4",
+            "cancel": "Cancel",
+            "saving": "Saving...",
+            "save": "Save"
+        },
         "header": {
             "title": "Floor Map",
             "subtitle": "Table view and management"

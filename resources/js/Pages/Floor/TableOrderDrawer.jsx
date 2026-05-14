@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { router } from '@inertiajs/react';
+import CustomNumberInput from '@/Components/CustomNumberInput';
 import { norm } from '@/utils/normalize';
 import PizzaBuilderModal from '@/Pages/POS/PizzaBuilderModal';
 import ProductVariationModal from '@/Pages/POS/ProductVariationModal';
@@ -931,27 +932,21 @@ export default function TableOrderDrawer({
                             <div className="space-y-2 sm:space-y-3">
                                 <label className="text-[10px] sm:text-[11px] font-black text-text-muted uppercase tracking-[0.1em] ml-1">{t('floor.drawer.checkout.payment_amount_label')}</label>
                                 <div className="flex gap-2">
-                                    <div className="flex-1 relative group">
-                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none">
-                                            <span className="text-emerald-400 font-black text-base sm:text-lg">R$</span>
-                                        </div>
-                                        <input
-                                            type="number"
-                                            inputMode="decimal"
-                                            step="0.01"
-                                            min="0.01"
+                                        <CustomNumberInput
                                             value={paymentInputValue}
-                                            onChange={e => setPaymentInputValue(e.target.value)}
-                                            className="w-full bg-white/5 border border-white/10 rounded-[16px] sm:rounded-2xl pl-10 sm:pl-12 pr-4 py-4 sm:py-5 text-xl sm:text-2xl text-white font-black focus:border-emerald-400/50 outline-none transition-all placeholder:text-white/10"
-                                            placeholder="0,00"
+                                            onChange={val => setPaymentInputValue(val)}
                                             onFocus={() => {
                                                 if (!paymentInputValue) {
                                                     const remaining = Math.max(0, tableTotal - payments.reduce((s, p) => s + p.amount, 0));
                                                     if (remaining > 0) setPaymentInputValue(remaining.toFixed(2));
                                                 }
                                             }}
+                                            prefix="R$"
+                                            step={0.01}
+                                            min={0.01}
+                                            placeholder="0,00"
+                                            className="w-full"
                                         />
-                                    </div>
                                     <button
                                         onClick={() => {
                                             const val = parseFloat(paymentInputValue);

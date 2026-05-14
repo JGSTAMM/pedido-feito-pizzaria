@@ -798,6 +798,20 @@
         }
     },
     "floor": {
+        "modal": {
+            "newTitle": "Nueva Mesa",
+            "editTitle": "Editar Mesa"
+        },
+        "form": {
+            "name": "Nombre de la Mesa",
+            "namePlaceholder": "Ej: Mesa 01",
+            "nameHelper": "Ej: Mesa 13, Barra VIP",
+            "capacity": "Cantidad de Lugares",
+            "capacityHelper": "Ej: 4",
+            "cancel": "Cancelar",
+            "saving": "Guardando...",
+            "save": "Guardar"
+        },
         "header": {
             "title": "Mapa del Salón",
             "subtitle": "Vista y gestión de mesas"
