@@ -37,6 +37,10 @@ export default function LanguageSwitcher({ scrolled }) {
                                 key={lang.code}
                                 href={`/menu?locale=${lang.code}`}
                                 preserveScroll
+                                onClick={() => {
+                                    localStorage.setItem('menu_locale', lang.code);
+                                    setIsOpen(false);
+                                }}
                                 className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-xl transition-all hover:bg-white/5 ${currentLocale === lang.code ? 'bg-primary/10 text-primary' : 'text-white/70'
                                     }`}
                             >

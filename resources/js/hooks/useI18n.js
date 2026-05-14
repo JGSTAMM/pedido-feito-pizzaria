@@ -51,7 +51,7 @@ function getByPath(object, path) {
 export function useI18n() {
     const { props } = usePage();
 
-    const locale = normalizeLocale(props.locale || 'pt-BR');
+    const locale = normalizeLocale(localStorage.getItem('menu_locale') || props.locale || 'pt-BR');
     const fallbackLocale = normalizeLocale(props.fallbackLocale || 'en-US');
 
     const dictionary = dictionaries[locale] || dictionaries['pt-BR'];
