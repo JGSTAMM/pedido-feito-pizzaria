@@ -39,7 +39,7 @@ class HandleInertiaRequests extends Middleware
     {
         $storeSetting = StoreSetting::first();
 
-        $phone = $request->cookie('customer_phone', '');
+        $phone = $request->cookie('customer_phone') ?? session('customer_phone', '');
         $activeOrdersCount = 0;
 
         if ($phone) {

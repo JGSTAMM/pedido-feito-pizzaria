@@ -23,13 +23,15 @@ class SetRequestLocale
     public function handle(Request $request, Closure $next): Response
     {
         $queryLocale = $this->normalizeLocale($request->query('locale') ?? $request->query('lang'));
+        $sessionLocale = $this->normalizeLocale(session()->get(self::LOCALE_COOKIE));
         $cookieLocale = $this->normalizeLocale($request->cookie(self::LOCALE_COOKIE));
 
-        $resolvedLocale = $queryLocale ?? $cookieLocale ?? 'pt-BR';
+        $resolvedLocale = $queryLocale ?? $sessionLocale ?? $cookieLocale ?? 'pt-BR';
 
         App::setLocale(str_replace('-', '_', $resolvedLocale));
 
         if ($queryLocale !== null) {
+            session()->put(self::LOCALE_COOKIE, $queryLocale);
             Cookie::queue(cookie()->forever(self::LOCALE_COOKIE, $queryLocale));
             Cookie::queue(cookie()->forever(self::MENU_LOCALE_SELECTED_COOKIE, '1'));
         }

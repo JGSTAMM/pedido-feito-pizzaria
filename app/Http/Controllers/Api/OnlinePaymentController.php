@@ -80,6 +80,7 @@ class OnlinePaymentController extends Controller
         // Ownership validation: Store order ID in session for polling security
         if ($result['status'] === 201 && isset($result['payload']['order_id'])) {
             session()->put('current_order_id', $result['payload']['order_id']);
+            session()->put('customer_phone', $validated['customer_phone']);
         }
 
         return response()->json($result['payload'], $result['status'])

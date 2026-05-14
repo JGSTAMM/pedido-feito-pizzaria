@@ -25,13 +25,13 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->encryptCookies(except: [
             'customer_phone',
+            'app_locale',
+            'menu_locale_selected',
         ]);
 
         $middleware->web(
-            prepend: [
-                SetRequestLocale::class,
-            ],
             append: [
+                SetRequestLocale::class,
                 HandleInertiaRequests::class,
             ],
         );
