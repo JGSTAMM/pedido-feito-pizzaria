@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Events\OrderStatusUpdated;
 use App\Models\Order;
 use App\Models\Payment;
 use Illuminate\Http\Request;
@@ -300,6 +301,13 @@ class PaymentGatewayService
             switch ($payment->status) {
                 case 'approved':
                     $this->markOrderAsPaidOnline($order, $paymentId);
+                    event(new OrderStatusUpdated(
+                        orderId: $order->id,
+                        status: Order::STATUS_PENDING,
+                        previousStatus: $previousStatus,
+                        type: $order->type,
+                        tableId: $order->table_id,
+                    ));
                     break;
 
                 case 'rejected':
@@ -309,6 +317,13 @@ class PaymentGatewayService
                         'rejected_at' => now(),
                         'rejection_reason' => 'Pagamento '.($payment->status === 'rejected' ? 'rejeitado' : 'cancelado'),
                     ]);
+                    event(new OrderStatusUpdated(
+                        orderId: $order->id,
+                        status: Order::STATUS_REJECTED,
+                        previousStatus: $previousStatus,
+                        type: $order->type,
+                        tableId: $order->table_id,
+                    ));
                     break;
 
                 case 'pending':

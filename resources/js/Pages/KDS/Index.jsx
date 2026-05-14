@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { router } from '@inertiajs/react';
+import { useOrderChannel } from '@/hooks/useOrderChannel';
 import AppLayout from '@/Layouts/AppLayout';
 import KitchenReceiptPrint from '@/Components/KitchenReceiptPrint';
 import KdsColumn from './Components/KdsColumn';
@@ -265,6 +266,9 @@ export default function Index({ orders = [], counts = {} }) {
     const [printOrder, setPrintOrder] = useState(null);
     const printTimeoutRef = useRef(null);
 
+    // Real-time WebSocket subscription — KDS updates instantly on any order event
+    useOrderChannel({ only: ['orders', 'counts'] });
+
     useEffect(() => {
         return () => {
             if (printTimeoutRef.current) clearTimeout(printTimeoutRef.current);
@@ -297,7 +301,7 @@ export default function Index({ orders = [], counts = {} }) {
                     </h2>
                     <p className="text-text-muted text-sm mt-1 flex items-center gap-2">
                         <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                        Atualização automática a cada 10s
+                        Conexão em tempo real ativa
                     </p>
                 </div>
                 <div className="flex items-center gap-4">

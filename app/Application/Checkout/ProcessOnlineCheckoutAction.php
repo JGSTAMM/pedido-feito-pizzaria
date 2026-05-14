@@ -2,6 +2,7 @@
 
 namespace App\Application\Checkout;
 
+use App\Events\OrderCreated;
 use App\Models\Neighborhood;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -81,6 +82,15 @@ class ProcessOnlineCheckoutAction
             }
 
             DB::commit();
+
+            // Broadcast real-time event so KDS appears instantly
+            event(new OrderCreated(
+                orderId: $order->id,
+                status: $order->status,
+                type: $orderType,
+                shortCode: $order->short_code ?? '',
+                tableId: $tableId,
+            ));
 
             return [
                 'status' => 201,

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Application\CashRegister\CashRegisterLockService;
 use App\Application\Orders\OrderActionException;
+use App\Events\OrderCreated;
 use App\Models\CashRegister;
 use App\Models\Customer;
 use App\Models\Order;
@@ -348,6 +349,15 @@ class PosController extends Controller
             }
 
             DB::commit();
+
+            // Broadcast real-time event so KDS shows this order instantly
+            event(new OrderCreated(
+                orderId: $order->id,
+                status: 'pending',
+                type: 'pickup',
+                shortCode: $order->short_code ?? '',
+                tableId: null,
+            ));
 
             return redirect()->back()->with('success', "Pedido #{$order->id} finalizado com sucesso! Total: R$ ".number_format($totalAmount, 2, ',', '.'));
 

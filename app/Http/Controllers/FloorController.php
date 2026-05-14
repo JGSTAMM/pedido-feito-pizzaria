@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Application\CashRegister\CashRegisterLockService;
 use App\Application\Orders\OrderActionException;
+use App\Events\OrderCreated;
+use App\Events\OrderStatusUpdated;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Payment;
@@ -333,6 +335,15 @@ class FloorController extends Controller
 
             DB::commit();
 
+            // Broadcast real-time event so KDS picks up this dine-in order instantly
+            event(new OrderCreated(
+                orderId: $order->id,
+                status: 'pending',
+                type: 'dine_in',
+                shortCode: $order->short_code ?? '',
+                tableId: $table->id,
+            ));
+
             return redirect()->back()->with('success', "Itens enviados para a cozinha! Pedido #{$order->id}");
 
         } catch (\Exception $e) {
@@ -441,6 +452,15 @@ class FloorController extends Controller
                     'paid_at' => now(),
                     'cash_register_id' => $activeRegister?->id,
                 ]);
+
+                // Broadcast table-closure so Floor view deactivates the table in real-time
+                event(new OrderStatusUpdated(
+                    orderId: $order->id,
+                    status: 'completed',
+                    previousStatus: 'ready',
+                    type: $order->type,
+                    tableId: $table->id,
+                ));
             }
 
             $table->update(['status' => 'available']);

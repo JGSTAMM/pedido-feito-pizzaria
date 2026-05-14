@@ -4,7 +4,7 @@ import { norm } from '@/utils/normalize';
 import AppLayout from '@/Layouts/AppLayout';
 import TableOrderDrawer from './TableOrderDrawer';
 import useI18n from '@/hooks/useI18n';
-
+import { useOrderChannel } from '@/hooks/useOrderChannel';
 import CustomNumberInput from '@/Components/CustomNumberInput';
 
 function Modal({ isOpen, onClose, title, children }) {
@@ -43,6 +43,9 @@ export default function Index({
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingId, setEditingId] = useState(null);
     const [isEditMode, setIsEditMode] = useState(false);
+
+    // ── Real-time WebSocket subscription ── tables update instantly on order events
+    useOrderChannel({ only: ['tables', 'stats'] });
 
     // ── Drawer state ──
     const [selectedTable, setSelectedTable] = useState(null);
