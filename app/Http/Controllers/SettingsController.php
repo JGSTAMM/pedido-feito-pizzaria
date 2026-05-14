@@ -156,10 +156,11 @@ class SettingsController extends Controller
         $request->validate([
             'receipt_header_1' => 'nullable|string|max:255',
             'receipt_header_2' => 'nullable|string|max:255',
+            'cnpj' => 'nullable|string|max:30',
             'receipt_footer' => 'nullable|string',
             'receipt_show_cnpj' => 'required|boolean',
         ]);
-        StoreSetting::first()->update($request->only('receipt_header_1', 'receipt_header_2', 'receipt_footer', 'receipt_show_cnpj'));
+        StoreSetting::first()->update($request->only('receipt_header_1', 'receipt_header_2', 'cnpj', 'receipt_footer', 'receipt_show_cnpj'));
 
         return redirect()->back()->with('success', 'Configurações de Recibo atualizadas.');
     }

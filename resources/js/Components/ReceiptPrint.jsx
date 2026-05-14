@@ -43,7 +43,7 @@ export default function ReceiptPrint({ order }) {
             <div className="text-center border-b border-black border-dashed pb-2 mb-2">
                 <h2 className="text-lg font-black uppercase mb-0.5">{header1}</h2>
                 {header2 && <p className="text-[9px] uppercase font-bold">{header2}</p>}
-                {storeSetting?.cnpj && (
+                {storeSetting?.receipt_show_cnpj && storeSetting?.cnpj && (
                     <p className="text-[9px] uppercase font-bold">CNPJ: {storeSetting.cnpj}</p>
                 )}
                 <p className="text-[9px] mt-1">{datePart} {timePart}</p>
