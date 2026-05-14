@@ -52,6 +52,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/api/customers/search', [CustomerController::class, 'search']);
         Route::get('/orders', [OrderController::class, 'index']);
         Route::get('/reports', [ReportController::class, 'index']);
+        Route::get('/reports/export', [ReportController::class, 'export']);
 
         Route::get('/cash-register', [CashRegisterController::class, 'index']);
         Route::post('/cash-register/open', [CashRegisterController::class, 'open']);
@@ -59,6 +60,7 @@ Route::middleware(['auth'])->group(function () {
             ->middleware('can:closeCashRegister,'.Order::class);
 
         Route::resource('/users', UserController::class)->except(['create', 'show', 'edit']);
+        Route::resource('/expenses', App\Http\Controllers\ExpenseController::class)->except(['create', 'show', 'edit']);
 
         Route::get('/products', [ProductController::class, 'index'])->name('products');
         Route::post('/products', [ProductController::class, 'store']);

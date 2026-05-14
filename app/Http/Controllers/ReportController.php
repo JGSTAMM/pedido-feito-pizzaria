@@ -62,15 +62,61 @@ class ReportController extends Controller
 
         return Inertia::render('Reports/Index', [
             'stats' => [
-                'gross_revenue' => $grossRevenue,
+                'total_revenue' => $grossRevenue,
                 'total_expenses' => $totalExpenses,
                 'net_profit' => $netProfit,
-                'profit_margin' => round($profitMargin, 2),
+                'profit_margin_pct' => round($profitMargin, 2),
                 'total_orders' => $totalOrders,
                 'avg_ticket' => round($avgTicket, 2),
             ],
             'topProducts' => $topFlavors,
             'typeDistribution' => $typeDistribution,
         ]);
+    }
+
+    public function export()
+    {
+        $last30Days = now()->subDays(30);
+
+        // Revenue based on paid_at instead of status = paid
+        $grossRevenue = ((float) Order::whereNotNull('paid_at')
+            ->where('created_at', '>=', $last30Days)
+            ->sum('total_amount')) / 100;
+
+        $totalOrders = Order::whereNotNull('paid_at')
+            ->where('created_at', '>=', $last30Days)
+            ->count();
+
+        // Calculate Expenses
+        $totalExpenses = ((float) Expense::where('expense_date', '>=', $last30Days->toDateString())
+            ->sum('amount')) / 100;
+
+        // Calculate Net Profit
+        $netProfit = $grossRevenue - $totalExpenses;
+
+        $headers = [
+            "Content-type"        => "text/csv",
+            "Content-Disposition" => "attachment; filename=relatorio_financeiro_" . now()->format('Y_m_d') . ".csv",
+            "Pragma"              => "no-cache",
+            "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
+            "Expires"             => "0"
+        ];
+
+        $callback = function() use ($grossRevenue, $totalExpenses, $netProfit, $totalOrders) {
+            $file = fopen('php://output', 'w');
+            
+            // Add BOM for UTF-8 Excel support
+            fputs($file, "\xEF\xBB\xBF");
+
+            fputcsv($file, ['Métrica', 'Valor'], ';');
+            fputcsv($file, ['Receita Bruta (R$)', number_format($grossRevenue, 2, ',', '')], ';');
+            fputcsv($file, ['Despesas Operacionais (R$)', number_format($totalExpenses, 2, ',', '')], ';');
+            fputcsv($file, ['Lucro Líquido (R$)', number_format($netProfit, 2, ',', '')], ';');
+            fputcsv($file, ['Total de Pedidos', $totalOrders], ';');
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 }

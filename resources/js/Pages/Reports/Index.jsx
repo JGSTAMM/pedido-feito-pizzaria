@@ -30,10 +30,10 @@ export default function Index({ stats = {}, topProducts = [], typeDistribution =
                             <p className="text-text-muted text-xs">Dados consolidados do estabelecimento</p>
                         </div>
                     </div>
-                    <button className="flex items-center gap-2 px-4 py-2.5 bg-primary/10 border border-primary/30 text-primary text-sm font-bold rounded-xl hover:bg-primary/20 transition-all">
+                    <a href="/reports/export" target="_blank" download className="flex items-center gap-2 px-4 py-2.5 bg-primary/10 border border-primary/30 text-primary text-sm font-bold rounded-xl hover:bg-primary/20 transition-all">
                         <span className="material-symbols-outlined text-lg">download</span>
                         Exportar Dados
-                    </button>
+                    </a>
                 </header>
 
                 <div className="p-10 flex flex-col gap-8">
