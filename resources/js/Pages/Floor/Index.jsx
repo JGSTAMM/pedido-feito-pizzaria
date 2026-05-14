@@ -5,6 +5,8 @@ import AppLayout from '@/Layouts/AppLayout';
 import TableOrderDrawer from './TableOrderDrawer';
 import useI18n from '@/hooks/useI18n';
 
+import CustomNumberInput from '@/Components/CustomNumberInput';
+
 function Modal({ isOpen, onClose, title, children }) {
     if (!isOpen) return null;
     return (
@@ -281,7 +283,7 @@ export default function Index({
             <Modal isOpen={isFormOpen} onClose={() => setIsFormOpen(false)} title={editingId ? t('floor.modal.editTitle') : t('floor.modal.newTitle')}>
                 <form onSubmit={submit} className="flex flex-col gap-4">
                     <div>
-                        <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-1.5">{t('floor.form.name')}</label>
+                        <label className="block text-sm font-bold text-gray-300 mb-1">{t('floor.form.name')}</label>
                         <input
                             type="text"
                             value={data.name}
@@ -290,20 +292,17 @@ export default function Index({
                             className="w-full bg-surface border border-border-subtle rounded-xl px-4 py-2.5 text-sm text-white focus:border-primary/50 outline-none"
                             required
                         />
-                        <p className="text-xs text-text-muted mt-1.5 opacity-70">Ex: Mesa 13, Balcão VIP</p>
+                        <p className="text-xs text-text-muted mt-1.5 opacity-70">{t('floor.form.nameHelper')}</p>
                         {errors.name && <div className="text-red-400 text-xs mt-1">{errors.name}</div>}
                     </div>
                     <div>
-                        <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-1.5">{t('floor.form.capacity')}</label>
-                        <input
-                            type="number"
-                            min="1"
-                            value={data.capacity}
-                            onChange={e => setData('capacity', e.target.value)}
-                            className="w-full bg-surface border border-border-subtle rounded-xl px-4 py-2.5 text-sm text-white focus:border-primary/50 outline-none"
-                            required
+                        <label className="block text-sm font-bold text-gray-300 mb-1">{t('floor.form.capacity')}</label>
+                        <CustomNumberInput 
+                            value={data.capacity} 
+                            onChange={val => setData('capacity', val)}
+                            min={1}
                         />
-                        <p className="text-xs text-text-muted mt-1.5 opacity-70">Ex: 4</p>
+                        <p className="text-xs text-text-muted mt-1.5 opacity-70">{t('floor.form.capacityHelper')}</p>
                         {errors.capacity && <div className="text-red-400 text-xs mt-1">{errors.capacity}</div>}
                     </div>
 
