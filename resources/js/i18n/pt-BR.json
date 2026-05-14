@@ -71,6 +71,7 @@
         "settings": "Configuracoes",
         "tables": "Mesas",
         "tabsOrders": "Comandas",
+        "expenses": "Despesas",
         "profile": "Perfil"
     },
     "flavors": {

@@ -38,15 +38,40 @@ export default function Index({ stats = {}, topProducts = [], typeDistribution =
 
                 <div className="p-10 flex flex-col gap-8">
                     {/* KPI Section */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         <GlassPanel className="relative overflow-hidden group">
                             <div className="absolute -right-4 -top-4 size-24 bg-emerald-500/5 rounded-full blur-2xl group-hover:bg-emerald-500/10 transition-colors"></div>
-                            <p className="text-text-muted text-sm font-medium uppercase tracking-wider">Receita Total</p>
+                            <p className="text-text-muted text-sm font-medium uppercase tracking-wider">Receita Bruta</p>
                             <div className="flex items-end gap-3 mt-2">
                                 <h3 className="text-emerald-400 text-3xl font-bold tracking-tight">{formatBRL(stats.total_revenue ?? 0)}</h3>
                             </div>
                             <p className="text-text-muted text-xs mt-2">Pedidos pagos acumulados</p>
                         </GlassPanel>
+                        
+                        <GlassPanel className="relative overflow-hidden group">
+                            <div className="absolute -right-4 -top-4 size-24 bg-red-500/5 rounded-full blur-2xl group-hover:bg-red-500/10 transition-colors"></div>
+                            <p className="text-text-muted text-sm font-medium uppercase tracking-wider">Despesas Operacionais</p>
+                            <div className="flex items-end gap-3 mt-2">
+                                <h3 className="text-red-400 text-3xl font-bold tracking-tight">{formatBRL(stats.total_expenses ?? 0)}</h3>
+                            </div>
+                            <p className="text-text-muted text-xs mt-2">Custos operacionais registrados</p>
+                        </GlassPanel>
+
+                        <GlassPanel className="relative overflow-hidden group">
+                            <div className="absolute -right-4 -top-4 size-24 bg-blue-500/5 rounded-full blur-2xl group-hover:bg-blue-500/10 transition-colors"></div>
+                            <p className="text-text-muted text-sm font-medium uppercase tracking-wider">Lucro Líquido</p>
+                            <div className="flex flex-col gap-1 mt-2">
+                                <div className="flex items-end gap-3">
+                                    <h3 className="text-blue-400 text-3xl font-bold tracking-tight">{formatBRL(stats.net_profit ?? 0)}</h3>
+                                </div>
+                                <div className="flex items-center gap-2 mt-1">
+                                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${(stats.profit_margin_pct ?? 0) >= 0 ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'}`}>
+                                        {Number(stats.profit_margin_pct ?? 0).toFixed(1)}% Margem
+                                    </span>
+                                </div>
+                            </div>
+                        </GlassPanel>
+
                         <GlassPanel>
                             <p className="text-text-muted text-sm font-medium uppercase tracking-wider">Total de Pedidos</p>
                             <div className="flex items-end gap-3 mt-2">
@@ -54,6 +79,7 @@ export default function Index({ stats = {}, topProducts = [], typeDistribution =
                             </div>
                             <p className="text-text-muted text-xs mt-2">Pedidos concluídos com sucesso</p>
                         </GlassPanel>
+                        
                         <GlassPanel className="relative overflow-hidden group">
                             <div className="absolute -right-4 -top-4 size-24 bg-primary/5 rounded-full blur-2xl group-hover:bg-primary/10 transition-colors"></div>
                             <p className="text-text-muted text-sm font-medium uppercase tracking-wider">Ticket Médio</p>

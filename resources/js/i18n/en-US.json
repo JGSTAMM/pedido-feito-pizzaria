@@ -71,6 +71,7 @@
         "settings": "Settings",
         "tables": "Tables",
         "tabsOrders": "Orders",
+        "expenses": "Expenses",
         "profile": "Profile"
     },
     "flavors": {
