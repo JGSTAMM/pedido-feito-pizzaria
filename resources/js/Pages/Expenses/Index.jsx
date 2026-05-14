@@ -188,19 +188,13 @@ export default function Index({ expenses = [] }) {
                         </div>
                         <div>
                             <label className="block text-xs font-bold text-text-muted uppercase tracking-wider mb-1.5">Valor (R$)</label>
-                            <div className="relative">
-                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted text-sm font-bold">R$</span>
-                                <input
-                                    type="number"
-                                    step="0.01"
-                                    min="0"
-                                    value={data.amount}
-                                    onChange={e => setData('amount', e.target.value)}
-                                    placeholder="0,00"
-                                    className="w-full bg-surface border border-border-subtle rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:border-primary/50 outline-none"
-                                    required
-                                />
-                            </div>
+                            <CustomNumberInput 
+                                value={data.amount}
+                                onChange={val => setData('amount', val)}
+                                step={0.01}
+                                min={0}
+                                prefix="R$"
+                            />
                             {errors.amount && <div className="text-red-400 text-xs mt-1">{errors.amount}</div>}
                         </div>
                     </div>

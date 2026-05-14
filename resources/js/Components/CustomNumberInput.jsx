@@ -66,17 +66,17 @@ const CustomNumberInput = forwardRef(({
     };
 
     return (
-        <div className={`flex items-center bg-surface border border-border-subtle rounded-xl overflow-hidden h-11 shadow-lg transition-all focus-within:border-primary/40 focus-within:ring-1 focus-within:ring-primary/20 ${className}`}>
+        <div className={`flex items-center bg-surface border border-border-subtle rounded-xl overflow-hidden h-11 shadow-lg transition-all focus-within:border-primary/40 focus-within:ring-1 focus-within:ring-primary/20 min-w-[140px] ${className}`}>
             <button
                 type="button"
                 onClick={handleDecrement}
                 disabled={parseFloat(value) <= min}
-                className="w-12 h-full flex items-center justify-center hover:bg-white/5 active:bg-white/10 text-gray-400 hover:text-white transition-all disabled:opacity-20 disabled:cursor-not-allowed border-r border-border-subtle"
+                className="w-12 shrink-0 h-full flex items-center justify-center hover:bg-white/5 active:bg-white/10 text-gray-400 hover:text-white transition-all disabled:opacity-20 disabled:cursor-not-allowed border-r border-border-subtle"
             >
                 <span className="material-symbols-outlined text-lg select-none">remove</span>
             </button>
             
-            <div className="flex-1 flex items-center px-4">
+            <div className="flex-1 min-w-0 flex items-center px-4">
                 {prefix && <span className="text-text-muted text-sm font-bold mr-2 select-none">{prefix}</span>}
                 <input
                     {...props}
@@ -86,7 +86,7 @@ const CustomNumberInput = forwardRef(({
                     onChange={handleInputChange}
                     onBlur={handleBlur}
                     step={step}
-                    className="flex-1 bg-transparent border-none text-center text-base font-bold text-white focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none p-0"
+                    className="flex-1 w-full min-w-0 bg-transparent border-none text-center text-base font-bold text-white focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none p-0"
                 />
             </div>
             
@@ -94,7 +94,7 @@ const CustomNumberInput = forwardRef(({
                 type="button"
                 onClick={handleIncrement}
                 disabled={parseFloat(value) >= max}
-                className="w-12 h-full flex items-center justify-center hover:bg-white/5 active:bg-white/10 text-gray-400 hover:text-white transition-all disabled:opacity-20 disabled:cursor-not-allowed border-l border-border-subtle"
+                className="w-12 shrink-0 h-full flex items-center justify-center hover:bg-white/5 active:bg-white/10 text-gray-400 hover:text-white transition-all disabled:opacity-20 disabled:cursor-not-allowed border-l border-border-subtle"
             >
                 <span className="material-symbols-outlined text-lg select-none">add</span>
             </button>
