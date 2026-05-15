@@ -149,7 +149,7 @@ export default function PizzaBuilderModal({
             finalNotes = finalNotes ? `${finalNotes}|${flavorExclusions.join('|')}` : flavorExclusions.join('|');
         }
 
-        const customPizzaId = `custom-pizza-${selectedPizzaSizeOption.id}-${selectedFlavorInstances.map(i => `${i.flavorId}-${(i.removed || []).slice().sort().join('_')}`).join('|')}`;
+        const customPizzaId = `custom-pizza-${selectedPizzaSizeOption.id}-${selectedFlavorInstances.map(i => `${i.flavorId}-${(i.removed || []).slice().sort().join('_')}`).join('|')}-${Date.now()}`;
 
         addItem({
             id: customPizzaId,
