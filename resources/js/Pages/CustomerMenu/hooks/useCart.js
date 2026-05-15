@@ -34,7 +34,14 @@ export function useCart() {
             return;
         }
 
-        window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
+        const currentStored = window.localStorage.getItem(CART_STORAGE_KEY);
+        const nextStored = JSON.stringify(items);
+
+        // Only update and emit if actual changes occurred to prevent infinite loops
+        if (currentStored !== nextStored) {
+            window.localStorage.setItem(CART_STORAGE_KEY, nextStored);
+            window.dispatchEvent(new CustomEvent('local-cart-updated'));
+        }
     }, [items]);
 
     useEffect(() => {
@@ -55,10 +62,12 @@ export function useCart() {
 
         window.addEventListener('popstate', syncWithStorage);
         window.addEventListener('focus', syncWithStorage);
+        window.addEventListener('local-cart-updated', syncWithStorage);
 
         return () => {
             window.removeEventListener('popstate', syncWithStorage);
             window.removeEventListener('focus', syncWithStorage);
+            window.removeEventListener('local-cart-updated', syncWithStorage);
         };
     }, []);
 
