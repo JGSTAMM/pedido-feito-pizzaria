@@ -37,6 +37,31 @@ export function useCart() {
         window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
     }, [items]);
 
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+
+        const syncWithStorage = () => {
+            const stored = readCartFromStorage();
+            setItems(current => {
+                if (JSON.stringify(current) !== JSON.stringify(stored)) {
+                    return stored;
+                }
+                return current;
+            });
+        };
+
+        // Sync immediately on mount to catch Inertia cached state mismatches
+        syncWithStorage();
+
+        window.addEventListener('popstate', syncWithStorage);
+        window.addEventListener('focus', syncWithStorage);
+
+        return () => {
+            window.removeEventListener('popstate', syncWithStorage);
+            window.removeEventListener('focus', syncWithStorage);
+        };
+    }, []);
+
     const addItem = useCallback((product, quantity = 1) => {
         const parsedQuantity = Math.max(1, Math.floor(toNumber(quantity)));
 

@@ -1,4 +1,5 @@
-import { Link, usePage } from '@inertiajs/react';
+import { useEffect } from 'react';
+import { Link, usePage, router } from '@inertiajs/react';
 import useI18n from '@/hooks/useI18n';
 import { useCart } from '../../hooks/useCart';
 
@@ -12,6 +13,28 @@ export default function BottomNav({ onOpenProfile }) {
         if (path !== '/menu' && url.startsWith(path)) return true;
         return false;
     };
+
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+
+        const checkStaleState = () => {
+            if (sessionStorage.getItem('checkout_completed') === 'true') {
+                sessionStorage.removeItem('checkout_completed');
+                router.reload({ only: ['activeOrdersCount'] });
+            }
+        };
+
+        // Check immediately on mount
+        checkStaleState();
+
+        // Also check on popstate for browser back navigations
+        const handlePopState = () => {
+            setTimeout(checkStaleState, 50); // Small delay to let Inertia restore cache first
+        };
+
+        window.addEventListener('popstate', handlePopState);
+        return () => window.removeEventListener('popstate', handlePopState);
+    }, []);
 
     return (
         <div className="fixed bottom-0 left-0 right-0 z-40 pb-safe w-full border-t border-white/5 bg-[#131118]/90 backdrop-blur-xl supports-[backdrop-filter]:bg-[#131118]/70">

@@ -188,6 +188,12 @@ export function useCheckout({ items, clearCart, t, initialValues = {} }) {
             }
 
             clearCart();
+            
+            // Set flag to force Inertia reload on menu pages when returning via back button
+            if (typeof window !== 'undefined') {
+                sessionStorage.setItem('checkout_completed', 'true');
+            }
+            
             router.visit(`/menu/order/${response.order_id}/status`);
         } catch (error) {
             const serverError = error?.response?.data?.error;
