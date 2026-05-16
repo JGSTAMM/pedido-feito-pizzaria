@@ -16,27 +16,17 @@ export default function FlavorDetailModal({ isOpen, onClose, product, onAddFlavo
     const ingredientsList = useMemo(() => {
         if (!product) return [];
         const rawIngredientsJson = product.ingredients_json;
-        let structured = [];
         try {
             const parsed = typeof rawIngredientsJson === 'string'
                 ? JSON.parse(rawIngredientsJson)
                 : (Array.isArray(rawIngredientsJson) ? rawIngredientsJson : []);
-            structured = (parsed || [])
-                .filter(i => (i?.is_available ?? true) === true)
+            return (parsed || [])
+                .filter(i => [true, '1', 1].includes(i?.is_available ?? true))
                 .map(i => i?.name)
                 .filter(Boolean);
         } catch {
-            structured = [];
+            return [];
         }
-
-        // If we got only 1 item and it looks like a compound string, split it
-        if (structured.length === 1 && (/,\s*|\s+e\s+/i.test(structured[0]))) {
-            return parseIngredients(structured[0]);
-        }
-        
-        if (structured.length > 0) return structured;
-
-        return parseIngredients(product.ingredients || product.description);
     }, [product]);
 
     // Handle Escape key with capture
