@@ -215,6 +215,13 @@ export default function PizzaBuilderModal({
         }
     }, [selectedSizeMaxFlavors, selectedFlavorInstances.length, selectedPizzaSizeOption]);
 
+    // Reset border if broto rule applies
+    useEffect(() => {
+        if (selectedPizzaSizeOption?.is_special_broto_rule) {
+            setSelectedBorderId('none');
+        }
+    }, [selectedPizzaSizeOption]);
+
     if (!isOpen) return null;
 
     const sliceAngle = 360 / selectedSizeMaxFlavors;
@@ -376,7 +383,7 @@ export default function PizzaBuilderModal({
                                     return (
                                         <div key={`inst-${idx}`} className={`flex flex-col p-3 rounded-xl border-2 transition-all ${isActive ? 'bg-primary/10 border-primary/40 shadow-lg shadow-primary/5' : 'bg-white/5 border-transparent'}`}>
                                             <div className="flex items-center justify-between">
-                                                <button onClick={() => setActiveInstanceIndex(idx)} className="flex-1 text-left flex items-center gap-3 group">
+                                                <button onClick={() => setActiveInstanceIndex(isActive ? null : idx)} className="flex-1 text-left flex items-center gap-3 group">
                                                     <span className={`w-6 h-6 rounded-full shrink-0 text-[10px] flex items-center justify-center font-black transition-colors ${isActive ? 'bg-primary text-white' : 'bg-white/10 text-slate-400'}`}>{idx + 1}</span>
                                                     <div className="flex-1">
                                                         <div className="flex items-center gap-2">
@@ -517,21 +524,29 @@ export default function PizzaBuilderModal({
                     {/* Step 3: Borders */}
                     <section className="space-y-4">
                         <h4 className="font-black text-white tracking-widest text-xs uppercase">{t('digital_menu.pizza_builder.escolher_borda')}</h4>
-                        <div className="space-y-2">
-                            {pizzaBorderOptions.map((border) => (
-                                <button
-                                    key={border.id}
-                                    onClick={() => setSelectedBorderId(String(border.id))}
-                                    className={`w-full flex items-center justify-between p-4 rounded-[1rem] transition-all duration-300 font-bold text-sm border-2 ${selectedBorderId === String(border.id)
-                                        ? 'bg-primary/20 border-primary text-white shadow-lg shadow-primary/10'
-                                        : `${luccheseMenuTheme.glass} border-transparent text-slate-300 hover:bg-white/10 hover:text-white`
-                                        }`}
-                                >
-                                    <span>{translateDynamic(border.name)}</span>
-                                    {border.price > 0 && <span className="text-primary tracking-wide bg-primary/10 px-3 py-1 rounded-full text-xs">+ {formatCurrency(border.price)}</span>}
-                                </button>
-                            ))}
-                        </div>
+                        
+                        {selectedPizzaSizeOption?.is_special_broto_rule ? (
+                            <div className="text-sm text-amber-500 bg-amber-500/10 p-4 rounded-[1rem] border border-amber-500/20 font-bold flex items-center gap-3 italic">
+                                <span className="material-symbols-outlined text-[18px]">info</span>
+                                {t('digital_menu.pizza_builder.broto_no_border') || 'Pizzas tamanho Broto não possuem borda recheada.'}
+                            </div>
+                        ) : (
+                            <div className="space-y-2">
+                                {[{ id: 'none', name: t('digital_menu.pizza_builder.no_border'), price: 0 }, ...pizzaBorderOptions].map((border) => (
+                                    <button
+                                        key={border.id}
+                                        onClick={() => setSelectedBorderId(String(border.id))}
+                                        className={`w-full flex items-center justify-between p-4 rounded-[1rem] transition-all duration-300 font-bold text-sm border-2 ${selectedBorderId === String(border.id)
+                                            ? 'bg-primary/20 border-primary text-white shadow-lg shadow-primary/10'
+                                            : `${luccheseMenuTheme.glass} border-transparent text-slate-300 hover:bg-white/10 hover:text-white`
+                                            }`}
+                                    >
+                                        <span>{translateDynamic(border.name)}</span>
+                                        {border.price > 0 && <span className="text-primary tracking-wide bg-primary/10 px-3 py-1 rounded-full text-xs">+ {formatCurrency(border.price)}</span>}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
                     </section>
                 </div>
 
