@@ -5,7 +5,7 @@ import { useCart } from './hooks/useCart';
 import { useDigitalMenuQuery } from './hooks/useDigitalMenuQuery';
 import { useStoreHours } from './hooks/useStoreHours';
 import ProductVariationModal from '@/Pages/POS/ProductVariationModal';
-import { buildCatalogCategories, buildFeaturedProducts, injectBaseIngredients } from './utils/menuHelpers';
+import { buildCatalogCategories, buildFeaturedProducts } from './utils/menuHelpers';
 
 // Layout Components
 import MenuHeader from './components/layout/MenuHeader';
@@ -191,8 +191,8 @@ export default function CustomerMenu() {
                 pizzaFlavorProducts={(data?.pizza_flavors ?? []).map(f => ({
                     ...f,
                     name: translateDynamic(f.name),
-                    description: translateDynamic(injectBaseIngredients(f.description || f.ingredients, f.flavor_category, f.name)),
-                    ingredients: translateDynamic(injectBaseIngredients(f.ingredients, f.flavor_category, f.name))
+                    description: translateDynamic(f.description || f.ingredients),
+                    ingredients: translateDynamic(f.ingredients)
                 }))}
                 preSelectedInstance={preSelectedPizzaInstance}
             />

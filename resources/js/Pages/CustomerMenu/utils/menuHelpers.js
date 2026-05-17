@@ -10,20 +10,6 @@ export function translateCategoryName(name, t) {
     return translated === `digital_menu.catalog.categories.${normalized}` ? name : translated;
 }
 
-export function injectBaseIngredients(ingredients, flavorCategory, name) {
-    const cat = (flavorCategory || '').toLowerCase();
-    const isSavory = !cat || ['salgada', 'tradicional', 'especial'].includes(cat);
-    const isForceSweet = (name || '').toLowerCase().includes('doce') || (name || '').toLowerCase().includes('chocolate');
-
-    if (isSavory && !isForceSweet) {
-        const base = "Molho artesanal, Queijo mussarela ralado";
-        if (!ingredients) return base;
-        if (ingredients.toLowerCase().includes('molho artesanal')) return ingredients;
-        return `${base}, ${ingredients}`;
-    }
-    return ingredients;
-}
-
 export function groupProductsByCategory(products, uncategorizedLabel, t, translateDynamic) {
     const grouped = (products ?? []).reduce((accumulator, product) => {
         const categoryName = product.category || uncategorizedLabel;
@@ -67,8 +53,8 @@ export function groupPizzaFlavorsByCategory(flavors, t, translateDynamic) {
         acc[cat].push({
             ...flavor,
             name: translateDynamic(flavor.name),
-            description: translateDynamic(injectBaseIngredients(flavor.description || flavor.ingredients, flavor.flavor_category, flavor.name)),
-            ingredients: translateDynamic(injectBaseIngredients(flavor.ingredients, flavor.flavor_category, flavor.name)),
+            description: translateDynamic(flavor.description || flavor.ingredients),
+            ingredients: translateDynamic(flavor.ingredients),
             price,
             type: 'pizza_flavor'
         });

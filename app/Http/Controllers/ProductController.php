@@ -29,6 +29,8 @@ class ProductController extends Controller
             'is_active_delivery' => 'boolean',
             'is_active_pos' => 'boolean',
             'variations' => 'nullable|array',
+            'variations.*.name' => 'required|string|max:255',
+            'variations.*.price' => 'required|numeric|min:0',
             'image' => 'nullable|image|max:5120',
         ]);
 
@@ -52,6 +54,8 @@ class ProductController extends Controller
             'is_active_delivery' => 'boolean',
             'is_active_pos' => 'boolean',
             'variations' => 'nullable|array',
+            'variations.*.name' => 'required|string|max:255',
+            'variations.*.price' => 'required|numeric|min:0',
             'image' => 'nullable|image|max:5120',
         ]);
 
@@ -66,6 +70,8 @@ class ProductController extends Controller
                 Storage::disk('public')->delete($product->image);
             }
             $validated['image'] = null;
+        } else {
+            unset($validated['image']);
         }
 
         $product->update($validated);

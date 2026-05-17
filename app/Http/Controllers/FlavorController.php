@@ -27,6 +27,8 @@ class FlavorController extends Controller
             'is_active_delivery' => 'boolean',
             'is_active_pos' => 'boolean',
             'ingredients_json' => 'nullable|array',
+            'ingredients_json.*.name' => 'required|string|max:255',
+            'ingredients_json.*.is_available' => 'boolean',
             'image' => 'nullable|image|max:5120',
         ]);
 
@@ -48,6 +50,8 @@ class FlavorController extends Controller
             'is_active_delivery' => 'boolean',
             'is_active_pos' => 'boolean',
             'ingredients_json' => 'nullable|array',
+            'ingredients_json.*.name' => 'required|string|max:255',
+            'ingredients_json.*.is_available' => 'boolean',
             'image' => 'nullable|image|max:5120',
         ]);
 
@@ -62,6 +66,8 @@ class FlavorController extends Controller
                 Storage::disk('public')->delete($flavor->image);
             }
             $validated['image'] = null;
+        } else {
+            unset($validated['image']);
         }
 
         $flavor->update($validated);

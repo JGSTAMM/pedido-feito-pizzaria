@@ -23,6 +23,24 @@ class Product extends Model
 
     protected $appends = ['image_url'];
 
+    protected function variations(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($value) => collect(is_string($value) ? json_decode($value, true) : $value)->map(function($v) {
+                return [
+                    'name' => $v['name'] ?? '',
+                    'price' => isset($v['price']) ? $v['price'] / 100 : 0,
+                ];
+            })->toArray(),
+            set: fn ($value) => json_encode(collect($value)->map(function($v) {
+                return [
+                    'name' => $v['name'] ?? '',
+                    'price' => isset($v['price']) ? (int) round($v['price'] * 100) : 0,
+                ];
+            })->toArray()),
+        );
+    }
+
     protected function price(): Attribute
     {
         return Attribute::make(
