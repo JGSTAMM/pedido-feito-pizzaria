@@ -94,7 +94,7 @@ export default function CustomerMenu() {
 
     return (
         <main
-            className="h-[100dvh] overflow-y-auto custom-scrollbar bg-[#0D0D12] text-slate-100 pb-24 font-sans overflow-x-clip"
+            className={`h-[100dvh] overflow-y-auto bg-[#0D0D12] text-slate-100 pb-24 font-sans overflow-x-clip ${scrolled ? 'custom-scrollbar' : 'custom-scrollbar-hidden'}`}
             onScroll={(e) => setScrolled(e.currentTarget.scrollTop > 180)}
         >
             <style dangerouslySetInnerHTML={{
@@ -106,6 +106,9 @@ export default function CustomerMenu() {
                 .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
                 .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(90, 90, 246, 0.4); border-radius: 10px; }
                 .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #5a5af6; }
+                .custom-scrollbar-hidden::-webkit-scrollbar { width: 6px; }
+                .custom-scrollbar-hidden::-webkit-scrollbar-track { background: transparent; }
+                .custom-scrollbar-hidden::-webkit-scrollbar-thumb { background: transparent; border-radius: 10px; }
             `}} />
 
             <MenuHeader
