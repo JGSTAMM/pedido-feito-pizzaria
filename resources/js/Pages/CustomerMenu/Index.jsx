@@ -38,13 +38,7 @@ export default function CustomerMenu() {
     const [preSelectedPizzaInstance, setPreSelectedPizzaInstance] = useState(null);
     const [scrolled, setScrolled] = useState(false);
 
-    useEffect(() => {
-        const handleScroll = () => {
-            setScrolled(window.scrollY > 180);
-        };
-        window.addEventListener('scroll', handleScroll, { passive: true });
-        return () => window.removeEventListener('scroll', handleScroll);
-    }, []);
+
 
     const { addItem, cartItemCount, cartTotal } = useCart();
     const { todayHours, dynamicHoursSummary } = useStoreHours(storeSetting?.opening_hours);
@@ -99,7 +93,10 @@ export default function CustomerMenu() {
     };
 
     return (
-        <main className="min-h-screen bg-[#0D0D12] text-slate-100 pb-24 font-sans overflow-x-clip">
+        <main
+            className="h-[100dvh] overflow-y-auto custom-scrollbar bg-[#0D0D12] text-slate-100 pb-24 font-sans overflow-x-clip"
+            onScroll={(e) => setScrolled(e.currentTarget.scrollTop > 180)}
+        >
             <style dangerouslySetInnerHTML={{
                 __html: `
                 header { will-change: height, padding, background-color; }
