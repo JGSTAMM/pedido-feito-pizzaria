@@ -264,7 +264,7 @@ export default function PizzaBuilderModal({
                     </button>
                 </header>
 
-                <div className="flex-1 overflow-y-auto p-6 space-y-10 no-scrollbar pb-48">
+                <div className="flex-1 overflow-y-auto p-6 space-y-10 custom-scrollbar pb-48">
 
                     {/* Visualizer */}
                     <div className="relative w-64 h-64 mx-auto mt-2 mb-6 transition-transform duration-500 hover:scale-105 select-none touch-none">

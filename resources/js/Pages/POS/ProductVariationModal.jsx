@@ -4,11 +4,13 @@ import useI18n from '@/hooks/useI18n';
 export default function ProductVariationModal({ isOpen, onClose, onConfirm, product }) {
     const { t, formatCurrency } = useI18n();
     const [selectedVariation, setSelectedVariation] = useState(null);
+    const [observation, setObservation] = useState('');
 
     // Reset selection when product changes or modal opens
     useEffect(() => {
         if (isOpen) {
             setSelectedVariation(null);
+            setObservation('');
         }
     }, [isOpen, product]);
 
@@ -23,7 +25,7 @@ export default function ProductVariationModal({ isOpen, onClose, onConfirm, prod
 
     const handleConfirm = () => {
         if (!selectedVariation) return;
-        onConfirm(product, selectedVariation);
+        onConfirm(product, selectedVariation, observation);
     };
 
     return (
@@ -111,6 +113,31 @@ export default function ProductVariationModal({ isOpen, onClose, onConfirm, prod
                         <div className="py-10 text-center bg-white/5 rounded-2xl border border-dashed border-white/10">
                             <span className="material-symbols-outlined text-4xl text-text-muted/30 mb-2">inventory_2</span>
                             <p className="text-sm text-text-muted font-medium">Nenhuma variação disponível.</p>
+                        </div>
+                    )}
+
+                    {/* Free-text Observation */}
+                    {selectedVariation && (
+                        <div className="pt-4 border-t border-white/5 mt-4 space-y-2 animate-fade-in">
+                            <label className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em] px-1">
+                                {t('digital_menu.catalog.observation_title') || 'Observações'}
+                            </label>
+                            <textarea
+                                value={observation}
+                                onChange={(e) => setObservation(e.target.value)}
+                                maxLength={250}
+                                rows={2}
+                                placeholder={t('digital_menu.catalog.observation_placeholder') || 'Ex: Gelo e limão, sem açúcar...'}
+                                className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm text-slate-300 placeholder-slate-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all resize-none"
+                            />
+                            <div className="flex justify-between items-center px-1">
+                                <span className="text-[9px] text-text-muted font-bold">
+                                    {t('digital_menu.catalog.observation_char_limit') || 'Opcional'}
+                                </span>
+                                <span className="text-[9px] text-text-muted font-bold">
+                                    {observation.length} / 250
+                                </span>
+                            </div>
                         </div>
                     )}
                 </div>
