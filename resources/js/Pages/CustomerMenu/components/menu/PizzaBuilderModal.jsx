@@ -488,7 +488,7 @@ export default function PizzaBuilderModal({
                             />
                         </div>
 
-                        <div className="flex flex-col gap-2 max-h-64 overflow-y-auto no-scrollbar pr-1">
+                        <div className="flex flex-col gap-2 max-h-64 overflow-y-auto custom-scrollbar pr-2">
                             {filteredPizzaFlavors.map((flavor) => (
                                 <button
                                     key={flavor.id}
