@@ -35,6 +35,7 @@ export default function PizzaBuilderModal({
 
     // New Feature States
     const [flavorSearchQuery, setFlavorSearchQuery] = useState('');
+    const [observation, setObservation] = useState('');
 
     // Derived State
     const selectedPizzaSizeOption = useMemo(() => {
@@ -144,10 +145,12 @@ export default function PizzaBuilderModal({
             }
         });
 
-        let finalNotes = borderNote || '';
-        if (flavorExclusions.length > 0) {
-            finalNotes = finalNotes ? `${finalNotes}|${flavorExclusions.join('|')}` : flavorExclusions.join('|');
-        }
+        let finalNotesArray = [];
+        if (borderNote) finalNotesArray.push(borderNote);
+        if (flavorExclusions.length > 0) finalNotesArray.push(...flavorExclusions);
+        if (observation.trim()) finalNotesArray.push(`📝 Obs: ${observation.trim()}`);
+
+        const finalNotes = finalNotesArray.join('|');
 
         const customPizzaId = `custom-pizza-${selectedPizzaSizeOption.id}-${selectedFlavorInstances.map(i => `${i.flavorId}-${(i.removed || []).slice().sort().join('_')}`).join('|')}-${Date.now()}`;
 
@@ -181,6 +184,7 @@ export default function PizzaBuilderModal({
 
             setSelectedBorderId('none');
             setPizzaBuilderErrorKey('');
+            setObservation('');
         }
     }, [isOpen, preSelectedInstance]);
 
@@ -543,6 +547,28 @@ export default function PizzaBuilderModal({
                                 ))}
                             </div>
                         )}
+                    </section>
+
+                    <hr className="border-white/5 mx-2" />
+
+                    {/* Step 4: Observations */}
+                    <section className="space-y-4">
+                        <h4 className="font-black text-white tracking-widest text-xs uppercase">
+                            {t('digital_menu.pizza_builder.observation_title') || 'Observações'}
+                        </h4>
+                        <textarea
+                            value={observation}
+                            onChange={(e) => setObservation(e.target.value)}
+                            maxLength={250}
+                            rows={3}
+                            placeholder={t('digital_menu.pizza_builder.observation_placeholder') || 'Ex: Massa bem fina, bem assada, sem cebola...'}
+                            className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm text-slate-300 placeholder-slate-500 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all resize-none"
+                        />
+                        <div className="flex justify-end">
+                            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+                                {observation.length} / 250
+                            </span>
+                        </div>
                     </section>
                 </div>
 
