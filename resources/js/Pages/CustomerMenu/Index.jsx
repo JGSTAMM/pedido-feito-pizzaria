@@ -105,6 +105,10 @@ export default function CustomerMenu() {
                 header { will-change: height, padding, background-color; }
                 .no-scrollbar::-webkit-scrollbar { display: none; }
                 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+                ::-webkit-scrollbar { width: 6px; height: 6px; }
+                ::-webkit-scrollbar-track { background: #0D0D12; }
+                ::-webkit-scrollbar-thumb { background: rgba(90, 90, 246, 0.4); border-radius: 10px; }
+                ::-webkit-scrollbar-thumb:hover { background: #5a5af6; }
                 .custom-scrollbar::-webkit-scrollbar { width: 6px; }
                 .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
                 .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(90, 90, 246, 0.4); border-radius: 10px; }
