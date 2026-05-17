@@ -107,8 +107,8 @@ export default function CustomerMenu() {
                 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
                 .custom-scrollbar::-webkit-scrollbar { width: 6px; }
                 .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-                .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
-                .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(139, 92, 246, 0.4); }
+                .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(90, 90, 246, 0.4); border-radius: 10px; }
+                .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #5a5af6; }
             `}} />
 
             <MenuHeader
