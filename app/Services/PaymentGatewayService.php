@@ -17,7 +17,15 @@ class PaymentGatewayService
 {
     public function __construct()
     {
-        MercadoPagoConfig::setAccessToken(config('services.mercadopago.access_token'));
+        $token = config('services.mercadopago.access_token');
+
+        if (empty($token)) {
+            throw new \RuntimeException(
+                'Mercado Pago access token not configured. Set MERCADOPAGO_ACCESS_TOKEN in .env.'
+            );
+        }
+
+        MercadoPagoConfig::setAccessToken((string) $token);
     }
 
     public function extractNotificationId(Request $request): ?string
@@ -347,7 +355,7 @@ class PaymentGatewayService
     /**
      * Mark order as paid online and create payment record.
      */
-    protected function markOrderAsPaidOnline(Order $order, $gatewayPaymentId): void
+    protected function markOrderAsPaidOnline(Order $order, string|int $gatewayPaymentId): void
     {
         if ($order->type === 'dine_in' && $order->status !== Order::STATUS_AWAITING_PAYMENT) {
             // POS table checkout PIX payment!
