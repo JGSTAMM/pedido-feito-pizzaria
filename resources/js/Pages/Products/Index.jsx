@@ -4,6 +4,7 @@ import { norm } from '@/utils/normalize';
 import AppLayout from '@/Layouts/AppLayout';
 import useI18n from '@/hooks/useI18n';
 import CustomNumberInput from '@/Components/CustomNumberInput';
+import { resolveImagePath } from '@/utils/media';
 
 function Modal({ isOpen, onClose, title, children }) {
     if (!isOpen) return null;
@@ -171,7 +172,7 @@ export default function Index({ products = [] }) {
                     {/* Table */}
                     <div className="bg-surface rounded-2xl border border-border-subtle overflow-hidden relative" style={{ background: 'rgba(255,255,255,0.03)' }}>
                         <div className="grid grid-cols-[60px_1fr_150px_120px_120px_80px] gap-4 px-6 py-4 border-b border-border-subtle bg-black/20 text-xs font-bold text-text-muted uppercase tracking-wider">
-                            <span>{t('products.table.image')}</span>
+                            <span>{t('admin.catalog.upload.image_header')}</span>
                             <span>{t('products.table.name')}</span>
                             <span>{t('products.table.category')}</span>
                             <span>{t('products.table.price')}</span>
@@ -187,7 +188,7 @@ export default function Index({ products = [] }) {
                                     <div key={product.id} className={`grid grid-cols-[60px_1fr_150px_120px_120px_80px] gap-4 px-6 py-4 items-center hover:bg-surface-hover transition-colors ${idx !== filtered.length - 1 ? 'border-b border-border-subtle' : ''}`}>
                                         <div className="w-10 h-10 rounded-lg bg-surface flex items-center justify-center overflow-hidden border border-border-subtle">
                                             {product.image_url ? (
-                                                <img src={product.image_url.startsWith('http') ? product.image_url : product.image_url} alt={product.name} className="w-full h-full object-cover" />
+                                                <img src={resolveImagePath(product.image_url)} alt={product.name} className="w-full h-full object-cover" />
                                             ) : (
                                                 <span className="material-symbols-outlined text-text-muted text-xl">image</span>
                                             )}
@@ -282,7 +283,7 @@ export default function Index({ products = [] }) {
 
                     {/* Image Upload Box (Dark Glassmorphism) */}
                     <div className="bg-[#111115]/50 backdrop-blur-md border border-border-subtle p-4 rounded-2xl flex flex-col gap-3">
-                        <label className="block text-xs font-bold text-text-muted uppercase tracking-wider">Imagem do Produto</label>
+                        <label className="block text-xs font-bold text-text-muted uppercase tracking-wider">{t('admin.catalog.upload.product_image_label')}</label>
                         
                         <div className="flex items-center gap-4">
                             {/* Preview/Thumbnail */}
@@ -290,7 +291,7 @@ export default function Index({ products = [] }) {
                                 {data.image ? (
                                     <img src={URL.createObjectURL(data.image)} alt="Preview" className="w-full h-full object-cover" />
                                 ) : (currentProduct?.image_url && !data.clear_image) ? (
-                                    <img src={currentProduct.image_url} alt="Preview" className="w-full h-full object-cover" />
+                                    <img src={resolveImagePath(currentProduct.image_url)} alt="Preview" className="w-full h-full object-cover" />
                                 ) : (
                                     <span className="material-symbols-outlined text-text-muted text-2xl">image</span>
                                 )}
@@ -301,7 +302,7 @@ export default function Index({ products = [] }) {
                                 <div className="flex gap-2">
                                     <label className="cursor-pointer px-4 py-2 bg-surface hover:bg-surface-hover border border-border-subtle text-white text-xs font-bold rounded-xl transition-all flex items-center gap-1.5">
                                         <span className="material-symbols-outlined text-base">upload</span>
-                                        <span>Selecionar</span>
+                                        <span>{t('admin.catalog.upload.select')}</span>
                                         <input
                                             type="file"
                                             accept="image/*"
@@ -323,12 +324,12 @@ export default function Index({ products = [] }) {
                                             className="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 text-xs font-bold rounded-xl transition-all flex items-center gap-1.5"
                                         >
                                             <span className="material-symbols-outlined text-base">delete</span>
-                                            <span>Remover</span>
+                                            <span>{t('admin.catalog.upload.remove')}</span>
                                         </button>
                                     )}
                                 </div>
                                 <p className="text-text-muted text-[10px] leading-relaxed">
-                                    Adicione imagem para o produto/sabor. Formato sugerido: WebP ou JPG quadrado para melhor performance e qualidade.
+                                    {t('admin.catalog.upload.help_text')}
                                 </p>
                             </div>
                         </div>
@@ -337,7 +338,7 @@ export default function Index({ products = [] }) {
 
                     {/* Channel Visibility */}
                     <div className="bg-black/20 p-4 rounded-2xl border border-border-subtle flex flex-col gap-3">
-                        <label className="block text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mb-1 italic">Visibilidade por Canal</label>
+                        <label className="block text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mb-1 italic">{t('admin.catalog.upload.visibility_by_channel')}</label>
                         <div className="flex gap-6">
                             <label className="flex items-center gap-2 cursor-pointer group">
                                 <input
@@ -346,7 +347,7 @@ export default function Index({ products = [] }) {
                                     onChange={e => setData('is_active_delivery', e.target.checked)}
                                     className="w-4 h-4 rounded border-border-subtle text-primary bg-surface focus:ring-primary focus:ring-offset-background-dark"
                                 />
-                                <span className="text-sm text-white group-hover:text-primary transition-colors">Delivery</span>
+                                <span className="text-sm text-white group-hover:text-primary transition-colors">{t('admin.catalog.upload.channel_delivery')}</span>
                             </label>
                             <label className="flex items-center gap-2 cursor-pointer group">
                                 <input
@@ -355,7 +356,7 @@ export default function Index({ products = [] }) {
                                     onChange={e => setData('is_active_pos', e.target.checked)}
                                     className="w-4 h-4 rounded border-border-subtle text-primary bg-surface focus:ring-primary focus:ring-offset-background-dark"
                                 />
-                                <span className="text-sm text-white group-hover:text-primary transition-colors">Salão / Mesa</span>
+                                <span className="text-sm text-white group-hover:text-primary transition-colors">{t('admin.catalog.upload.channel_pos')}</span>
                             </label>
                         </div>
                     </div>
@@ -406,7 +407,7 @@ export default function Index({ products = [] }) {
                             ))}
                             {data.variations.length === 0 && (
                                 <div className="py-4 text-center text-xs text-text-muted italic bg-black/10 rounded-xl border border-dashed border-border-subtle">
-                                    Nenhuma variação adicionada
+                                    {t('admin.catalog.upload.empty_variations')}
                                 </div>
                             )}
                         </div>
@@ -425,7 +426,7 @@ export default function Index({ products = [] }) {
                             disabled={processing}
                             className="px-4 py-2 rounded-xl text-sm font-bold bg-primary text-white hover:bg-primary-dark transition-colors disabled:opacity-50"
                         >
-                            {processing ? 'Salvando...' : t('products.form.save')}
+                            {processing ? t('flavors.form.saving') : t('products.form.save')}
                         </button>
                     </div>
                 </form>

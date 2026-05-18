@@ -26,6 +26,7 @@ class StoreSetting extends Model
         'phone',
         'full_address',
         'google_maps_embed_url',
+        'google_maps_place_url',
         'payment_methods',
         'custom_info',
         'mercadopago_access_token',

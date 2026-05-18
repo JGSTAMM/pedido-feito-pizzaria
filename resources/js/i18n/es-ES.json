@@ -959,5 +959,41 @@
             "until": "hasta",
             "empty": "No se encontraron registros"
         }
+    },
+    "admin": {
+        "catalog": {
+            "upload": {
+                "image_header": "Imagen",
+                "flavor_image_label": "Imagen del Sabor",
+                "select": "Seleccionar",
+                "remove": "Eliminar",
+                "help_text": "Añada una imagen para el producto/sabor. Formato sugerido: WebP o JPG cuadrado para mejor rendimiento y calidad.",
+                "visibility_by_channel": "Visibilidad por Canal",
+                "channel_delivery": "Delivery",
+                "channel_pos": "Salón / Mesa",
+                "available": "Disponible",
+                "unavailable": "No disponible",
+                "product_image_label": "Imagen del Producto",
+                "empty_variations": "Ninguna variación agregada"
+            }
+        },
+        "settings": {
+            "branding": {
+                "visual_identity": "Identidad Visual",
+                "visual_identity_desc": "Logotipo y portada que aparecerán en el menú digital.",
+                "logo_label": "Logotipo",
+                "logo_help": "Logotipo de su marca en formato PNG/WebP con fondo transparente o sólido.",
+                "cover_label": "Portada del Menú",
+                "cover_help": "Banner de portada que se muestra en la parte superior del menú digital (Móvil y Escritorio).",
+                "bg_media_label": "Fondo del Menú (Medio Dinámico)",
+                "bg_media_help": "Vídeo o imagen que se muestra como fondo en la pantalla de inicio del cliente.",
+                "bg_media_format_help": "Formato sugerido: WebP o MP4 (Máx. 5MB) para un mejor rendimiento",
+                "save_profile": "Guardar Perfil",
+                "save_images": "Guardar Imágenes",
+                "store_open": "Tienda Abierta",
+                "store_closed": "Tienda Cerrada",
+                "store_status_desc": "Controle si los clientes pueden realizar pedidos ahora."
+            }
+        }
     }
 }

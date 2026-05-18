@@ -970,5 +970,41 @@
             "until": "to",
             "empty": "No logs found"
         }
+    },
+    "admin": {
+        "catalog": {
+            "upload": {
+                "image_header": "Image",
+                "flavor_image_label": "Flavor Image",
+                "select": "Select",
+                "remove": "Remove",
+                "help_text": "Add an image for the product/flavor. Suggested format: square WebP or JPG for best performance and quality.",
+                "visibility_by_channel": "Visibility by Channel",
+                "channel_delivery": "Delivery",
+                "channel_pos": "POS / Table",
+                "available": "Available",
+                "unavailable": "Unavailable",
+                "product_image_label": "Product Image",
+                "empty_variations": "No variations added"
+            }
+        },
+        "settings": {
+            "branding": {
+                "visual_identity": "Visual Identity",
+                "visual_identity_desc": "Logo and cover that will appear on the digital menu.",
+                "logo_label": "Logo",
+                "logo_help": "Your brand logo in PNG/WebP format with a transparent or solid background.",
+                "cover_label": "Menu Cover",
+                "cover_help": "Cover banner displayed at the top of the digital menu (Mobile & Desktop).",
+                "bg_media_label": "Menu Background (Dynamic Media)",
+                "bg_media_help": "Video or image displayed as background on the customer's home screen.",
+                "bg_media_format_help": "Suggested format: WebP or MP4 (Max 5MB) for best performance",
+                "save_profile": "Save Profile",
+                "save_images": "Save Images",
+                "store_open": "Store Open",
+                "store_closed": "Store Closed",
+                "store_status_desc": "Control whether customers can place orders now."
+            }
+        }
     }
 }
