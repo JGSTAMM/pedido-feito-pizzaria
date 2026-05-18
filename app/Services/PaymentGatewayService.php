@@ -25,7 +25,7 @@ class PaymentGatewayService
             );
         }
 
-        MercadoPagoConfig::setAccessToken((string) $token);
+        MercadoPagoConfig::setAccessToken($token);
     }
 
     public function extractNotificationId(Request $request): ?string
