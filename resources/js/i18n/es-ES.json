@@ -994,6 +994,22 @@
                 "store_closed": "Tienda Cerrada",
                 "store_status_desc": "Controle si los clientes pueden realizar pedidos ahora."
             }
+        },
+        "floor": {
+            "drawer": {
+                "pix": {
+                    "title": "Pago PIX",
+                    "scanHint": "Escanee el código QR con la app del banco",
+                    "generating": "Generando código QR...",
+                    "error": "Error al generar PIX. Intente de nuevo.",
+                    "approved": "¡Pago aprobado!",
+                    "remainingAmount": "Monto: :amount",
+                    "countdown": "Expira en :time",
+                    "pixCopiar": "Copiar Código PIX",
+                    "waitingApproval": "Esperando pago...",
+                    "cancel": "Volver / Cancelar PIX"
+                }
+            }
         }
     }
 }

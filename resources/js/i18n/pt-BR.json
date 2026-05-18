@@ -1015,41 +1015,21 @@
             "title": "Histórico do Caixa",
             "until": "até",
             "empty": "Nenhum log encontrado"
-        }
-    },
-    "admin": {
-        "catalog": {
-            "upload": {
-                "image_header": "Imagem",
-                "flavor_image_label": "Imagem do Sabor",
-                "select": "Selecionar",
-                "remove": "Remover",
-                "help_text": "Adicione imagem para o produto/sabor. Formato sugerido: WebP ou JPG quadrado para melhor performance e qualidade.",
-                "visibility_by_channel": "Visibilidade por Canal",
-                "channel_delivery": "Delivery",
-                "channel_pos": "Salão / Mesa",
-                "available": "Disponível",
-                "unavailable": "Indisponível",
-                "product_image_label": "Imagem do Produto",
-                "empty_variations": "Nenhuma variação adicionada"
-            }
         },
-        "settings": {
-            "branding": {
-                "visual_identity": "Identidade Visual",
-                "visual_identity_desc": "Logotipo e capa que aparecerão no cardápio digital.",
-                "logo_label": "Logotipo",
-                "logo_help": "Logotipo da sua marca em formato PNG/WebP com fundo transparente ou sólido.",
-                "cover_label": "Capa do Cardápio",
-                "cover_help": "Banner de capa exibido no topo do cardápio digital (Mobile & Desktop).",
-                "bg_media_label": "Background do Menu (Mídia Dinâmica)",
-                "bg_media_help": "Vídeo ou imagem exibida como fundo na tela inicial do cliente.",
-                "bg_media_format_help": "Formato sugerido: WebP ou MP4 (Máx 5MB) para melhor performance",
-                "save_profile": "Salvar Perfil",
-                "save_images": "Salvar Imagens",
-                "store_open": "Loja Aberta",
-                "store_closed": "Loja Fechada",
-                "store_status_desc": "Controle se os clientes podem fazer pedidos agora."
+        "floor": {
+            "drawer": {
+                "pix": {
+                    "title": "Pagamento PIX",
+                    "scanHint": "Escaneie o QR Code com o app do banco",
+                    "generating": "Gerando QR Code...",
+                    "error": "Erro ao gerar PIX. Tente novamente.",
+                    "approved": "Pagamento aprovado!",
+                    "remainingAmount": "Valor: :amount",
+                    "countdown": "Expira em :time",
+                    "pixCopiar": "Copiar Código PIX",
+                    "waitingApproval": "Aguardando pagamento...",
+                    "cancel": "Voltar / Cancelar PIX"
+                }
             }
         }
     }
