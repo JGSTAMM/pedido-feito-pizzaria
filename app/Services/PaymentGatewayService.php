@@ -82,13 +82,13 @@ class PaymentGatewayService
      * @param  string  $payerEmail  Email do pagador (obrigatório para PIX)
      * @return array ['success' => bool, 'data' => [...]]
      */
-    public function createPixPayment(Order $order, string $payerEmail): array
+    public function createPixPayment(Order $order, string $payerEmail, ?float $amount = null): array
     {
         try {
             $client = new PaymentClient;
 
             $requestBody = [
-                'transaction_amount' => (float) $order->total_amount,
+                'transaction_amount' => $amount !== null ? (float) $amount : (float) $order->total_amount,
                 'description' => "Pedido #{$order->id} - Pedido Feito Pizzaria",
                 'payment_method_id' => 'pix',
                 'payer' => [
@@ -349,6 +349,14 @@ class PaymentGatewayService
      */
     protected function markOrderAsPaidOnline(Order $order, $gatewayPaymentId): void
     {
+        if ($order->type === 'dine_in' && $order->status !== Order::STATUS_AWAITING_PAYMENT) {
+            // POS table checkout PIX payment!
+            $order->update([
+                'online_payment_status' => Order::ONLINE_PAYMENT_APPROVED,
+            ]);
+            return;
+        }
+
         $order->update([
             'status' => Order::STATUS_PENDING,
             'online_payment_status' => Order::ONLINE_PAYMENT_APPROVED,

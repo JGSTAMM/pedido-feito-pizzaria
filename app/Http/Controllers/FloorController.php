@@ -14,6 +14,7 @@ use App\Models\PizzaSize;
 use App\Models\Product;
 use App\Models\Table;
 use App\Services\PizzaPriceService;
+use App\Services\PaymentGatewayService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -26,6 +27,7 @@ class FloorController extends Controller
     public function __construct(
         private readonly PizzaPriceService $pizzaPriceService,
         private readonly CashRegisterLockService $cashRegisterLockService,
+        private readonly PaymentGatewayService $paymentGatewayService,
     ) {}
 
     public function index(): \Inertia\Response
@@ -509,5 +511,65 @@ class FloorController extends Controller
         $table->delete();
 
         return redirect()->back()->with('success', 'Mesa excluída com sucesso.');
+    }
+
+    /**
+     * Generate dynamic Mercado Pago PIX QR Code for table checkout.
+     */
+    public function generatePix(Request $request, Table $table)
+    {
+        $validated = $request->validate([
+            'amount' => 'required|numeric|min:0.01',
+        ]);
+
+        try {
+            $this->cashRegisterLockService->requireOpenRegister();
+        } catch (OrderActionException $exception) {
+            return response()->json(['error' => $exception->getMessage()], 400);
+        }
+
+        $activeOrders = $table->activeOrders;
+        if ($activeOrders->isEmpty()) {
+            return response()->json(['error' => __('order.payment.no_active_orders')], 400);
+        }
+
+        $firstOrder = $activeOrders->first();
+        $amount = (float) $validated['amount'];
+
+        // Generate dynamic Mercado Pago PIX QR Code via PaymentGatewayService
+        $result = $this->paymentGatewayService->createPixPayment($firstOrder, 'caixa@pizzaria.com', $amount);
+
+        if (!($result['success'] ?? false)) {
+            return response()->json(['error' => $result['error'] ?? 'Erro ao gerar PIX'], 500);
+        }
+
+        // Return QR Details
+        return response()->json([
+            'success' => true,
+            'qr_code' => $result['data']['qr_code'],
+            'qr_code_base64' => $result['data']['qr_code_base64'],
+            'gateway_payment_id' => $result['data']['gateway_payment_id'],
+            'expires_at' => $result['data']['expires_at'],
+            'order_id' => $firstOrder->id,
+        ]);
+    }
+
+    /**
+     * Polling endpoint to check POS PIX payment status directly.
+     */
+    public function pixPaymentStatus(Order $order)
+    {
+        if ($order->online_payment_status === 'approved') {
+            return response()->json(['status' => 'approved']);
+        }
+
+        $gatewayStatus = $this->paymentGatewayService->checkPaymentStatus($order);
+
+        if ($gatewayStatus === 'approved') {
+            $order->update(['online_payment_status' => 'approved']);
+            return response()->json(['status' => 'approved']);
+        }
+
+        return response()->json(['status' => $gatewayStatus ?? 'pending']);
     }
 }

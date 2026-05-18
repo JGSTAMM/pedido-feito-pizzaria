@@ -911,6 +911,18 @@
                 "closeAccount": "Close Account",
                 "payment_added": "Payment Added"
             },
+            "pix": {
+                "generating": "Generating PIX QR Code...",
+                "title": "PIX Instant Payment",
+                "scanHint": "Point your phone's camera at the QR Code to pay:",
+                "remainingAmount": "Amount: :amount",
+                "countdown": "Expires in: :time",
+                "pixCopiar": "Copy Pix Code (Copy and Paste)",
+                "waitingApproval": "Awaiting payment approval...",
+                "approved": "Payment Approved!",
+                "error": "Error generating PIX. Try again.",
+                "cancel": "Back / Cancel"
+            },
             "actions": {
                 "closeAccount": "Close Account"
             }

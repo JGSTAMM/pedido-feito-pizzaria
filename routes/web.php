@@ -100,6 +100,8 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/floor', [FloorController::class, 'store']);
         Route::post('/floor/{table}/add-items', [FloorController::class, 'addItems']);
         Route::post('/floor/{table}/pay', [FloorController::class, 'payAndClose']);
+        Route::post('/floor/{table}/generate-pix', [FloorController::class, 'generatePix']);
+        Route::get('/floor/pix-status/{order}', [FloorController::class, 'pixPaymentStatus']);
         Route::put('/floor/{table}', [FloorController::class, 'update']);
         Route::delete('/floor/{table}', [FloorController::class, 'destroy']);
     });
