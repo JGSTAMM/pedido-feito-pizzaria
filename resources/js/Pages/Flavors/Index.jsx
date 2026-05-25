@@ -4,7 +4,6 @@ import { norm } from '@/utils/normalize';
 import AppLayout from '@/Layouts/AppLayout';
 import useI18n from '@/hooks/useI18n';
 import CustomNumberInput from '@/Components/CustomNumberInput';
-import { resolveImagePath } from '@/utils/media';
 
 function Modal({ isOpen, onClose, title, children }) {
     if (!isOpen) return null;
@@ -167,7 +166,7 @@ export default function Index({ flavors = [] }) {
                     <div className="bg-surface rounded-2xl border border-border-subtle overflow-hidden relative" style={{ background: 'rgba(255,255,255,0.03)' }}>
                         <div className="absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent"></div>
                         <div className="grid grid-cols-[60px_1fr_120px_100px_80px] gap-4 px-6 py-4 border-b border-border-subtle bg-black/20 text-xs font-bold text-text-muted uppercase tracking-wider">
-                            <span>{t('admin.catalog.upload.image_header')}</span>
+                            <span>Imagem</span>
                             <span>{t('flavors.table.name')}</span>
                             <span>{t('flavors.table.basePrice')}</span>
                             <span>{t('flavors.table.status')}</span>
@@ -180,7 +179,7 @@ export default function Index({ flavors = [] }) {
                                 <div key={flavor.id} className={`grid grid-cols-[60px_1fr_120px_100px_80px] gap-4 px-6 py-4 items-center hover:bg-surface-hover transition-colors ${idx !== filtered.length - 1 ? 'border-b border-border-subtle' : ''}`}>
                                     <div className="w-10 h-10 rounded-lg bg-surface flex items-center justify-center overflow-hidden border border-border-subtle">
                                         {flavor.image_url ? (
-                                            <img src={resolveImagePath(flavor.image_url)} alt={flavor.name} className="w-full h-full object-cover" />
+                                            <img src={flavor.image_url} alt={flavor.name} className="w-full h-full object-cover" />
                                         ) : (
                                             <span className="material-symbols-outlined text-text-muted text-xl">image</span>
                                         )}
@@ -242,7 +241,7 @@ export default function Index({ flavors = [] }) {
 
                     {/* Image Upload Box (Dark Glassmorphism) */}
                     <div className="bg-[#111115]/50 backdrop-blur-md border border-border-subtle p-4 rounded-2xl flex flex-col gap-3">
-                        <label className="block text-xs font-bold text-text-muted uppercase tracking-wider">{t('admin.catalog.upload.flavor_image_label')}</label>
+                        <label className="block text-xs font-bold text-text-muted uppercase tracking-wider">Imagem do Sabor</label>
                         
                         <div className="flex items-center gap-4">
                             {/* Preview/Thumbnail */}
@@ -250,7 +249,7 @@ export default function Index({ flavors = [] }) {
                                 {data.image ? (
                                     <img src={URL.createObjectURL(data.image)} alt="Preview" className="w-full h-full object-cover" />
                                 ) : (currentFlavor?.image_url && !data.clear_image) ? (
-                                    <img src={resolveImagePath(currentFlavor.image_url)} alt="Preview" className="w-full h-full object-cover" />
+                                    <img src={currentFlavor.image_url} alt="Preview" className="w-full h-full object-cover" />
                                 ) : (
                                     <span className="material-symbols-outlined text-text-muted text-2xl">image</span>
                                 )}
@@ -261,7 +260,7 @@ export default function Index({ flavors = [] }) {
                                 <div className="flex gap-2">
                                     <label className="cursor-pointer px-4 py-2 bg-surface hover:bg-surface-hover border border-border-subtle text-white text-xs font-bold rounded-xl transition-all flex items-center gap-1.5">
                                         <span className="material-symbols-outlined text-base">upload</span>
-                                        <span>{t('admin.catalog.upload.select')}</span>
+                                        <span>Selecionar</span>
                                         <input
                                             type="file"
                                             accept="image/*"
@@ -283,12 +282,12 @@ export default function Index({ flavors = [] }) {
                                             className="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 text-xs font-bold rounded-xl transition-all flex items-center gap-1.5"
                                         >
                                             <span className="material-symbols-outlined text-base">delete</span>
-                                            <span>{t('admin.catalog.upload.remove')}</span>
+                                            <span>Remover</span>
                                         </button>
                                     )}
                                 </div>
                                 <p className="text-text-muted text-[10px] leading-relaxed">
-                                    {t('admin.catalog.upload.help_text')}
+                                    Adicione imagem para o produto/sabor. Formato sugerido: WebP ou JPG quadrado para melhor performance e qualidade.
                                 </p>
                             </div>
                         </div>
@@ -334,7 +333,7 @@ export default function Index({ flavors = [] }) {
                                             type="button"
                                             onClick={() => toggleIngredientAvailability(idx)}
                                             className={`size-2 rounded-full ${ing.is_available ? 'bg-emerald-500 shadow-[0_0_5px_rgba(16,185,129,0.5)]' : 'bg-red-500'}`}
-                                            title={ing.is_available ? t('admin.catalog.upload.available') : t('admin.catalog.upload.unavailable')}
+                                            title={ing.is_available ? 'Disponível' : 'Indisponível'}
                                         />
                                         <span className={`text-sm ${ing.is_available ? 'text-white' : 'text-text-muted line-through'}`}>{ing.name}</span>
                                     </div>
@@ -352,7 +351,7 @@ export default function Index({ flavors = [] }) {
 
                     {/* Channel Visibility */}
                     <div className="bg-black/20 p-4 rounded-2xl border border-border-subtle flex flex-col gap-3">
-                        <label className="block text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mb-1 italic">{t('admin.catalog.upload.visibility_by_channel')}</label>
+                        <label className="block text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mb-1 italic">Visibilidade por Canal</label>
                         <div className="flex gap-6">
                             <label className="flex items-center gap-2 cursor-pointer group">
                                 <input
@@ -361,7 +360,7 @@ export default function Index({ flavors = [] }) {
                                     onChange={e => setData('is_active_delivery', e.target.checked)}
                                     className="w-4 h-4 rounded border-border-subtle text-primary bg-surface focus:ring-primary focus:ring-offset-background-dark"
                                 />
-                                <span className="text-sm text-white group-hover:text-primary transition-colors">{t('admin.catalog.upload.channel_delivery')}</span>
+                                <span className="text-sm text-white group-hover:text-primary transition-colors">Delivery</span>
                             </label>
                             <label className="flex items-center gap-2 cursor-pointer group">
                                 <input
@@ -370,7 +369,7 @@ export default function Index({ flavors = [] }) {
                                     onChange={e => setData('is_active_pos', e.target.checked)}
                                     className="w-4 h-4 rounded border-border-subtle text-primary bg-surface focus:ring-primary focus:ring-offset-background-dark"
                                 />
-                                <span className="text-sm text-white group-hover:text-primary transition-colors">{t('admin.catalog.upload.channel_pos')}</span>
+                                <span className="text-sm text-white group-hover:text-primary transition-colors">Salão / Mesa</span>
                             </label>
                         </div>
                     </div>

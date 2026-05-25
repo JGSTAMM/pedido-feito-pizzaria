@@ -2,7 +2,6 @@ import React from 'react';
 import { useForm, router } from '@inertiajs/react';
 import { useI18n } from '@/Hooks/useI18n';
 import { Card, Label } from './Shared';
-import { resolveImagePath } from '@/utils/media';
 
 export default function TabPerfil({ settings, days }) {
     const { t } = useI18n();
@@ -60,8 +59,8 @@ export default function TabPerfil({ settings, days }) {
                                 <span className="material-symbols-outlined">{settings.is_open ? 'store' : 'store_front'}</span>
                             </div>
                             <div>
-                                <h4 className="text-white font-bold">{settings.is_open ? t('admin.settings.branding.store_open') : t('admin.settings.branding.store_closed')}</h4>
-                                <p className="text-sm text-text-muted">{t('admin.settings.branding.store_status_desc')}</p>
+                                <h4 className="text-white font-bold">{settings.is_open ? 'Loja Aberta' : 'Loja Fechada'}</h4>
+                                <p className="text-sm text-text-muted">Controle se os clientes podem fazer pedidos agora.</p>
                             </div>
                         </div>
                         <button onClick={toggleStoreStatus} className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors focus:outline-none ${settings.is_open ? 'bg-emerald-500' : 'bg-surface border border-border-subtle'}`}>
@@ -73,44 +72,44 @@ export default function TabPerfil({ settings, days }) {
                 {/* Identidade Visual */}
                 <Card>
                     <div className="mb-6">
-                        <h3 className="text-lg font-bold text-white mb-1">{t('admin.settings.branding.visual_identity')}</h3>
-                        <p className="text-sm text-text-muted">{t('admin.settings.branding.visual_identity_desc')}</p>
+                        <h3 className="text-lg font-bold text-white mb-1">Identidade Visual</h3>
+                        <p className="text-sm text-text-muted">Logotipo e capa que aparecerão no cardápio digital.</p>
                     </div>
                     <form onSubmit={submitIdentity} className="space-y-8">
                         <div className="flex items-center gap-8">
                             <div className="relative group">
-                                <Label>{t('admin.settings.branding.logo_label')}</Label>
+                                <Label>Logotipo</Label>
                                 <div className="size-24 rounded-2xl bg-background-dark border-2 border-dashed border-border-subtle flex items-center justify-center overflow-hidden relative group-hover:border-primary/50 transition-colors">
-                                    {settings.logo_url ? <img src={resolveImagePath(settings.logo_url)} className="size-full object-contain" /> : <span className="material-symbols-outlined text-text-muted text-3xl">add_photo_alternate</span>}
+                                    {settings.logo_url ? <img src={settings.logo_url} className="size-full object-contain" /> : <span className="material-symbols-outlined text-text-muted text-3xl">add_photo_alternate</span>}
                                     <input type="file" onChange={e => identityForm.setData('logo_image', e.target.files[0])} className="absolute inset-0 opacity-0 cursor-pointer" />
                                 </div>
                             </div>
                             <div className="flex-1">
-                                <Label>{t('admin.settings.branding.cover_label')}</Label>
+                                <Label>Capa do Cardápio</Label>
                                 <div className="h-24 w-full rounded-2xl bg-background-dark border-2 border-dashed border-border-subtle flex items-center justify-center overflow-hidden relative group-hover:border-primary/50 transition-colors">
-                                    {settings.cover_url ? <img src={resolveImagePath(settings.cover_url)} className="size-full object-cover" /> : <span className="material-symbols-outlined text-text-muted text-3xl">add_photo_alternate</span>}
+                                    {settings.cover_url ? <img src={settings.cover_url} className="size-full object-cover" /> : <span className="material-symbols-outlined text-text-muted text-3xl">add_photo_alternate</span>}
                                     <input type="file" onChange={e => identityForm.setData('cover_image', e.target.files[0])} className="absolute inset-0 opacity-0 cursor-pointer" />
                                 </div>
                             </div>
                         </div>
                         <div className="flex-1">
-                            <Label>{t('admin.settings.branding.bg_media_label')}</Label>
+                            <Label>Background do Menu (Mídia Dinâmica)</Label>
                             <div className="h-24 w-full rounded-2xl bg-background-dark border-2 border-dashed border-border-subtle flex items-center justify-center overflow-hidden relative group-hover:border-primary/50 transition-colors">
                                 {settings.background_media_url ? (
                                     settings.background_media_type === 'video' ? (
-                                        <video src={resolveImagePath(settings.background_media_url)} className="size-full object-cover" muted loop autoPlay playsInline />
+                                        <video src={settings.background_media_url} className="size-full object-cover" muted loop autoPlay playsInline />
                                     ) : (
-                                        <img src={resolveImagePath(settings.background_media_url)} className="size-full object-cover" />
+                                        <img src={settings.background_media_url} className="size-full object-cover" />
                                     )
                                 ) : (
                                     <span className="material-symbols-outlined text-text-muted text-3xl">add_photo_alternate</span>
                                 )}
                                 <input type="file" accept="image/*,video/mp4,video/webm" onChange={e => identityForm.setData('background_media', e.target.files[0])} className="absolute inset-0 opacity-0 cursor-pointer" />
                             </div>
-                            <p className="text-xs text-text-muted mt-2">{t('admin.settings.branding.bg_media_format_help')}</p>
+                            <p className="text-xs text-text-muted mt-2">Formato sugerido: WebP ou MP4 (Máx 5MB) para melhor performance</p>
                         </div>
                         <div className="flex justify-end pt-4 border-t border-border-subtle">
-                            <button type="submit" disabled={identityForm.processing} className="px-5 py-2 bg-primary text-white text-sm font-bold rounded-xl hover:bg-primary-dark transition-all disabled:opacity-50">{t('admin.settings.branding.save_images')}</button>
+                            <button type="submit" disabled={identityForm.processing} className="px-5 py-2 bg-primary text-white text-sm font-bold rounded-xl hover:bg-primary-dark transition-all disabled:opacity-50">Salvar Imagens</button>
                         </div>
                     </form>
                 </Card>

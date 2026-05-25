@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import AppLayout from '@/Layouts/AppLayout';
 import { router, useForm, usePage } from '@inertiajs/react';
-import { resolveImagePath } from '@/utils/media';
 
 /* ── Tiny Modal Shell ── */
 function Modal({ isOpen, onClose, title, children }) {
@@ -258,7 +257,7 @@ function TabPerfil({ settings }) {
                             <Label>Logo da Loja</Label>
                             {settings.logo_url && !brandingForm.data.remove_logo ? (
                                 <div className="relative w-full h-32 group rounded-xl overflow-hidden border border-border-subtle bg-background-dark flex items-center justify-center">
-                                    <img src={resolveImagePath(settings.logo_url)} alt="Logo" className="w-full h-full object-contain p-2" />
+                                    <img src={settings.logo_url} alt="Logo" className="w-full h-full object-contain p-2" />
                                     <button type="button" onClick={handleRemoveLogo} className="absolute inset-0 bg-red-500/80 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                                         <span className="material-symbols-outlined text-white text-3xl">delete</span>
                                     </button>
@@ -279,7 +278,7 @@ function TabPerfil({ settings }) {
                             <Label>Imagem de Fundo (Capa)</Label>
                             {settings.cover_url && !brandingForm.data.remove_cover ? (
                                 <div className="relative w-full h-32 group rounded-xl overflow-hidden border border-border-subtle bg-background-dark flex items-center justify-center">
-                                    <img src={resolveImagePath(settings.cover_url)} alt="Cover" className="w-full h-full object-cover" />
+                                    <img src={settings.cover_url} alt="Cover" className="w-full h-full object-cover" />
                                     <button type="button" onClick={handleRemoveCover} className="absolute inset-0 bg-red-500/80 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                                         <span className="material-symbols-outlined text-white text-3xl">delete</span>
                                     </button>
@@ -308,7 +307,7 @@ function TabPerfil({ settings }) {
                             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                                 {brandingForm.data.story_media.map((media, index) => {
                                     const isFile = media instanceof File;
-                                    const url = isFile ? URL.createObjectURL(media) : resolveImagePath(media.url);
+                                    const url = isFile ? URL.createObjectURL(media) : media.url;
                                     const isVideo = isFile ? media.type.startsWith('video/') : media.type === 'video';
                                     
                                     return (
