@@ -17,15 +17,7 @@ class PaymentGatewayService
 {
     public function __construct()
     {
-        $token = config('services.mercadopago.access_token');
-
-        if (empty($token)) {
-            throw new \RuntimeException(
-                'Mercado Pago access token not configured. Set MERCADOPAGO_ACCESS_TOKEN in .env.'
-            );
-        }
-
-        MercadoPagoConfig::setAccessToken($token);
+        MercadoPagoConfig::setAccessToken(config('services.mercadopago.access_token'));
     }
 
     public function extractNotificationId(Request $request): ?string
@@ -90,106 +82,130 @@ class PaymentGatewayService
      * @param  string  $payerEmail  Email do pagador (obrigatório para PIX)
      * @return array ['success' => bool, 'data' => [...]]
      */
-    public function createPixPayment(Order $order, string $payerEmail, ?float $amount = null): array
+    public function createPixPayment(Order $order, string $payerEmail, ?float $amount = null, int $maxRetries = 3): array
     {
-        try {
-            $client = new PaymentClient;
+        for ($attempt = 1; $attempt <= $maxRetries; $attempt++) {
+            try {
+                $client = new PaymentClient;
 
-            $requestBody = [
-                'transaction_amount' => $amount !== null ? (float) $amount : (float) $order->total_amount,
-                'description' => "Pedido #{$order->id} - Pedido Feito Pizzaria",
-                'payment_method_id' => 'pix',
-                'payer' => [
-                    'email' => $payerEmail,
-                    'first_name' => 'Cliente',
-                    'last_name' => 'Pizza',
-                    'identification' => [
-                        'type' => 'CPF',
-                        'number' => '19119119100', // CPF de teste
+                $requestBody = [
+                    'transaction_amount' => $amount !== null ? (float) $amount : (float) $order->total_amount,
+                    'description' => "Pedido #{$order->id} - Pedido Feito Pizzaria",
+                    'payment_method_id' => 'pix',
+                    'payer' => [
+                        'email' => $payerEmail,
+                        'first_name' => 'Cliente',
+                        'last_name' => 'Pizza',
+                        'identification' => [
+                            'type' => 'CPF',
+                            'number' => '19119119100', // CPF de teste
+                        ],
                     ],
-                ],
-                'external_reference' => (string) $order->id,
-            ];
+                    'external_reference' => (string) $order->id . '_' . time(),
+                ];
 
-            $webhookUrl = config('services.mercadopago.webhook_url');
-            if ($webhookUrl && str_starts_with($webhookUrl, 'https://')) {
-                $requestBody['notification_url'] = $webhookUrl;
-            }
+                $webhookUrl = config('services.mercadopago.webhook_url');
+                if ($webhookUrl && str_starts_with($webhookUrl, 'https://')) {
+                    $requestBody['notification_url'] = $webhookUrl;
+                }
 
-            $options = new RequestOptions;
-            $options->setCustomHeaders([
-                'X-Idempotency-Key: '.(string) $order->id.'_'.time(),
-            ]);
+                $options = new RequestOptions;
+                $options->setCustomHeaders([
+                    'X-Idempotency-Key: '.(string) $order->id.'_'.time().'_'.$attempt,
+                ]);
 
-            Log::info("Creating PIX payment for order #{$order->id}", $requestBody);
-            $payment = $client->create($requestBody, $options);
+                Log::info("Creating PIX payment for order #{$order->id} (Attempt {$attempt})", $requestBody);
+                $payment = $client->create($requestBody, $options);
 
-            // Extract PIX data
-            $pixData = $payment->point_of_interaction?->transaction_data ?? null;
+                // Extract PIX data
+                $pixData = $payment->point_of_interaction?->transaction_data ?? null;
 
-            // Update order with gateway info
-            $order->update([
-                'payment_gateway_id' => $payment->id,
-                'payment_method_online' => 'pix',
-                'online_payment_status' => $payment->status,
-                'pix_qr_code' => $pixData?->qr_code ?? null,
-                'pix_qr_code_base64' => $pixData?->qr_code_base64 ?? null,
-            ]);
+                // Update order with gateway info
+                $order->update([
+                    'payment_gateway_id' => $payment->id,
+                    'payment_method_online' => 'pix',
+                    'online_payment_status' => $payment->status,
+                    'pix_qr_code' => $pixData?->qr_code ?? null,
+                    'pix_qr_code_base64' => $pixData?->qr_code_base64 ?? null,
+                ]);
 
-            Log::info("PIX payment created for order #{$order->id}", [
-                'gateway_id' => $payment->id,
-                'status' => $payment->status,
-            ]);
-
-            return [
-                'success' => true,
-                'data' => [
-                    'gateway_payment_id' => $payment->id,
+                Log::info("PIX payment created for order #{$order->id}", [
+                    'gateway_id' => $payment->id,
                     'status' => $payment->status,
-                    'qr_code' => $pixData?->qr_code ?? null,
-                    'qr_code_base64' => $pixData?->qr_code_base64 ?? null,
-                    'ticket_url' => $pixData?->ticket_url ?? null,
-                    'expires_at' => $payment->date_of_expiration ?? null,
-                ],
-            ];
-        } catch (MPApiException $e) {
-            $response = $e->getApiResponse();
-            $statusCode = $response->getStatusCode();
-            $content = $response->getContent();
+                ]);
 
-            Log::error("Mercado Pago API error creating PIX for order #{$order->id}", [
-                'status' => $statusCode,
-                'content' => $content,
-            ]);
+                return [
+                    'success' => true,
+                    'data' => [
+                        'gateway_payment_id' => $payment->id,
+                        'status' => $payment->status,
+                        'qr_code' => $pixData?->qr_code ?? null,
+                        'qr_code_base64' => $pixData?->qr_code_base64 ?? null,
+                        'ticket_url' => $pixData?->ticket_url ?? null,
+                        'expires_at' => $payment->date_of_expiration ?? null,
+                    ],
+                ];
+            } catch (MPApiException $e) {
+                $response = $e->getApiResponse();
+                $statusCode = $response->getStatusCode();
+                $content = $response->getContent();
 
-            // Detect circuit breaker / internal errors from sandbox
-            $errorMessage = $content['message'] ?? '';
-            $isCircuitBreaker = str_contains(json_encode($content), 'circuit breaker');
-            $isInternalError = ($statusCode === 500) || str_contains($errorMessage, 'internal');
+                Log::error("Mercado Pago API error creating PIX for order #{$order->id}", [
+                    'status' => $statusCode,
+                    'content' => $content,
+                    'attempt' => $attempt,
+                ]);
 
-            if ($isCircuitBreaker || $isInternalError) {
+                // Detect circuit breaker / internal errors from sandbox
+                $errorMessage = $content['message'] ?? '';
+                $isCircuitBreaker = str_contains(json_encode($content), 'circuit breaker');
+                $isCommunicationError = str_contains($errorMessage, 'communication_error');
+                $isInternalError = ($statusCode === 500) || str_contains($errorMessage, 'internal');
+
+                // Retry on transient sandbox errors
+                if (($isCommunicationError || $isCircuitBreaker || $isInternalError) && $attempt < $maxRetries) {
+                    $delay = $attempt * 2; // 2s, 4s exponential backoff
+                    Log::warning("Retrying PIX payment for order #{$order->id} (attempt {$attempt}/{$maxRetries}) after {$delay}s delay");
+                    sleep($delay);
+                    continue; // Go to next loop iteration
+                }
+
+                if ($isCircuitBreaker || $isInternalError) {
+                    return [
+                        'success' => false,
+                        'error' => 'O serviço PIX do Mercado Pago está temporariamente indisponível (sandbox). Tente novamente em alguns minutos ou use outro método de pagamento.',
+                        'details' => $content,
+                    ];
+                }
+
                 return [
                     'success' => false,
-                    'error' => 'O serviço PIX do Mercado Pago está temporariamente indisponível (sandbox). Tente novamente em alguns minutos ou use outro método de pagamento.',
+                    'error' => 'Erro ao gerar pagamento PIX: '.($errorMessage ?: 'Erro desconhecido (status '.$statusCode.')'),
                     'details' => $content,
                 ];
+            } catch (\Exception $e) {
+                Log::error("Error creating PIX payment for order #{$order->id} (Attempt {$attempt}): ".$e->getMessage(), [
+                    'exception' => $e,
+                ]);
+
+                if ($attempt < $maxRetries) {
+                    $delay = $attempt * 2;
+                    Log::warning("Retrying PIX payment for order #{$order->id} due to generic exception (attempt {$attempt}/{$maxRetries}) after {$delay}s delay");
+                    sleep($delay);
+                    continue;
+                }
+
+                return [
+                    'success' => false,
+                    'error' => 'Erro interno ao processar pagamento: '.$e->getMessage(),
+                ];
             }
-
-            return [
-                'success' => false,
-                'error' => 'Erro ao gerar pagamento PIX: '.($errorMessage ?: 'Erro desconhecido (status '.$statusCode.')'),
-                'details' => $content,
-            ];
-        } catch (\Exception $e) {
-            Log::error("Error creating PIX payment for order #{$order->id}: ".$e->getMessage(), [
-                'exception' => $e,
-            ]);
-
-            return [
-                'success' => false,
-                'error' => 'Erro interno ao processar pagamento: '.$e->getMessage(),
-            ];
         }
+        
+        return [
+            'success' => false,
+            'error' => 'Erro interno ao processar pagamento.',
+        ];
     }
 
     /**
@@ -355,7 +371,7 @@ class PaymentGatewayService
     /**
      * Mark order as paid online and create payment record.
      */
-    protected function markOrderAsPaidOnline(Order $order, string|int $gatewayPaymentId): void
+    protected function markOrderAsPaidOnline(Order $order, $gatewayPaymentId): void
     {
         if ($order->type === 'dine_in' && $order->status !== Order::STATUS_AWAITING_PAYMENT) {
             // POS table checkout PIX payment!

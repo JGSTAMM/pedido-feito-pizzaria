@@ -198,6 +198,11 @@ class SettingsController extends Controller
                 }
                 
                 file_put_contents($envPath, $envContent);
+                try {
+                    \Illuminate\Support\Facades\Artisan::call('config:clear');
+                } catch (\Exception $e) {
+                    // Ignore exceptions if config clearing fails in certain environments
+                }
             }
         }
 

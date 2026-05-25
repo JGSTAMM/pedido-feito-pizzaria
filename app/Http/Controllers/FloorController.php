@@ -537,7 +537,7 @@ class FloorController extends Controller
         $amount = (float) $validated['amount'];
 
         // Generate dynamic Mercado Pago PIX QR Code via PaymentGatewayService
-        $result = $this->paymentGatewayService->createPixPayment($firstOrder, 'caixa@pizzaria.com', $amount);
+        $result = $this->paymentGatewayService->createPixPayment($firstOrder, 'pagamento@pedidofeito.com', $amount);
 
         if (!($result['success'] ?? false)) {
             return response()->json(['error' => $result['error'] ?? 'Erro ao gerar PIX'], 500);
