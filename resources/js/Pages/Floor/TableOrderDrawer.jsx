@@ -501,10 +501,12 @@ export default function TableOrderDrawer({
         setCheckingOut(true);
 
         router.post(`/floor/${table.id}/pay`, {
-            payments: safePayments.map(p => ({ 
-                method: p.method, 
-                amount: Math.round(Number(p.amount) * 100) 
-            }))
+            payments: safePayments
+                .filter(p => p !== null && p !== undefined && p.method)
+                .map(p => ({ 
+                    method: p.method, 
+                    amount: Math.round(Number(p.amount) * 100) 
+                }))
         }, {
             preserveScroll: true,
             onSuccess: () => {
