@@ -493,11 +493,18 @@ export default function TableOrderDrawer({
     };
 
     const handleCheckout = async (paymentsToSend = payments) => {
-        if (!activeOrder || paymentsToSend.length === 0) return;
+        const safePayments = Array.isArray(paymentsToSend) 
+            ? paymentsToSend 
+            : Object.values(paymentsToSend || {});
+
+        if (!activeOrder || safePayments.length === 0) return;
         setCheckingOut(true);
 
         router.post(`/floor/${table.id}/pay`, {
-            payments: paymentsToSend.map(p => ({ method: p.method, amount: p.amount }))
+            payments: safePayments.map(p => ({ 
+                method: p.method, 
+                amount: Math.round(Number(p.amount) * 100) 
+            }))
         }, {
             preserveScroll: true,
             onSuccess: () => {
