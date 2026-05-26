@@ -1105,21 +1105,27 @@ export default function TableOrderDrawer({
                                                 </span>
                                             </div>
                                         ) : pixQrCodeBase64 ? (
-                                            <div className="flex flex-col items-center space-y-3 py-2">
-                                                <div className="size-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
-                                                    <span className="material-symbols-outlined text-amber-400 text-3xl">qr_code_2</span>
+                                            <button
+                                                onClick={() => setIsQrFullscreen(true)}
+                                                className="w-full max-w-[240px] flex flex-col items-center justify-center space-y-3 py-6 px-4 rounded-3xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 hover:border-amber-500/50 text-amber-400 transition-all duration-300 active:scale-95 group relative overflow-hidden mx-auto"
+                                            >
+                                                {/* Subtle pulsing glow background */}
+                                                <div className="absolute inset-0 bg-amber-500/10 animate-pulse opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                                                
+                                                <div className="size-16 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center relative z-10 group-hover:scale-110 transition-transform duration-300 shadow-[0_0_20px_rgba(245,158,11,0.2)]">
+                                                    <span className="material-symbols-outlined text-amber-400 text-4xl">qr_code_2</span>
                                                 </div>
-                                                <button
-                                                    onClick={() => setIsQrFullscreen(true)}
-                                                    className="w-full py-3.5 px-6 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-400 font-black text-sm uppercase tracking-wider transition-all active:scale-[0.97] flex items-center justify-center gap-2"
-                                                >
-                                                    <span className="material-symbols-outlined text-lg">fullscreen</span>
-                                                    {t('floor.drawer.pix.enlargeQr')}
-                                                </button>
-                                                <p className="text-[10px] text-text-muted text-center leading-relaxed">
-                                                    {t('floor.drawer.pix.enlargeHint')}
-                                                </p>
-                                            </div>
+                                                
+                                                <div className="text-center relative z-10 space-y-1 mt-2">
+                                                    <span className="block font-black text-sm sm:text-base uppercase tracking-widest flex items-center justify-center gap-2">
+                                                        <span className="material-symbols-outlined text-lg">fullscreen</span>
+                                                        {t('floor.drawer.pix.enlargeQr')}
+                                                    </span>
+                                                    <span className="block text-[10px] sm:text-xs text-amber-400/70 font-medium leading-relaxed max-w-[200px] mx-auto">
+                                                        {t('floor.drawer.pix.enlargeHint')}
+                                                    </span>
+                                                </div>
+                                            </button>
                                         ) : null}
 
                                         {/* Display BRL amount & countdown */}
