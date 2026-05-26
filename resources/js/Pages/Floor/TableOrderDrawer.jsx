@@ -1049,9 +1049,9 @@ export default function TableOrderDrawer({
                         </div>
 
                         {generatingPix || pixQrCode || pixError || pixApproved ? (
-                            <div className="flex-1 flex flex-col justify-between overflow-hidden">
+                            <div className="flex-1 flex flex-col justify-between overflow-hidden min-h-0">
                                 {/* Scrollable Pix Content */}
-                                <div className="px-4 sm:px-8 py-6 overflow-y-auto custom-scrollbar flex-1 flex flex-col items-center justify-center space-y-6">
+                                <div className="px-4 sm:px-8 py-6 overflow-y-auto custom-scrollbar flex-1 flex flex-col items-center space-y-4 min-h-0">
                                     <div className="w-full text-center">
                                         <h4 className="text-lg font-black text-white tracking-tight flex items-center justify-center gap-2">
                                             <span className={`material-symbols-outlined text-xl ${pixApproved ? 'text-emerald-400 animate-bounce' : 'text-amber-400 animate-pulse'}`}>
@@ -1065,7 +1065,7 @@ export default function TableOrderDrawer({
                                     </div>
 
                                     {/* Glassmorphic card for QR Code with smooth glows */}
-                                    <div className="relative p-6 rounded-[28px] bg-white/[0.03] border border-white/10 backdrop-blur-xl shadow-2xl flex flex-col items-center justify-center space-y-4 group overflow-hidden max-w-[280px] w-full">
+                                    <div className="relative p-4 sm:p-6 rounded-[28px] bg-white/[0.03] border border-white/10 backdrop-blur-xl shadow-2xl flex flex-col items-center justify-center space-y-4 group overflow-hidden max-w-[280px] w-full">
                                         {/* Soft pulsing glow behind the QR code */}
                                         <div className={`absolute inset-0 -z-10 opacity-30 blur-2xl transition-all duration-700 ${
                                             pixApproved 
@@ -1074,21 +1074,21 @@ export default function TableOrderDrawer({
                                         }`} />
 
                                         {generatingPix ? (
-                                            <div className="w-48 aspect-square shrink-0 flex flex-col items-center justify-center space-y-3">
+                                            <div className="w-40 sm:w-48 aspect-square shrink-0 flex flex-col items-center justify-center space-y-3">
                                                 <div className="size-12 border-4 border-amber-500/20 border-t-amber-500 rounded-full animate-spin" />
                                                 <span className="text-[10px] text-amber-400 font-bold uppercase tracking-widest animate-pulse">
                                                     {t('floor.drawer.pix.generating')}
                                                 </span>
                                             </div>
                                         ) : pixError ? (
-                                            <div className="w-48 aspect-square shrink-0 flex flex-col items-center justify-center text-center p-4">
+                                            <div className="w-40 sm:w-48 aspect-square shrink-0 flex flex-col items-center justify-center text-center p-4">
                                                 <span className="material-symbols-outlined text-red-400 text-4xl mb-2 animate-bounce">error</span>
                                                 <span className="text-xs text-red-400 font-bold leading-normal">
                                                     {pixError}
                                                 </span>
                                             </div>
                                         ) : pixApproved ? (
-                                            <div className="w-48 aspect-square shrink-0 flex flex-col items-center justify-center text-center">
+                                            <div className="w-40 sm:w-48 aspect-square shrink-0 flex flex-col items-center justify-center text-center">
                                                 <div className="size-16 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center mb-3 animate-scale-in">
                                                     <span className="material-symbols-outlined text-emerald-400 text-3xl">check</span>
                                                 </div>
@@ -1097,7 +1097,7 @@ export default function TableOrderDrawer({
                                                 </span>
                                             </div>
                                         ) : pixQrCodeBase64 ? (
-                                            <div className="relative w-48 aspect-square shrink-0 bg-white p-3 rounded-2xl shadow-inner transition-transform duration-300 group-hover:scale-[1.03] select-none animate-scale-in">
+                                            <div className="relative w-40 sm:w-48 aspect-square shrink-0 bg-white p-3 rounded-2xl shadow-inner transition-transform duration-300 group-hover:scale-[1.03] select-none animate-scale-in">
                                                 <img 
                                                     src={`data:image/png;base64,${pixQrCodeBase64}`} 
                                                     alt="PIX QR Code" 
