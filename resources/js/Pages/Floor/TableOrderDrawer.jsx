@@ -1119,7 +1119,7 @@ export default function TableOrderDrawer({
                                                 
                                                 {/* Middle: Explicit Text with Fallbacks */}
                                                 <div className="flex flex-col items-start flex-1 min-w-0 mx-4 relative z-10 text-left">
-                                                    <span className="font-black text-sm uppercase tracking-widest text-amber-400 truncate w-full">
+                                                    <span className="font-black text-[10px] sm:text-xs uppercase tracking-widest text-amber-400 truncate w-full">
                                                         {t('floor.drawer.pix.enlargeQr') || 'AMPLIAR QR CODE'}
                                                     </span>
                                                     <span className="text-[10px] text-amber-400/70 font-medium truncate w-full">
