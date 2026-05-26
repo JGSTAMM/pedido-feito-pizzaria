@@ -500,18 +500,14 @@ export default function TableOrderDrawer({
         if (!activeOrder || safePayments.length === 0) return;
         setCheckingOut(true);
 
-        const payload = {
+        router.post(`/floor/${table.id}/pay`, {
             payments: safePayments
                 .filter(p => p !== null && p !== undefined && p.method)
                 .map(p => ({ 
                     method: p.method, 
                     amount: Math.round(Number(p.amount) * 100) 
                 }))
-        };
-
-        console.log("DEBUG CHECKOUT PAYLOAD:", { ...payload });
-
-        router.post(`/floor/${table.id}/pay`, payload, {
+        }, {
             preserveScroll: true,
             onSuccess: () => {
                 setShowCheckoutModal(false);
@@ -521,6 +517,9 @@ export default function TableOrderDrawer({
                 onClose();
             },
             onError: () => {
+                setCheckingOut(false);
+            },
+            onFinish: () => {
                 setCheckingOut(false);
             }
         });
@@ -1329,7 +1328,7 @@ export default function TableOrderDrawer({
                                             <span>{t('floor.drawer.checkout.print_check')}</span>
                                         </button>
                                         <button
-                                            onClick={handleCheckout}
+                                            onClick={() => handleCheckout(payments)}
                                             disabled={checkingOut || payments.reduce((s, p) => s + p.amount, 0) < tableTotal - 0.01}
                                             className="flex-[2] py-3 sm:py-4 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-20 disabled:bg-white/20 text-black font-black rounded-[16px] sm:rounded-2xl transition-all shadow-[0_20px_40px_-12px_rgba(16,185,129,0.3)] flex items-center justify-center gap-2 sm:gap-3 active:scale-[0.98]"
                                         >

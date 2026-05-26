@@ -367,7 +367,7 @@ class FloorController extends Controller
         $validated = $request->validate([
             'payments' => 'required|array',
             'payments.*.method' => 'required|string',
-            'payments.*.amount' => 'required|numeric|min:0',
+            'payments.*.amount' => 'required|integer|min:0',
         ]);
 
         try {
@@ -390,27 +390,29 @@ class FloorController extends Controller
                 return redirect()->back()->with('error', __('order.payment.no_active_orders'));
             }
 
-            $totalAmount = $orders->sum('total_amount');
+            $totalAmount = (int) $orders->sum(function ($order) {
+                return $order->getRawOriginal('total_amount');
+            });
             $totalPaid = collect($validated['payments'])->sum('amount');
 
-            if ($totalPaid < $totalAmount - 0.01) {
+            if ($totalPaid < $totalAmount) {
                 DB::rollBack();
 
                 return redirect()->back()->with('error', __('order.payment.insufficient_amount'));
             }
 
             $paymentPool = collect($validated['payments'])->map(function ($p) {
-                return ['method' => $p['method'], 'amount' => (float) $p['amount']];
+                return ['method' => $p['method'], 'amount' => (int) $p['amount']];
             })->toArray();
 
             $pIndex = 0;
 
             foreach ($orders as $index => $order) {
                 /** @var \App\Models\Order $order */
-                $amountToPayForOrder = (float) $order->total_amount;
+                $amountToPayForOrder = (int) $order->getRawOriginal('total_amount');
 
                 // Distribute payment to this order
-                while ($amountToPayForOrder > 0.001 && $pIndex < count($paymentPool)) {
+                while ($amountToPayForOrder > 0 && $pIndex < count($paymentPool)) {
                     $currentMethod = &$paymentPool[$pIndex];
                     if ($currentMethod['amount'] <= 0) {
                         $pIndex++;
@@ -423,13 +425,13 @@ class FloorController extends Controller
                     Payment::create([
                         'order_id' => $order->id,
                         'method' => $currentMethod['method'],
-                        'amount' => $take,
+                        'amount' => $take / 100, // Cast to float for mutator
                     ]);
 
                     $currentMethod['amount'] -= $take;
                     $amountToPayForOrder -= $take;
 
-                    if ($currentMethod['amount'] <= 0.001) {
+                    if ($currentMethod['amount'] <= 0) {
                         $pIndex++;
                     }
                 }
@@ -437,11 +439,11 @@ class FloorController extends Controller
                 // If last order, dump remaining payment (change)
                 if ($index === $orders->count() - 1) {
                     while ($pIndex < count($paymentPool)) {
-                        if ($paymentPool[$pIndex]['amount'] > 0.001) {
+                        if ($paymentPool[$pIndex]['amount'] > 0) {
                             Payment::create([
                                 'order_id' => $order->id,
                                 'method' => $paymentPool[$pIndex]['method'],
-                                'amount' => $paymentPool[$pIndex]['amount'],
+                                'amount' => $paymentPool[$pIndex]['amount'] / 100, // Cast to float for mutator
                             ]);
                         }
                         $pIndex++;
