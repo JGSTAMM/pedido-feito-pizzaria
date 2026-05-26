@@ -13,7 +13,7 @@ class OrderController extends Controller
     public function index()
     {
         $orders = Order::with(['items.product', 'items.pizzaSize', 'items.flavors', 'payments', 'table', 'user', 'neighborhood'])
-            ->orderByDesc('created_at')
+            ->orderByDesc('updated_at')
             ->limit(100)
             ->get()
             ->map(fn ($order) => [
@@ -45,12 +45,11 @@ class OrderController extends Controller
             ]);
 
         // Stats
-        $todayOrders = Order::whereDate('created_at', today());
         $stats = [
-            'total_today' => $todayOrders->count(),
-            'revenue_today' => ((float) $todayOrders->clone()->whereNotNull('paid_at')->sum('total_amount')) / 100,
+            'total_today' => Order::whereDate('created_at', today())->count(),
+            'revenue_today' => ((float) Order::whereDate('paid_at', today())->sum('total_amount')) / 100,
             'pending_count' => Order::whereIn('status', ['pending', 'preparing', 'ready'])->count(),
-            'completed_today' => $todayOrders->clone()->whereNotNull('paid_at')->count(),
+            'completed_today' => Order::whereDate('paid_at', today())->count(),
         ];
 
         return Inertia::render('Orders/Index', [

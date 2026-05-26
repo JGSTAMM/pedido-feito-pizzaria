@@ -14,14 +14,11 @@ class DashboardController extends Controller
     {
         $today = today();
 
-        $todayOrders = Order::whereDate('created_at', $today);
-        $yesterdayOrders = Order::whereDate('created_at', $today->copy()->subDay());
-
         $stats = [
-            'revenue_today' => ((float) $todayOrders->clone()->whereNotNull('paid_at')->sum('total_amount')) / 100,
-            'revenue_yesterday' => ((float) $yesterdayOrders->clone()->whereNotNull('paid_at')->sum('total_amount')) / 100,
-            'orders_today' => $todayOrders->clone()->count(),
-            'orders_yesterday' => $yesterdayOrders->clone()->count(),
+            'revenue_today' => ((float) Order::whereDate('paid_at', $today)->sum('total_amount')) / 100,
+            'revenue_yesterday' => ((float) Order::whereDate('paid_at', $today->copy()->subDay())->sum('total_amount')) / 100,
+            'orders_today' => Order::whereDate('created_at', $today)->count(),
+            'orders_yesterday' => Order::whereDate('created_at', $today->copy()->subDay())->count(),
             'active_orders' => Order::whereIn('status', ['pending', 'preparing', 'ready'])->count(),
             'products_count' => Product::count(),
             'flavors_count' => PizzaFlavor::count(),
@@ -29,7 +26,7 @@ class DashboardController extends Controller
         ];
 
         $recentOrders = Order::with('table')
-            ->orderByDesc('created_at')
+            ->orderByDesc('updated_at')
             ->limit(5)
             ->get()
             ->map(fn ($o) => [
