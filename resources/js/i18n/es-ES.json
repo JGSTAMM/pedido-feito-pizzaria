@@ -769,7 +769,7 @@
             "defaultHint": "Los pedidos recientes aparecerán aquí"
         },
         "footer": {
-            "showing": "Mostrando {{filtered}} de {{total}} pedidos"
+            "showing": "Mostrando :filtered de :total pedidos"
         },
         "types": {
             "pickup": "Retiro",
@@ -792,9 +792,9 @@
         "modal": {
             "orderCode": "Código",
             "deliveryDetails": "Detalles de Entrega",
-            "itemsTitle": "{{count}} artículos",
+            "itemsTitle": ":count artículos",
             "notesPrefix": "Notas",
-            "eachPrice": "{{price}} c/u",
+            "eachPrice": ":price c/u",
             "totalOrder": "Total del Pedido"
         }
     },

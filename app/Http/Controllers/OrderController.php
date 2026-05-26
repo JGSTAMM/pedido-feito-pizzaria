@@ -29,7 +29,10 @@ class OrderController extends Controller
                 'neighborhood' => $order->neighborhood_name ?? ($order->neighborhood?->name),
                 'total_amount' => (float) $order->total_amount,
                 'items_count' => $order->items->sum('quantity'),
-                'payment_method' => $order->payments->first()?->method ?? '-',
+                'payments' => $order->payments->map(fn($p) => [
+                    'method' => $p->method,
+                    'amount' => (float) $p->amount,
+                ]),
                 'table_name' => $order->table?->name ?? null,
                 'created_at' => $order->created_at->format('d/m/Y H:i'),
                 'created_at_relative' => $order->created_at->diffForHumans(),

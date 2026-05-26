@@ -150,11 +150,24 @@ function OrderDetailsModal({ order, onClose, t, statusConfig, typeConfig, format
 
                 {/* Footer */}
                 <div className="p-6 border-t border-border-subtle bg-black/20 flex items-center justify-between rounded-b-2xl">
-                    <div className="flex items-center gap-2">
-                        <span className="material-symbols-outlined text-text-muted">payments</span>
-                        <span className="text-sm text-text-muted capitalize">{order.payment_method}</span>
+                    <div className="flex flex-col gap-1.5 max-w-[50%]">
+                        {order.payments && order.payments.length > 0 ? (
+                            order.payments.map((payment, idx) => (
+                                <div key={idx} className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 backdrop-blur-md shadow-sm">
+                                    <span className="material-symbols-outlined text-text-muted text-[16px]">payments</span>
+                                    <span className="text-xs text-text-muted capitalize font-medium">
+                                        {payment.method} - <span className="font-bold text-emerald-400/90 font-mono">{formatCurrency(payment.amount)}</span>
+                                    </span>
+                                </div>
+                            ))
+                        ) : (
+                            <div className="flex items-center gap-2">
+                                <span className="material-symbols-outlined text-text-muted text-[18px]">payments</span>
+                                <span className="text-sm text-text-muted capitalize">-</span>
+                            </div>
+                        )}
                     </div>
-                    <div className="text-right">
+                    <div className="text-right flex-shrink-0">
                         <span className="text-sm text-text-muted mr-3">{t('orders.modal.totalOrder')}</span>
                         <span className="text-2xl font-bold text-emerald-400 font-mono">{formatCurrency(order.total_amount)}</span>
                     </div>

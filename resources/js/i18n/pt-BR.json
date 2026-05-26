@@ -826,7 +826,7 @@
             "defaultHint": "Os pedidos recentes aparecerão aqui"
         },
         "footer": {
-            "showing": "Mostrando {{filtered}} de {{total}} pedidos"
+            "showing": "Mostrando :filtered de :total pedidos"
         },
         "types": {
             "pickup": "Retirada",
@@ -849,9 +849,9 @@
         "modal": {
             "orderCode": "Código",
             "deliveryDetails": "Detalhes de Entrega",
-            "itemsTitle": "{{count}} itens",
+            "itemsTitle": ":count itens",
             "notesPrefix": "Observação",
-            "eachPrice": "{{price}} unid.",
+            "eachPrice": ":price unid.",
             "totalOrder": "Total do Pedido"
         }
     },

@@ -780,7 +780,7 @@
             "defaultHint": "Recent orders will appear here"
         },
         "footer": {
-            "showing": "Showing {{filtered}} of {{total}} orders"
+            "showing": "Showing :filtered of :total orders"
         },
         "types": {
             "pickup": "Pickup",
@@ -803,9 +803,9 @@
         "modal": {
             "orderCode": "Code",
             "deliveryDetails": "Delivery Details",
-            "itemsTitle": "{{count}} items",
+            "itemsTitle": ":count items",
             "notesPrefix": "Notes",
-            "eachPrice": "{{price}} each",
+            "eachPrice": ":price each",
             "totalOrder": "Total Order"
         }
     },
