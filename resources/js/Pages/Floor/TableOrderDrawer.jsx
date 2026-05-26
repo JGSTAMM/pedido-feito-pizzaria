@@ -1059,8 +1059,8 @@ export default function TableOrderDrawer({
                         {generatingPix || pixQrCode || pixError || pixApproved ? (
                             <div className="flex-1 flex flex-col justify-between overflow-hidden min-h-0">
                                 {/* Scrollable Pix Content */}
-                                <div className="px-4 sm:px-8 py-6 overflow-y-auto custom-scrollbar flex-1 flex flex-col items-center space-y-4 min-h-0">
-                                    <div className="w-full text-center">
+                                <div className="px-4 sm:px-8 py-6 overflow-y-auto custom-scrollbar flex-1 space-y-4 min-h-0">
+                                    <div className="w-full text-center mx-auto shrink-0">
                                         <h4 className="text-lg font-black text-white tracking-tight flex items-center justify-center gap-2">
                                             <span className={`material-symbols-outlined text-xl ${pixApproved ? 'text-emerald-400 animate-bounce' : 'text-amber-400 animate-pulse'}`}>
                                                 {pixApproved ? 'check_circle' : 'qr_code_scanner'}
@@ -1073,7 +1073,7 @@ export default function TableOrderDrawer({
                                     </div>
 
                                     {/* Glassmorphic card for QR Code with smooth glows */}
-                                    <div className="relative p-4 sm:p-6 rounded-[28px] bg-white/[0.03] border border-white/10 backdrop-blur-xl shadow-2xl flex flex-col items-center justify-center space-y-4 group overflow-hidden max-w-[280px] w-full">
+                                    <div className="relative p-4 sm:p-6 rounded-[28px] bg-white/[0.03] border border-white/10 backdrop-blur-xl shadow-2xl flex flex-col items-center justify-center space-y-4 group overflow-hidden max-w-[280px] w-full mx-auto shrink-0">
                                         {/* Soft pulsing glow behind the QR code */}
                                         <div className={`absolute inset-0 -z-10 opacity-30 blur-2xl transition-all duration-700 ${
                                             pixApproved 
@@ -1149,7 +1149,7 @@ export default function TableOrderDrawer({
 
                                     {/* Copy Pix paste key & status indicator */}
                                     {pixQrCode && !pixApproved && !pixError && (
-                                        <div className="w-full max-w-sm space-y-3">
+                                        <div className="w-full max-w-sm space-y-3 mx-auto shrink-0">
                                             <button
                                                 onClick={handleCopyCode}
                                                 className={`w-full py-3.5 px-4 rounded-xl border font-bold text-xs flex items-center justify-center gap-2 transition-all active:scale-[0.98] ${
@@ -1188,7 +1188,7 @@ export default function TableOrderDrawer({
                         ) : (
                             <>
                                 {/* Interaction Area - Scrollable Body */}
-                                <div className="px-4 sm:px-8 py-4 sm:py-6 overflow-y-auto custom-scrollbar flex-1 space-y-5 sm:space-y-6">
+                                <div className="px-4 sm:px-8 py-4 sm:py-6 overflow-y-auto custom-scrollbar flex-1 space-y-5 sm:space-y-6 min-h-0">
 
                                     {/* Payment Methods Grid */}
                                     <div className="space-y-2 sm:space-y-3">
