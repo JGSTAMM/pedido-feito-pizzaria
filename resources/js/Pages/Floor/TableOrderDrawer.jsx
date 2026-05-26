@@ -1107,23 +1107,29 @@ export default function TableOrderDrawer({
                                         ) : pixQrCodeBase64 ? (
                                             <button
                                                 onClick={() => setIsQrFullscreen(true)}
-                                                className="w-full max-w-[240px] flex flex-col items-center justify-center space-y-3 py-6 px-4 rounded-3xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 hover:border-amber-500/50 text-amber-400 transition-all duration-300 active:scale-95 group relative overflow-hidden mx-auto"
+                                                className="w-full py-4 px-5 rounded-2xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 hover:border-amber-500/50 transition-all duration-300 active:scale-95 group relative overflow-hidden flex flex-row items-center justify-between shrink-0"
                                             >
                                                 {/* Subtle pulsing glow background */}
                                                 <div className="absolute inset-0 bg-amber-500/10 animate-pulse opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                                                 
-                                                <div className="size-16 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center relative z-10 group-hover:scale-110 transition-transform duration-300 shadow-[0_0_20px_rgba(245,158,11,0.2)]">
-                                                    <span className="material-symbols-outlined text-amber-400 text-4xl">qr_code_2</span>
+                                                {/* Left: QR Icon */}
+                                                <div className="size-10 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center relative z-10 shrink-0 shadow-[0_0_15px_rgba(245,158,11,0.2)]">
+                                                    <span className="material-symbols-outlined text-amber-400 text-[22px]">qr_code_2</span>
                                                 </div>
                                                 
-                                                <div className="text-center relative z-10 space-y-1 mt-2">
-                                                    <span className="block font-black text-sm sm:text-base uppercase tracking-widest flex items-center justify-center gap-2">
-                                                        <span className="material-symbols-outlined text-lg">fullscreen</span>
-                                                        {t('floor.drawer.pix.enlargeQr')}
+                                                {/* Middle: Explicit Text with Fallbacks */}
+                                                <div className="flex flex-col items-start flex-1 min-w-0 mx-4 relative z-10 text-left">
+                                                    <span className="font-black text-sm uppercase tracking-widest text-amber-400 truncate w-full">
+                                                        {t('floor.drawer.pix.enlargeQr') || 'AMPLIAR QR CODE'}
                                                     </span>
-                                                    <span className="block text-[10px] sm:text-xs text-amber-400/70 font-medium leading-relaxed max-w-[200px] mx-auto">
-                                                        {t('floor.drawer.pix.enlargeHint')}
+                                                    <span className="text-[10px] text-amber-400/70 font-medium truncate w-full">
+                                                        {t('floor.drawer.pix.enlargeHint') || 'Toque para tela cheia'}
                                                     </span>
+                                                </div>
+
+                                                {/* Right: Action Icon */}
+                                                <div className="relative z-10 shrink-0 flex items-center justify-center">
+                                                    <span className="material-symbols-outlined text-amber-400/80 text-[24px] group-hover:translate-x-1 group-hover:text-amber-300 transition-all">fullscreen</span>
                                                 </div>
                                             </button>
                                         ) : null}
