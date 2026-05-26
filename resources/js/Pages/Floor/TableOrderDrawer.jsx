@@ -162,6 +162,7 @@ export default function TableOrderDrawer({
     const [pixCountdown, setPixCountdown] = useState(600);
     const [pixAmount, setPixAmount] = useState(0);
     const [copied, setCopied] = useState(false);
+    const [isQrFullscreen, setIsQrFullscreen] = useState(false);
 
     const pollingIntervalRef = useRef(null);
     const countdownIntervalRef = useRef(null);
@@ -304,6 +305,13 @@ export default function TableOrderDrawer({
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
     };
+
+    // Auto-close fullscreen overlay when PIX is approved
+    useEffect(() => {
+        if (pixApproved) {
+            setIsQrFullscreen(false);
+        }
+    }, [pixApproved]);
 
     // Tabs: 'account' or 'add_items'. Safely check table?.status since it evaluates before early return.
     const [activeTab, setActiveTab] = useState(table?.status === 'occupied' ? 'account' : 'add_items');
@@ -1097,12 +1105,20 @@ export default function TableOrderDrawer({
                                                 </span>
                                             </div>
                                         ) : pixQrCodeBase64 ? (
-                                            <div className="relative w-40 sm:w-48 aspect-square shrink-0 bg-white p-3 rounded-2xl shadow-inner transition-transform duration-300 group-hover:scale-[1.03] select-none animate-scale-in">
-                                                <img 
-                                                    src={`data:image/png;base64,${pixQrCodeBase64}`} 
-                                                    alt="PIX QR Code" 
-                                                    className="w-full h-full object-contain"
-                                                />
+                                            <div className="flex flex-col items-center space-y-3 py-2">
+                                                <div className="size-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
+                                                    <span className="material-symbols-outlined text-amber-400 text-3xl">qr_code_2</span>
+                                                </div>
+                                                <button
+                                                    onClick={() => setIsQrFullscreen(true)}
+                                                    className="w-full py-3.5 px-6 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-400 font-black text-sm uppercase tracking-wider transition-all active:scale-[0.97] flex items-center justify-center gap-2"
+                                                >
+                                                    <span className="material-symbols-outlined text-lg">fullscreen</span>
+                                                    {t('floor.drawer.pix.enlargeQr')}
+                                                </button>
+                                                <p className="text-[10px] text-text-muted text-center leading-relaxed">
+                                                    {t('floor.drawer.pix.enlargeHint')}
+                                                </p>
                                             </div>
                                         ) : null}
 
@@ -1311,6 +1327,75 @@ export default function TableOrderDrawer({
                                 </div>
                             </>
                         )}
+                    </div>
+                </div>
+            )}
+
+            {/* ── Full-Screen PIX QR Code Overlay ── */}
+            {isQrFullscreen && pixQrCodeBase64 && (
+                <div className="fixed inset-0 z-[10000] bg-black/95 backdrop-blur-2xl flex flex-col items-center justify-center p-6 animate-fade-in-scale">
+                    {/* Close Button */}
+                    <button
+                        onClick={() => setIsQrFullscreen(false)}
+                        className="absolute top-4 right-4 size-11 flex items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-all border border-white/10 z-10"
+                    >
+                        <span className="material-symbols-outlined text-xl">close</span>
+                    </button>
+
+                    {/* Title */}
+                    <div className="text-center mb-6 shrink-0">
+                        <h3 className="text-xl font-black text-white tracking-tight flex items-center justify-center gap-2">
+                            <span className="material-symbols-outlined text-amber-400 text-2xl animate-pulse">qr_code_scanner</span>
+                            {t('floor.drawer.pix.title')}
+                        </h3>
+                        <p className="text-sm text-text-muted mt-1">
+                            {t('floor.drawer.pix.fullscreenHint')}
+                        </p>
+                    </div>
+
+                    {/* QR Code — Maximum size, perfectly square */}
+                    <div className="w-full max-w-[280px] aspect-square bg-white p-4 rounded-3xl shadow-2xl animate-scale-in select-none">
+                        <img
+                            src={`data:image/png;base64,${pixQrCodeBase64}`}
+                            alt="PIX QR Code"
+                            className="w-full h-full object-contain"
+                        />
+                    </div>
+
+                    {/* Amount & Countdown */}
+                    <div className="text-center mt-6 space-y-2 shrink-0">
+                        <p className="text-lg font-black text-white">
+                            {t('floor.drawer.pix.remainingAmount').replace(':amount', formatCurrency(pixAmount))}
+                        </p>
+                        {!pixApproved && !pixError && !generatingPix && (
+                            <p className="text-sm font-bold text-amber-400 tracking-wider">
+                                {t('floor.drawer.pix.countdown').replace(':time', formatCountdown(pixCountdown))}
+                            </p>
+                        )}
+                    </div>
+
+                    {/* Copy & Waiting Status */}
+                    <div className="w-full max-w-sm mt-6 space-y-3 shrink-0">
+                        <button
+                            onClick={handleCopyCode}
+                            className={`w-full py-3.5 px-4 rounded-xl border font-bold text-xs flex items-center justify-center gap-2 transition-all active:scale-[0.98] ${
+                                copied
+                                    ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                                    : 'bg-white/5 border-white/5 text-text-muted hover:bg-white/10 hover:text-white'
+                            }`}
+                        >
+                            <span className="material-symbols-outlined text-base">
+                                {copied ? 'check' : 'content_copy'}
+                            </span>
+                            <span>{copied ? t('floor.drawer.pix.pixCopiar') + ' (Copiado!)' : t('floor.drawer.pix.pixCopiar')}</span>
+                        </button>
+
+                        <div className="flex items-center justify-center gap-2 bg-amber-500/5 border border-amber-500/10 py-2.5 px-4 rounded-xl">
+                            <span className="size-2 rounded-full bg-amber-500 animate-ping" />
+                            <span className="text-[10px] text-amber-400 font-bold uppercase tracking-widest">
+                                {t('floor.drawer.pix.waitingApproval')}
+                            </span>
+                        </div>
                     </div>
                 </div>
             )}

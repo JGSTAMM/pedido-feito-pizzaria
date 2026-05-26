@@ -1028,7 +1028,10 @@
                     "countdown": "Expira em :time",
                     "pixCopiar": "Copiar Código PIX",
                     "waitingApproval": "Aguardando pagamento...",
-                    "cancel": "Voltar / Cancelar PIX"
+                    "cancel": "Voltar / Cancelar PIX",
+                    "enlargeQr": "Ampliar QR Code",
+                    "enlargeHint": "Toque para ver o QR Code em tela cheia",
+                    "fullscreenHint": "Aponte a câmera do celular para o código abaixo"
                 }
             }
         }

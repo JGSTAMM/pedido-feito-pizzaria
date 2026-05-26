@@ -982,7 +982,10 @@
                     "countdown": "Expires in :time",
                     "pixCopiar": "Copy PIX Code",
                     "waitingApproval": "Waiting for payment...",
-                    "cancel": "Back / Cancel PIX"
+                    "cancel": "Back / Cancel PIX",
+                    "enlargeQr": "Enlarge QR Code",
+                    "enlargeHint": "Tap to view the QR Code fullscreen",
+                    "fullscreenHint": "Point your phone's camera at the code below"
                 }
             }
         }
