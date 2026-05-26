@@ -500,14 +500,18 @@ export default function TableOrderDrawer({
         if (!activeOrder || safePayments.length === 0) return;
         setCheckingOut(true);
 
-        router.post(`/floor/${table.id}/pay`, {
+        const payload = {
             payments: safePayments
                 .filter(p => p !== null && p !== undefined && p.method)
                 .map(p => ({ 
                     method: p.method, 
                     amount: Math.round(Number(p.amount) * 100) 
                 }))
-        }, {
+        };
+
+        console.log("DEBUG CHECKOUT PAYLOAD:", { ...payload });
+
+        router.post(`/floor/${table.id}/pay`, payload, {
             preserveScroll: true,
             onSuccess: () => {
                 setShowCheckoutModal(false);
