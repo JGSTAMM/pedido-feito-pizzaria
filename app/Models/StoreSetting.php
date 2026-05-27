@@ -34,6 +34,12 @@ class StoreSetting extends Model
         'ifood_merchant_id',
     ];
 
+    protected $hidden = [
+        'mercadopago_access_token',
+        'google_maps_api_key',
+        'ifood_merchant_id',
+    ];
+
     protected $casts = [
         'is_open' => 'boolean',
         'opening_hours' => 'array',

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Events\OrderStatusUpdated;
 use App\Models\Order;
 use App\Models\Payment;
+use App\Models\StoreSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use MercadoPago\Client\Common\RequestOptions;
@@ -17,7 +18,12 @@ class PaymentGatewayService
 {
     public function __construct()
     {
-        MercadoPagoConfig::setAccessToken((string) config('services.mercadopago.access_token', ''));
+        // Read access token from database first (set via admin Settings page),
+        // falling back to .env config for backward compatibility.
+        $dbToken = StoreSetting::first()?->mercadopago_access_token;
+        $token = $dbToken ?: (string) config('services.mercadopago.access_token', '');
+
+        MercadoPagoConfig::setAccessToken($token);
     }
 
     public function extractNotificationId(Request $request): ?string
@@ -95,11 +101,7 @@ class PaymentGatewayService
                     'payer' => [
                         'email' => $payerEmail,
                         'first_name' => 'Cliente',
-                        'last_name' => 'Pizza',
-                        'identification' => [
-                            'type' => 'CPF',
-                            'number' => '19119119100', // CPF de teste
-                        ],
+                        'last_name' => 'PedidoFeito',
                     ],
                     'external_reference' => (string) $order->id . '_' . time(),
                 ];

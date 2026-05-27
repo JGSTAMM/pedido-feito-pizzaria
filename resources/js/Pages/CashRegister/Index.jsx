@@ -292,15 +292,20 @@ export default function Index({ register = null, summary = null, history = null,
                                 <div className="p-4 border-t border-border-subtle bg-background-dark/50 flex flex-col md:flex-row md:items-center justify-between gap-4">
                                     <span className="text-xs text-text-muted font-bold tracking-wider uppercase">{t('cashRegister.history.pagination.pageOf', { current: history.current_page, total: history.last_page })}</span>
                                     <div className="flex gap-1.5 flex-wrap">
-                                        {history.links.map((link, i) => (
-                                            <button
-                                                key={i}
-                                                disabled={!link.url || link.active}
-                                                onClick={() => link.url && router.get(link.url, {}, { preserveState: true })}
-                                                className={`h-8 min-w-[32px] px-2 rounded-lg text-xs font-bold transition-all border flex items-center justify-center ${link.active ? 'bg-primary border-primary text-white shadow-[0_0_10px_rgba(139,92,246,0.3)]' : 'bg-surface border-border-subtle text-text-muted hover:text-white hover:border-border-subtle-hover'} disabled:opacity-30 disabled:cursor-not-allowed`}
-                                                dangerouslySetInnerHTML={{ __html: link.label }}
-                                            />
-                                        ))}
+                                        {history.links.map((link, i) => {
+                                            const decodePaginationLabel = (label) =>
+                                                label.replace(/&laquo;/g, '\u00AB').replace(/&raquo;/g, '\u00BB').replace(/&amp;/g, '&');
+                                            return (
+                                                <button
+                                                    key={i}
+                                                    disabled={!link.url || link.active}
+                                                    onClick={() => link.url && router.get(link.url, {}, { preserveState: true })}
+                                                    className={`h-8 min-w-[32px] px-2 rounded-lg text-xs font-bold transition-all border flex items-center justify-center ${link.active ? 'bg-primary border-primary text-white shadow-[0_0_10px_rgba(139,92,246,0.3)]' : 'bg-surface border-border-subtle text-text-muted hover:text-white hover:border-border-subtle-hover'} disabled:opacity-30 disabled:cursor-not-allowed`}
+                                                >
+                                                    {decodePaginationLabel(link.label)}
+                                                </button>
+                                            );
+                                        })}
                                     </div>
                                 </div>
                             </div>

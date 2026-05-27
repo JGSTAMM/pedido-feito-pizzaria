@@ -30,7 +30,7 @@ class SettingsController extends Controller
         );
 
         return Inertia::render('Settings/Index', [
-            'settings' => $settings,
+            'settings' => $settings->makeVisible(['mercadopago_access_token', 'google_maps_api_key', 'ifood_merchant_id']),
             'printers' => Printer::orderBy('name')->get(),
         ]);
     }
@@ -182,29 +182,8 @@ class SettingsController extends Controller
             'ifood_merchant_id'
         ));
 
-        // Update .env for Mercado Pago
-        if ($request->has('mercadopago_access_token')) {
-            $envPath = base_path('.env');
-            if (file_exists($envPath)) {
-                $envContent = file_get_contents($envPath);
-                $oldToken = env('MERCADOPAGO_ACCESS_TOKEN');
-                $newToken = $request->mercadopago_access_token ?? '';
-                
-                // Only write if there's actually an entry or we need to add it
-                if (preg_match('/^MERCADOPAGO_ACCESS_TOKEN=.*$/m', $envContent)) {
-                    $envContent = preg_replace('/^MERCADOPAGO_ACCESS_TOKEN=.*$/m', 'MERCADOPAGO_ACCESS_TOKEN="' . $newToken . '"', $envContent);
-                } else {
-                    $envContent .= "\nMERCADOPAGO_ACCESS_TOKEN=\"" . $newToken . "\"\n";
-                }
-                
-                file_put_contents($envPath, $envContent);
-                try {
-                    \Illuminate\Support\Facades\Artisan::call('config:clear');
-                } catch (\Exception $e) {
-                    // Ignore exceptions if config clearing fails in certain environments
-                }
-            }
-        }
+        // Token is stored exclusively in the database (store_settings table).
+        // PaymentGatewayService reads it from there at runtime.
 
         return redirect()->back()->with('success', 'Integrações atualizadas.');
     }
