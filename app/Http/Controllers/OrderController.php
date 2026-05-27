@@ -14,9 +14,8 @@ class OrderController extends Controller
     {
         $orders = Order::with(['items.product', 'items.pizzaSize', 'items.flavors', 'payments', 'table', 'user', 'neighborhood'])
             ->orderByDesc('updated_at')
-            ->limit(100)
-            ->get()
-            ->map(fn ($order) => [
+            ->paginate(20)
+            ->through(fn ($order) => [
                 'id' => $order->id,
                 'short_code' => $order->short_code,
                 'status' => $order->status,

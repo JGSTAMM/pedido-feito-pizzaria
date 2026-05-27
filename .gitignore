@@ -97,3 +97,5 @@ SCREENS.md
 .github/agents/
 .github/copilot/
 .github/prompts/
+
+composer.phar

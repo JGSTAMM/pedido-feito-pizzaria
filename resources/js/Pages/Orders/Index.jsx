@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Link } from '@inertiajs/react';
+import { Link, router } from '@inertiajs/react';
 import { norm } from '@/utils/normalize';
 import AppLayout from '@/Layouts/AppLayout';
 import useI18n from '@/hooks/useI18n';
@@ -177,7 +177,7 @@ function OrderDetailsModal({ order, onClose, t, statusConfig, typeConfig, format
     );
 }
 
-export default function Index({ orders = [], stats = {} }) {
+export default function Index({ orders = { data: [], links: [], total: 0 }, stats = {} }) {
     const { t, formatCurrency } = useI18n();
     const statusConfig = getStatusConfig(t);
     const typeConfig = getTypeConfig(t);
@@ -186,7 +186,7 @@ export default function Index({ orders = [], stats = {} }) {
     const [selectedOrder, setSelectedOrder] = useState(null);
 
     const filteredOrders = useMemo(() => {
-        let items = orders;
+        let items = orders.data || [];
 
         if (statusFilter !== 'all') {
             if (statusFilter === 'paid') {
@@ -208,11 +208,11 @@ export default function Index({ orders = [], stats = {} }) {
     }, [orders, statusFilter, searchTerm]);
 
     const statusTabs = [
-        { key: 'all', label: t('orders.filters.all'), count: orders.length },
-        { key: 'pending', label: t('orders.filters.pending'), count: orders.filter(o => o.status === 'pending').length },
-        { key: 'preparing', label: t('orders.filters.preparing'), count: orders.filter(o => o.status === 'preparing').length },
-        { key: 'ready', label: t('orders.filters.ready'), count: orders.filter(o => o.status === 'ready').length },
-        { key: 'paid', label: t('orders.filters.paid'), count: orders.filter(o => o.is_paid).length },
+        { key: 'all', label: t('orders.filters.all'), count: (orders.data || []).length },
+        { key: 'pending', label: t('orders.filters.pending'), count: (orders.data || []).filter(o => o.status === 'pending').length },
+        { key: 'preparing', label: t('orders.filters.preparing'), count: (orders.data || []).filter(o => o.status === 'preparing').length },
+        { key: 'ready', label: t('orders.filters.ready'), count: (orders.data || []).filter(o => o.status === 'ready').length },
+        { key: 'paid', label: t('orders.filters.paid'), count: (orders.data || []).filter(o => o.is_paid).length },
     ];
 
     return (
@@ -362,10 +362,28 @@ export default function Index({ orders = [], stats = {} }) {
                     </div>
 
                     {/* Footer */}
-                    <div className="flex items-center justify-between mt-4 px-2">
+                    <div className="flex items-center justify-between mt-4 px-2 pb-4">
                         <p className="text-sm text-text-muted">
-                            {t('orders.footer.showing', { filtered: filteredOrders.length, total: orders.length })}
+                            {t('orders.footer.showing', { filtered: filteredOrders.length, total: orders.total || filteredOrders.length })}
                         </p>
+                        {orders.links && orders.links.length > 3 && (
+                            <div className="flex gap-1.5 flex-wrap">
+                                {orders.links.map((link, i) => {
+                                    const decodePaginationLabel = (label) =>
+                                        label.replace(/&laquo;/g, '\u00AB').replace(/&raquo;/g, '\u00BB').replace(/&amp;/g, '&');
+                                    return (
+                                        <button
+                                            key={i}
+                                            disabled={!link.url || link.active}
+                                            onClick={() => link.url && router.get(link.url, {}, { preserveState: true })}
+                                            className={`h-8 min-w-[32px] px-2 rounded-lg text-xs font-bold transition-all border flex items-center justify-center ${link.active ? 'bg-primary border-primary text-white shadow-[0_0_10px_rgba(139,92,246,0.3)]' : 'bg-surface border-border-subtle text-text-muted hover:text-white hover:border-border-subtle-hover'} disabled:opacity-30 disabled:cursor-not-allowed`}
+                                        >
+                                            {decodePaginationLabel(link.label)}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

@@ -14,7 +14,7 @@ class DashboardController extends Controller
     {
         $today = today();
 
-        $stats = [
+        $stats = \Illuminate\Support\Facades\Cache::remember('dashboard_stats', 60, fn() => [
             'revenue_today' => ((float) Order::whereDate('paid_at', $today)->sum('total_amount')) / 100,
             'revenue_yesterday' => ((float) Order::whereDate('paid_at', $today->copy()->subDay())->sum('total_amount')) / 100,
             'orders_today' => Order::whereDate('created_at', $today)->count(),
@@ -23,7 +23,7 @@ class DashboardController extends Controller
             'products_count' => Product::count(),
             'flavors_count' => PizzaFlavor::count(),
             'cash_register_open' => CashRegister::where('status', 'open')->exists(),
-        ];
+        ]);
 
         $recentOrders = Order::with('table')
             ->orderByDesc('updated_at')
