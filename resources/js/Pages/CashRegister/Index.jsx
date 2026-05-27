@@ -293,8 +293,16 @@ export default function Index({ register = null, summary = null, history = null,
                                     <span className="text-xs text-text-muted font-bold tracking-wider uppercase">{t('cashRegister.history.pagination.pageOf', { current: history.current_page, total: history.last_page })}</span>
                                     <div className="flex gap-1.5 flex-wrap">
                                         {history.links.map((link, i) => {
-                                            const decodePaginationLabel = (label) =>
-                                                label.replace(/&laquo;/g, '\u00AB').replace(/&raquo;/g, '\u00BB').replace(/&amp;/g, '&');
+                                            const renderPaginationLabel = (label) => {
+                                                const lower = label.toLowerCase();
+                                                if (lower.includes('previous') || lower.includes('&laquo;')) {
+                                                    return <span className="material-symbols-outlined text-[18px]">chevron_left</span>;
+                                                }
+                                                if (lower.includes('next') || lower.includes('&raquo;')) {
+                                                    return <span className="material-symbols-outlined text-[18px]">chevron_right</span>;
+                                                }
+                                                return label.replace(/&amp;/g, '&');
+                                            };
                                             return (
                                                 <button
                                                     key={i}
@@ -302,7 +310,7 @@ export default function Index({ register = null, summary = null, history = null,
                                                     onClick={() => link.url && router.get(link.url, {}, { preserveState: true })}
                                                     className={`h-8 min-w-[32px] px-2 rounded-lg text-xs font-bold transition-all border flex items-center justify-center ${link.active ? 'bg-primary border-primary text-white shadow-[0_0_10px_rgba(139,92,246,0.3)]' : 'bg-surface border-border-subtle text-text-muted hover:text-white hover:border-border-subtle-hover'} disabled:opacity-30 disabled:cursor-not-allowed`}
                                                 >
-                                                    {decodePaginationLabel(link.label)}
+                                                    {renderPaginationLabel(link.label)}
                                                 </button>
                                             );
                                         })}
