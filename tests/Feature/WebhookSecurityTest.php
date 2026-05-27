@@ -2,17 +2,24 @@
 
 namespace Tests\Feature;
 
+use App\Models\StoreSetting;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Tests\TestCase;
 
 class WebhookSecurityTest extends TestCase
 {
+    use RefreshDatabase;
+
     protected function setUp(): void
     {
         parent::setUp();
 
         Cache::flush();
         config(['services.mercadopago.webhook_secret' => 'test_webhook_secret']);
+        StoreSetting::create([
+            'mercadopago_access_token' => 'TEST-mock-token'
+        ]);
     }
 
     public function test_webhook_rejects_invalid_signature(): void
