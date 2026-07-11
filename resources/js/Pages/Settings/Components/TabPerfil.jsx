@@ -1,6 +1,6 @@
 import React from 'react';
 import { useForm, router } from '@inertiajs/react';
-import { useI18n } from '@/Hooks/useI18n';
+import { useI18n } from '@/hooks/useI18n';
 import { Card, Label } from './Shared';
 
 export default function TabPerfil({ settings, days }) {
