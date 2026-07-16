@@ -56,9 +56,9 @@ export default function AppLayout({ children, topBar = null }) {
                 {/* Brand */}
                 <div className="p-6 pb-8 border-b border-border-subtle">
                     <h1 className="text-white text-xl font-bold tracking-tight">
-                        {appName || t('layout.defaultAppName')}
+                        {props.storeSetting?.store_name || 'Pedido Feito'}
                     </h1>
-                    <p className="text-text-muted text-xs mt-1 font-medium">{t('layout.systemAdminVersion')}</p>
+                    <p className="text-text-muted text-[10px] mt-1 font-medium leading-tight">Pedido Feito System By Pixirica Tecnologias</p>
                 </div>
 
                 {/* Navigation Links */}
@@ -113,12 +113,14 @@ export default function AppLayout({ children, topBar = null }) {
             </nav>
 
             {/* Main Content Area */}
-            <main className="flex-1 flex flex-col h-full min-w-0 bg-background-dark">
-                {/* Optional Top Bar (pages like POS customize this) */}
-                {topBar && topBar}
+            <main className="flex-1 flex flex-col h-full min-w-0 bg-background-dark items-center">
+                <div className="flex-1 flex flex-col w-full max-w-7xl mx-auto h-full">
+                    {/* Optional Top Bar (pages like POS customize this) */}
+                    {topBar && topBar}
 
-                {/* Page Content */}
-                {children}
+                    {/* Page Content */}
+                    {children}
+                </div>
             </main>
         </div>
     );
