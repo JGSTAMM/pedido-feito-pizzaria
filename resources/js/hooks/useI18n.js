@@ -87,7 +87,7 @@ export function useI18n() {
 
     const translateDynamic = (value) => {
         if (!value) return '';
-        const normalized = value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
+        const normalized = String(value || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
         const key = `digital_menu.dynamic.${normalized}`;
         const translated = t(key);
 
@@ -98,7 +98,7 @@ export function useI18n() {
             const parts = value.split(/,\s*|\s+e\s+|\s+and\s+/i).map(p => p.trim()).filter(Boolean);
             if (parts.length > 1) {
                 return parts.map(part => {
-                    const pNorm = part.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
+                    const pNorm = String(part || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
                     const pKey = `digital_menu.dynamic.${pNorm}`;
                     const pTrans = t(pKey);
                     return (pTrans && pTrans !== pKey) ? pTrans : part;

@@ -72,7 +72,7 @@ const WaiterCartItem = ({ item, updateQty, removeFromCart, formatCurrency, t }) 
                         <div className="space-y-1">
                             <p className="text-[10px] uppercase font-bold text-text-muted tracking-wider">{t('floor.drawer.cart.observations_label')}</p>
                             {notesArray.map((note, i) => {
-                                const isExclusion = note.toLowerCase().startsWith('sem ') || note.toLowerCase().startsWith('retirar ') || note.toLowerCase().startsWith('no ');
+                                const isExclusion = String(note || '').toLowerCase().startsWith('sem ') || String(note || '').toLowerCase().startsWith('retirar ') || String(note || '').toLowerCase().startsWith('no ');
                                 const isPizza = item.type === 'pizza_custom';
                                 
                                 return (

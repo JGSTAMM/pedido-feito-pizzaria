@@ -106,9 +106,9 @@ export default function KitchenReceiptPrint({ order }) {
                                         <div className="mt-2 ml-1 bg-black text-white p-1 font-black uppercase text-[10px] leading-tight">
                                             {item.notes.split('|').map((note, idx) => {
                                                 const trimmed = note.trim();
-                                                const isExclusion = trimmed.toLowerCase().startsWith('sem ') || 
-                                                                  trimmed.toLowerCase().startsWith('retirar ') ||
-                                                                  trimmed.toLowerCase().startsWith('no ');
+                                                const isExclusion = String(trimmed || '').toLowerCase().startsWith('sem ') || 
+                                                                  String(trimmed || '').toLowerCase().startsWith('retirar ') ||
+                                                                  String(trimmed || '').toLowerCase().startsWith('no ');
                                                 return (
                                                     <div key={idx} className={isExclusion ? "underline decoration-1" : ""}>
                                                         {isExclusion ? "❌ " : "⚠️ "}{trimmed}

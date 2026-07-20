@@ -7,12 +7,12 @@ export default function CatalogList({ filteredCategories, t, formatCurrency, onA
             {filteredCategories.map(category => (
                 <section key={category.id} className="scroll-mt-32" id={category.id}>
                     <h2 className="text-xl font-black text-white mb-1 uppercase tracking-widest">{category.name}</h2>
-                    {(category.isPizzaFlavorGroup || category.name.toLowerCase().includes('pizza')) && (
+                    {(category.isPizzaFlavorGroup || category.name?.toLowerCase()?.includes('pizza')) && (
                         <p className="text-sm text-slate-400 mb-5">{t('digital_menu.home.pizza_custom_subtitle')}</p>
                     )}
 
                     <div className="space-y-4 pt-2">
-                        {(category.isPizzaFlavorGroup || category.name.toLowerCase().includes('pizza')) && (
+                        {(category.isPizzaFlavorGroup || category.name?.toLowerCase()?.includes('pizza')) && (
                             <button
                                 onClick={onOpenPizzaBuilder}
                                 className="w-full flex items-center gap-4 bg-gradient-to-r from-primary/10 to-transparent border border-primary/20 rounded-3xl p-4 text-left transition-all hover:bg-primary/20 hover:scale-[1.01] active:scale-95 group mb-6"

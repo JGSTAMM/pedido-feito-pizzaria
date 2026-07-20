@@ -215,8 +215,8 @@ function OrderDetailModal({ order, isOpen, onClose }) {
                                                     const uniqueNotes = Array.from(new Set(rawNotes));
                                                     
                                                     return uniqueNotes.filter((note, idx) => {
-                                                        const lowerNote = note.toLowerCase();
-                                                        const lowerName = item.name.toLowerCase();
+                                                        const lowerNote = String(note || '').toLowerCase();
+                                                        const lowerName = String(item.name || '').toLowerCase();
                                                         
                                                         // 1. Hide if the item name already contains the note (most common for variations)
                                                         if (lowerName.includes(lowerNote)) return false;
@@ -227,7 +227,7 @@ function OrderDetailModal({ order, isOpen, onClose }) {
                                                         // 3. Hide if this note is a substring of another note in the same list
                                                         // (Aggressive deduplication between pills)
                                                         const isRedundant = uniqueNotes.some((other, oIdx) => 
-                                                            oIdx !== idx && other.toLowerCase().includes(lowerNote)
+                                                            oIdx !== idx && String(other || '').toLowerCase().includes(lowerNote)
                                                         );
 
                                                         return !isRedundant;

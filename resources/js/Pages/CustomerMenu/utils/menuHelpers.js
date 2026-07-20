@@ -5,7 +5,7 @@
 
 export function translateCategoryName(name, t) {
     if (!name) return '';
-    const normalized = name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '_');
+    const normalized = String(name || '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '_');
     const translated = t(`digital_menu.catalog.categories.${normalized}`);
     return translated === `digital_menu.catalog.categories.${normalized}` ? name : translated;
 }

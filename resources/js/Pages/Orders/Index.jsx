@@ -370,7 +370,7 @@ export default function Index({ orders = { data: [], links: [], total: 0 }, stat
                             <div className="flex gap-1.5 flex-wrap">
                                 {orders.links.map((link, i) => {
                                     const renderPaginationLabel = (label) => {
-                                        const lower = label.toLowerCase();
+                                        const lower = String(label || '').toLowerCase();
                                         if (lower.includes('previous') || lower.includes('&laquo;')) {
                                             return <span className="material-symbols-outlined text-[18px]">chevron_left</span>;
                                         }
