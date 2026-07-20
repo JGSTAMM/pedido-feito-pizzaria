@@ -22,7 +22,7 @@ export default function CategoryTabs({ catalogCategories, activeCategory, setAct
                             : 'bg-transparent border-white/10 text-slate-400 hover:bg-white/5'
                             }`}
                     >
-                        {category.name.toUpperCase()}
+                        {category.name?.toUpperCase()}
                     </button>
                 ))}
             </div>

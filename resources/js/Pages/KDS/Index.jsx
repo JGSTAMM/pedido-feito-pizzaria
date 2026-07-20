@@ -60,7 +60,7 @@ function OrderDetailModal({ order, isOpen, onClose }) {
                             <p className="text-white font-bold flex items-center gap-2">
                                 <span className="material-symbols-outlined text-emerald-400">payments</span>
                                 {order.payment_method_online ? (
-                                    <span className="truncate">{order.payment_method_online.toUpperCase()} (Online)</span>
+                                    <span className="truncate">{order.payment_method_online?.toUpperCase()} (Online)</span>
                                 ) : 'Local / Manual'}
                             </p>
                         </div>

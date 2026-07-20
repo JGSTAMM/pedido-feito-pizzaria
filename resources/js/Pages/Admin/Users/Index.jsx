@@ -149,7 +149,7 @@ export default function Index({ users }) {
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-3">
                                                     <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-primary to-purple-400 flex items-center justify-center text-white font-bold text-sm shadow-lg border border-white/10">
-                                                        {user.name.substring(0, 2).toUpperCase()}
+                                                        {user.name?.substring(0, 2)?.toUpperCase()}
                                                     </div>
                                                     <span className="text-white font-bold text-sm">{user.name}</span>
                                                 </div>

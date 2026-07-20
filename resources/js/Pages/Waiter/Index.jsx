@@ -86,7 +86,7 @@ export default function Index({
                                 </h1>
                             </div>
                             <div className="size-12 rounded-2xl bg-gradient-to-tr from-primary to-purple-500 flex items-center justify-center text-white font-bold text-lg shadow-xl shadow-primary/20 border border-white/10">
-                                {userName.charAt(0).toUpperCase()}
+                                {userName?.charAt(0)?.toUpperCase()}
                             </div>
                         </div>
                     </div>

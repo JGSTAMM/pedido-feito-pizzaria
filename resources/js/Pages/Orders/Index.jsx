@@ -320,7 +320,7 @@ export default function Index({ orders = { data: [], links: [], total: 0 }, stat
                                         {/* Customer */}
                                         <div className="flex items-center gap-3 min-w-0">
                                             <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-primary/30 to-purple-400/30 flex items-center justify-center text-primary text-xs font-bold flex-shrink-0">
-                                                {order.customer_name.substring(0, 2).toUpperCase()}
+                                                {order.customer_name?.substring(0, 2)?.toUpperCase()}
                                             </div>
                                             <div className="min-w-0">
                                                 <p className="text-sm font-semibold text-white truncate">{order.customer_name}</p>
