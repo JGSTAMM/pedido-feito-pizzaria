@@ -368,6 +368,9 @@ class FloorController extends Controller
             'payments' => 'required|array',
             'payments.*.method' => 'required|string',
             'payments.*.amount' => 'required|integer|min:0',
+            'service_fee_cents' => 'nullable|integer|min:0',
+            'discount_cents' => 'nullable|integer|min:0',
+            'discount_supervisor_id' => 'nullable|exists:users,id',
         ]);
 
         try {
@@ -394,8 +397,13 @@ class FloorController extends Controller
                 return $order->getRawOriginal('total_amount');
             });
             $totalPaid = collect($validated['payments'])->sum('amount');
+            
+            $serviceFee = (int) ($validated['service_fee_cents'] ?? 0);
+            $discount = (int) ($validated['discount_cents'] ?? 0);
+            
+            $expectedTotal = max(0, $totalAmount + $serviceFee - $discount);
 
-            if ($totalPaid < $totalAmount) {
+            if ($totalPaid < $expectedTotal) {
                 DB::rollBack();
 
                 return redirect()->back()->with('error', __('order.payment.insufficient_amount'));
@@ -427,7 +435,6 @@ class FloorController extends Controller
                         'method' => $currentMethod['method'],
                         'amount' => $take / 100, // Cast to float for mutator
                     ]);
-
                     $currentMethod['amount'] -= $take;
                     $amountToPayForOrder -= $take;
 
@@ -435,6 +442,21 @@ class FloorController extends Controller
                         $pIndex++;
                     }
                 }
+
+                // Add fee and discount to the first order for tracking
+                $updateData = [
+                    'status' => 'paid',
+                    'paid_at' => now(),
+                    'cash_register_id' => $activeRegister?->id,
+                ];
+                
+                if ($index === 0) {
+                    $updateData['service_fee_amount'] = $validated['service_fee_cents'] ?? 0;
+                    $updateData['discount_amount'] = $validated['discount_cents'] ?? 0;
+                    $updateData['discount_approved_by'] = $validated['discount_supervisor_id'] ?? null;
+                }
+                
+                $order->update($updateData);
 
                 // If last order, dump remaining payment (change)
                 if ($index === $orders->count() - 1) {
@@ -573,5 +595,31 @@ class FloorController extends Controller
         }
 
         return response()->json(['status' => $gatewayStatus ?? 'pending']);
+    }
+
+    /**
+     * Validate Supervisor PIN for Discounts
+     */
+    public function validateSupervisorPin(Request $request)
+    {
+        $request->validate([
+            'pin' => 'required|string',
+        ]);
+
+        $users = \App\Models\User::whereIn('role', ['admin', 'supervisor'])
+            ->whereNotNull('pin_hash')
+            ->get();
+
+        foreach ($users as $user) {
+            if (\Illuminate\Support\Facades\Hash::check($request->pin, $user->pin_hash)) {
+                return response()->json([
+                    'valid' => true,
+                    'supervisor_name' => $user->name,
+                    'supervisor_id' => $user->id,
+                ]);
+            }
+        }
+
+        return response()->json(['valid' => false], 401);
     }
 }

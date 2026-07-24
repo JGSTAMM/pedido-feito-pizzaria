@@ -26,27 +26,7 @@ class FixUtf8Encoding extends Command
     /**
      * The mapping of corrupted characters to correct characters.
      */
-    protected $replaceMap = [
-        // Uppercase
-        'Ã€' => 'À', 'Ã ' => 'À', 'Ã‚' => 'Â', 'Ãƒ' => 'Ã', 'Ã„' => 'Ä',
-        'Ã‡' => 'Ç',
-        'Ãˆ' => 'È', 'Ã‰' => 'É', 'ÃŠ' => 'Ê', 'Ã‹' => 'Ë',
-        'ÃŒ' => 'Ì', 'Ã ' => 'Í', 'ÃŽ' => 'Î', 'Ã ' => 'Ï', // Note: 'Ã ' is often Í depending on the dump
-        'Ã’' => 'Ò', 'Ã“' => 'Ó', 'Ã”' => 'Ô', 'Ã•' => 'Õ', 'Ã–' => 'Ö',
-        'Ã™' => 'Ù', 'Ãš' => 'Ú', 'Ã›' => 'Û', 'Ãœ' => 'Ü',
-        
-        // Lowercase
-        'Ã¡' => 'á', 'Ã¢' => 'â', 'Ã£' => 'ã', 'Ã¤' => 'ä', 'Ã ' => 'à',
-        'Ã§' => 'ç',
-        'Ã¨' => 'è', 'Ã©' => 'é', 'Ãª' => 'ê', 'Ã«' => 'ë',
-        'Ã¬' => 'ì', 'Ã­' => 'í', 'Ã®' => 'î', 'Ã¯' => 'ï',
-        'Ã²' => 'ò', 'Ã³' => 'ó', 'Ã´' => 'ô', 'Ãµ' => 'õ', 'Ã¶' => 'ö',
-        'Ã¹' => 'ù', 'Ãº' => 'ú', 'Ã»' => 'û', 'Ã¼' => 'ü',
-        
-        // Special case fallbacks from user prompt if exact match is needed
-        // The user mentioned 'Ã' -> 'í', 'Ã ' -> 'À', 'Ã' -> 'Í'. We must be careful not to replace 'Ã' too early.
-        // It's better to rely on standard utf-8 mojibake replacements as above.
-    ];
+    protected $replaceMap = [];
 
     /**
      * Execute the console command.
@@ -57,6 +37,8 @@ class FixUtf8Encoding extends Command
     {
         $this->info('Starting UTF-8 Mojibake correction...');
 
+        $this->buildReplaceMap();
+
         $this->fixProducts();
         $this->fixPizzaFlavors();
         $this->fixOrderItems();
@@ -64,6 +46,23 @@ class FixUtf8Encoding extends Command
         $this->info('Finished UTF-8 Mojibake correction successfully.');
         
         return 0;
+    }
+
+    private function buildReplaceMap()
+    {
+        $chars = [
+            'À','Á','Â','Ã','Ä','Å','Æ','Ç','È','É','Ê','Ë','Ì','Í','Î','Ï',
+            'Ð','Ñ','Ò','Ó','Ô','Õ','Ö','Ø','Ù','Ú','Û','Ü','Ý','Þ','ß',
+            'à','á','â','ã','ä','å','æ','ç','è','é','ê','ë','ì','í','î','ï',
+            'ð','ñ','ò','ó','ô','õ','ö','ø','ù','ú','û','ü','ý','þ','ÿ'
+        ];
+        
+        foreach ($chars as $c) {
+            $mojibake = mb_convert_encoding($c, 'UTF-8', 'Windows-1252');
+            if ($mojibake !== $c) {
+                $this->replaceMap[$mojibake] = $c;
+            }
+        }
     }
 
     private function applyFix(?string $text): ?string

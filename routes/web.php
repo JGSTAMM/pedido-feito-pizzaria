@@ -99,6 +99,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/floor', [FloorController::class, 'index']);
         Route::post('/floor', [FloorController::class, 'store']);
         Route::post('/floor/{table}/add-items', [FloorController::class, 'addItems']);
+        Route::post('/floor/validate-supervisor-pin', [FloorController::class, 'validateSupervisorPin']);
         Route::post('/floor/{table}/pay', [FloorController::class, 'payAndClose']);
         Route::post('/floor/{table}/generate-pix', [FloorController::class, 'generatePix']);
         Route::get('/floor/pix-status/{order}', [FloorController::class, 'pixPaymentStatus']);
