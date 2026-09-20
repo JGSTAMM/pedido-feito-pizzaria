@@ -2,7 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Models\Order;
+use App\Models\Payment;
 use App\Models\StoreSetting;
+use App\Services\PaymentGatewayService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Tests\TestCase;
@@ -33,7 +36,33 @@ class WebhookSecurityTest extends TestCase
 
         $response = $this->postJson('/api/payments/webhook', $payload, [
             'x-request-id' => 'req-invalid',
-            'x-signature' => 'ts=1710000000,v1=invalid-signature',
+            'x-signature' => 'ts=' . time() . ',v1=invalid-signature',
+        ]);
+
+        $response->assertStatus(403)
+            ->assertJson([
+                'received' => false,
+                'message' => 'digital_menu.webhook.invalid_signature',
+            ]);
+    }
+
+    public function test_webhook_rejects_expired_timestamp_replay_attack(): void
+    {
+        $payload = [
+            'type' => 'merchant_order',
+            'data' => [
+                'id' => 'notification-replay',
+            ],
+        ];
+
+        $requestId = 'req-replay';
+        // Timestamp older than 300 seconds (5 minutes)
+        $expiredTs = (string) (time() - 301);
+        $signature = $this->buildSignature('notification-replay', $requestId, $expiredTs);
+
+        $response = $this->postJson('/api/payments/webhook', $payload, [
+            'x-request-id' => $requestId,
+            'x-signature' => "ts={$expiredTs},v1={$signature}",
         ]);
 
         $response->assertStatus(403)
@@ -53,7 +82,7 @@ class WebhookSecurityTest extends TestCase
         ];
 
         $requestId = 'req-valid';
-        $ts = '1710000001';
+        $ts = (string) time();
         $signature = $this->buildSignature('notification-200', $requestId, $ts);
 
         $response = $this->postJson('/api/payments/webhook', $payload, [
@@ -77,7 +106,7 @@ class WebhookSecurityTest extends TestCase
         ];
 
         $requestId = 'req-idempotent';
-        $ts = '1710000002';
+        $ts = (string) time();
         $signature = $this->buildSignature('notification-300', $requestId, $ts);
         $headers = [
             'x-request-id' => $requestId,
@@ -97,6 +126,46 @@ class WebhookSecurityTest extends TestCase
                 'duplicate' => true,
                 'message' => 'digital_menu.webhook.duplicate_notification',
             ]);
+    }
+
+    public function test_order_is_resolved_when_external_reference_has_timestamp_suffix(): void
+    {
+        $order = Order::create([
+            'status' => Order::STATUS_AWAITING_PAYMENT,
+            'type' => 'salon',
+            'total_amount' => 50.00,
+            'customer_name' => 'Cliente PIX',
+        ]);
+
+        $externalReferenceWithTimestamp = $order->id . '_' . time();
+
+        // Create mock payment object returned by MercadoPago SDK
+        $mockPayment = (object) [
+            'id' => 999888777,
+            'status' => 'approved',
+            'external_reference' => $externalReferenceWithTimestamp,
+            'transaction_amount' => 50.00,
+        ];
+
+        // Partially mock PaymentGatewayService to inject mock payment response without calling external API
+        $service = $this->getMockBuilder(PaymentGatewayService::class)
+            ->onlyMethods(['fetchPaymentFromGateway'])
+            ->getMock();
+
+        $service->method('fetchPaymentFromGateway')
+            ->willReturn($mockPayment);
+
+        $result = $service->handleWebhook([
+            'type' => 'payment',
+            'data' => ['id' => '999888777'],
+        ]);
+
+        $this->assertTrue($result);
+
+        $order->refresh();
+        $this->assertEquals(Order::ONLINE_PAYMENT_APPROVED, $order->online_payment_status);
+        $this->assertEquals(Order::STATUS_PENDING, $order->status);
+        $this->assertNotNull($order->paid_at);
     }
 
     private function buildSignature(string $notificationId, string $requestId, string $ts): string
