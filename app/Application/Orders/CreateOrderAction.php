@@ -107,6 +107,10 @@ class CreateOrderAction
                 throw $exception;
             }
 
+            if ($exception instanceof \InvalidArgumentException) {
+                throw new OrderActionException($exception->getMessage(), 422, [], $exception);
+            }
+
             throw new OrderActionException('order.create.error', 500, [], $exception);
         }
     }

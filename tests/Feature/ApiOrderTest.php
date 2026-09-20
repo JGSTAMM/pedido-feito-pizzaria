@@ -84,4 +84,26 @@ class ApiOrderTest extends TestCase
             'user_id' => $this->user->id,
         ]);
     }
+
+    public function test_cannot_create_order_with_more_flavors_than_size_allows(): void
+    {
+        $flavor2 = PizzaFlavor::create(['name' => 'Calabresa', 'base_price' => 25.00]);
+        $flavor3 = PizzaFlavor::create(['name' => 'Mussarela', 'base_price' => 22.00]);
+
+        // Size 'Large' has max_flavors = 2, we send 3
+        $orderData = [
+            'table_id' => $this->table->id,
+            'items' => [
+                [
+                    'type' => 'pizza',
+                    'size_id' => $this->size->id,
+                    'flavor_ids' => [$this->flavor->id, $flavor2->id, $flavor3->id],
+                ],
+            ],
+        ];
+
+        $response = $this->actingAs($this->user)->postJson('/api/orders', $orderData);
+
+        $response->assertStatus(422);
+    }
 }

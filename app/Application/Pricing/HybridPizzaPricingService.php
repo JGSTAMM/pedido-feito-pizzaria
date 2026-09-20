@@ -4,6 +4,7 @@ namespace App\Application\Pricing;
 
 use App\Models\PizzaFlavor;
 use App\Models\PizzaSize;
+use InvalidArgumentException;
 
 class HybridPizzaPricingService
 {
@@ -23,8 +24,12 @@ class HybridPizzaPricingService
             return 0.0;
         }
 
+        if ($size->max_flavors !== null && count($flavorIds) > (int) $size->max_flavors) {
+            throw new InvalidArgumentException("Number of flavors exceeds the maximum allowed ({$size->max_flavors}) for size {$size->name}.");
+        }
+
         if ($size->is_special_broto_rule) {
-            return ((float) $flavors->first()->base_price / 2) + self::BROTO_FIXED_FEE;
+            return ((float) $flavors->max('base_price') / 2) + self::BROTO_FIXED_FEE;
         }
 
         return (float) $flavors->max('base_price');
