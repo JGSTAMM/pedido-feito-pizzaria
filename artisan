@@ -7,7 +7,22 @@ use Symfony\Component\Console\Input\ArgvInput;
 define('LARAVEL_START', microtime(true));
 
 // Register the Composer autoloader...
-require __DIR__.'/vendor/autoload.php';
+$loader = require __DIR__.'/vendor/autoload.php';
+$loader->setPsr4('App\\', [__DIR__.'/app']);
+$loader->setPsr4('Database\\Factories\\', [__DIR__.'/database/factories']);
+$loader->setPsr4('Database\\Seeders\\', [__DIR__.'/database/seeders']);
+$loader->setPsr4('Tests\\', [__DIR__.'/tests']);
+
+// Clear precompiled classmap entries so worktree classes take priority
+$ref = new ReflectionClass($loader);
+$prop = $ref->getProperty('classMap');
+$map = $prop->getValue($loader);
+foreach ($map as $class => $path) {
+    if (str_starts_with($class, 'App\\') || str_starts_with($class, 'Tests\\') || str_starts_with($class, 'Database\\')) {
+        unset($map[$class]);
+    }
+}
+$prop->setValue($loader, $map);
 
 // Bootstrap Laravel and handle the command...
 /** @var Application $app */

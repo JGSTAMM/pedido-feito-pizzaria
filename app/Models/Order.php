@@ -39,6 +39,9 @@ class Order extends Model
         'accepted_at',
         'rejected_at',
         'total_amount',
+        'service_fee_amount',
+        'discount_amount',
+        'discount_approved_by',
     ];
 
     // Order statuses

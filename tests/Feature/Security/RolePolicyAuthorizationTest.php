@@ -116,4 +116,38 @@ class RolePolicyAuthorizationTest extends TestCase
 
         $response->assertForbidden();
     }
+
+    public function test_waiter_cannot_delete_table_via_floor_web_route(): void
+    {
+        $waiter = User::factory()->create([
+            'role' => 'waiter',
+        ]);
+
+        $table = Table::create([
+            'name' => 'Mesa Para Exclusao',
+            'status' => 'available',
+        ]);
+
+        $response = $this->actingAs($waiter)->delete("/floor/{$table->id}");
+        $response->assertForbidden();
+    }
+
+    public function test_supervisor_pin_validation_is_rate_limited(): void
+    {
+        $user = User::factory()->create([
+            'role' => 'waiter',
+        ]);
+
+        $this->actingAs($user);
+
+        // Send 5 requests (within rate limit)
+        for ($i = 0; $i < 5; $i++) {
+            $response = $this->postJson('/floor/validate-supervisor-pin', ['pin' => '0000']);
+            $this->assertNotEquals(429, $response->status());
+        }
+
+        // 6th request must be rate limited (429 Too Many Requests)
+        $rateLimitedResponse = $this->postJson('/floor/validate-supervisor-pin', ['pin' => '0000']);
+        $rateLimitedResponse->assertStatus(429);
+    }
 }

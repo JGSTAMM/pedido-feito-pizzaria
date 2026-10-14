@@ -76,6 +76,16 @@ class PaymentGatewayService
             return false;
         }
 
+        // Replay attack prevention: maximum 300 seconds drift allowed
+        if (abs(time() - (int) $ts) > 300) {
+            Log::warning('Mercado Pago webhook rejected: timestamp drift exceeds 300s', [
+                'ts' => $ts,
+                'current_time' => time(),
+            ]);
+
+            return false;
+        }
+
         $manifest = "id:{$notificationId};request-id:{$requestId};ts:{$ts};";
         $computedSignature = hash_hmac('sha256', $manifest, $secret);
 
@@ -307,22 +317,23 @@ class PaymentGatewayService
         }
 
         try {
-            $client = new PaymentClient;
-            $payment = $client->get($paymentId);
+            $payment = $this->fetchPaymentFromGateway($paymentId);
 
-            $orderId = $payment->external_reference;
-            $order = Order::find($orderId);
+            $rawRef = (string) ($payment->external_reference ?? '');
+            $cleanOrderId = explode('_', $rawRef)[0];
+            $order = Order::find($cleanOrderId)
+                ?? Order::where('payment_gateway_id', (string) $paymentId)->first();
 
             if (! $order) {
-                Log::warning("Webhook: Order not found for external_reference: {$orderId}");
+                Log::warning("Webhook: Order not found for external_reference: {$rawRef}");
 
                 return false;
             }
 
-            $previousStatus = $order->online_payment_status;
+            $previousStatus = (string) ($order->online_payment_status ?? $order->status ?? 'awaiting_payment');
             $order->update(['online_payment_status' => $payment->status]);
 
-            Log::info("Webhook: Payment #{$paymentId} for order #{$orderId} — status: {$payment->status}");
+            Log::info("Webhook: Payment #{$paymentId} for order #{$cleanOrderId} — status: {$payment->status}");
 
             switch ($payment->status) {
                 case 'approved':
@@ -368,6 +379,16 @@ class PaymentGatewayService
 
             return false;
         }
+    }
+
+    /**
+     * Retrieve payment information from Mercado Pago API.
+     */
+    public function fetchPaymentFromGateway(string|int $paymentId): object
+    {
+        $client = new PaymentClient;
+
+        return $client->get($paymentId);
     }
 
     /**

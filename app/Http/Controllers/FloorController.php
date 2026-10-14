@@ -17,6 +17,7 @@ use App\Services\PizzaPriceService;
 use App\Services\PaymentGatewayService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Application\Orders\SettleTableModule;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -28,6 +29,7 @@ class FloorController extends Controller
         private readonly PizzaPriceService $pizzaPriceService,
         private readonly CashRegisterLockService $cashRegisterLockService,
         private readonly PaymentGatewayService $paymentGatewayService,
+        private readonly SettleTableModule $settleTableModule,
     ) {}
 
     public function index(): \Inertia\Response
@@ -374,129 +376,22 @@ class FloorController extends Controller
         ]);
 
         try {
-            $activeRegister = $this->cashRegisterLockService->requireOpenRegister();
-        } catch (OrderActionException $exception) {
-            return redirect()->back()->with('error', $exception->getMessage());
-        }
-
-        DB::beginTransaction();
-        try {
-            // Get active orders with lock to prevent double-charging
-            /** @var \Illuminate\Database\Eloquent\Collection<\App\Models\Order> $orders */
-            $orders = $table->activeOrders()
-                ->lockForUpdate()
-                ->get();
-
-            if ($orders->isEmpty()) {
-                DB::rollBack();
-
-                return redirect()->back()->with('error', __('order.payment.no_active_orders'));
-            }
-
-            $totalAmount = (int) $orders->sum(function ($order) {
-                return $order->getRawOriginal('total_amount');
-            });
-            $totalPaid = collect($validated['payments'])->sum('amount');
-            
-            $serviceFee = (int) ($validated['service_fee_cents'] ?? 0);
-            $discount = (int) ($validated['discount_cents'] ?? 0);
-            
-            $expectedTotal = max(0, $totalAmount + $serviceFee - $discount);
-
-            if ($totalPaid < $expectedTotal) {
-                DB::rollBack();
-
-                return redirect()->back()->with('error', __('order.payment.insufficient_amount'));
-            }
-
-            $paymentPool = collect($validated['payments'])->map(function ($p) {
-                return ['method' => $p['method'], 'amount' => (int) $p['amount']];
-            })->toArray();
-
-            $pIndex = 0;
-
-            foreach ($orders as $index => $order) {
-                /** @var \App\Models\Order $order */
-                $amountToPayForOrder = (int) $order->getRawOriginal('total_amount');
-
-                // Distribute payment to this order
-                while ($amountToPayForOrder > 0 && $pIndex < count($paymentPool)) {
-                    $currentMethod = &$paymentPool[$pIndex];
-                    if ($currentMethod['amount'] <= 0) {
-                        $pIndex++;
-
-                        continue;
-                    }
-
-                    $take = min($currentMethod['amount'], $amountToPayForOrder);
-
-                    Payment::create([
-                        'order_id' => $order->id,
-                        'method' => $currentMethod['method'],
-                        'amount' => $take / 100, // Cast to float for mutator
-                    ]);
-                    $currentMethod['amount'] -= $take;
-                    $amountToPayForOrder -= $take;
-
-                    if ($currentMethod['amount'] <= 0) {
-                        $pIndex++;
-                    }
-                }
-
-                // Add fee and discount to the first order for tracking
-                $updateData = [
-                    'status' => 'paid',
-                    'paid_at' => now(),
-                    'cash_register_id' => $activeRegister?->id,
-                ];
-                
-                if ($index === 0) {
-                    $updateData['service_fee_amount'] = $validated['service_fee_cents'] ?? 0;
-                    $updateData['discount_amount'] = $validated['discount_cents'] ?? 0;
-                    $updateData['discount_approved_by'] = $validated['discount_supervisor_id'] ?? null;
-                }
-                
-                $order->update($updateData);
-
-                // If last order, dump remaining payment (change)
-                if ($index === $orders->count() - 1) {
-                    while ($pIndex < count($paymentPool)) {
-                        if ($paymentPool[$pIndex]['amount'] > 0) {
-                            Payment::create([
-                                'order_id' => $order->id,
-                                'method' => $paymentPool[$pIndex]['method'],
-                                'amount' => $paymentPool[$pIndex]['amount'] / 100, // Cast to float for mutator
-                            ]);
-                        }
-                        $pIndex++;
-                    }
-                }
-
-                // Update order to 'completed' so it leaves the table's activeOrders scope
-                $order->update([
-                    'status' => 'completed',
-                    'paid_at' => now(),
-                    'cash_register_id' => $activeRegister?->id,
-                ]);
-
-                // Broadcast table-closure so Floor view deactivates the table in real-time
-                event(new OrderStatusUpdated(
-                    orderId: $order->id,
-                    status: 'completed',
-                    previousStatus: 'ready',
-                    type: $order->type,
-                    tableId: $table->id,
-                ));
-            }
-
-            $table->update(['status' => 'available']);
-
-            DB::commit();
+            $this->settleTableModule->execute(
+                table: $table,
+                payments: $validated['payments'],
+                settledBy: $request->user(),
+                options: [
+                    'amounts_in_cents' => true,
+                    'service_fee_cents' => $validated['service_fee_cents'] ?? 0,
+                    'discount_cents' => $validated['discount_cents'] ?? 0,
+                    'discount_supervisor_id' => $validated['discount_supervisor_id'] ?? null,
+                ]
+            );
 
             return redirect()->back()->with('success', __('order.payment.success'));
-
+        } catch (OrderActionException $exception) {
+            return redirect()->back()->with('error', $exception->getMessage());
         } catch (\Exception $e) {
-            DB::rollBack();
             Log::error('Error paying and closing floor table', [
                 'table_id' => $table->id,
                 'exception' => $e,
