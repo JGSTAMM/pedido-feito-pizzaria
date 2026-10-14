@@ -97,12 +97,16 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/kds', [KdsController::class, 'index']);
         Route::post('/kds/{order}/status/{status}', [KdsController::class, 'updateStatus']);
         Route::get('/floor', [FloorController::class, 'index']);
-        Route::post('/floor', [FloorController::class, 'store']);
         Route::post('/floor/{table}/add-items', [FloorController::class, 'addItems']);
-        Route::post('/floor/validate-supervisor-pin', [FloorController::class, 'validateSupervisorPin']);
+        Route::post('/floor/validate-supervisor-pin', [FloorController::class, 'validateSupervisorPin'])
+            ->middleware('throttle:5,1');
         Route::post('/floor/{table}/pay', [FloorController::class, 'payAndClose']);
         Route::post('/floor/{table}/generate-pix', [FloorController::class, 'generatePix']);
         Route::get('/floor/pix-status/{order}', [FloorController::class, 'pixPaymentStatus']);
+    });
+
+    Route::middleware('role:admin')->group(function () {
+        Route::post('/floor', [FloorController::class, 'store']);
         Route::put('/floor/{table}', [FloorController::class, 'update']);
         Route::delete('/floor/{table}', [FloorController::class, 'destroy']);
     });

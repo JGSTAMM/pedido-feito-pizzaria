@@ -2,6 +2,9 @@
 
 $loader = require __DIR__.'/../vendor/autoload.php';
 $baseDir = dirname(__DIR__);
+$_ENV['APP_BASE_PATH'] = $baseDir;
+$_SERVER['APP_BASE_PATH'] = $baseDir;
+putenv('APP_BASE_PATH='.$baseDir);
 
 // Configure PSR-4 to load directly from the current worktree
 $loader->setPsr4('App\\', [$baseDir.'/app']);

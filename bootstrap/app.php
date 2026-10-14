@@ -46,6 +46,12 @@ return Application::configure(basePath: dirname(__DIR__))
                 return null;
             }
 
+            if ($exception instanceof \Illuminate\Validation\ValidationException
+                || $exception instanceof \Illuminate\Auth\AuthenticationException
+                || $exception instanceof \Illuminate\Auth\Access\AuthorizationException) {
+                return null;
+            }
+
             if (config('app.debug')) {
                 return null;
             }

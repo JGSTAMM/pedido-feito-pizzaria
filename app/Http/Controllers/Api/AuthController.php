@@ -21,6 +21,8 @@ class AuthController extends Controller
         }
 
         $user = User::where('email', $request->email)->firstOrFail();
+        // Revoke previous tokens to prevent lingering unauthorized sessions
+        $user->tokens()->delete();
         $token = $user->createToken('mobile')->plainTextToken;
 
         return response()->json([
