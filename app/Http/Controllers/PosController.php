@@ -31,11 +31,24 @@ class PosController extends Controller
 
     /**
      * Display the POS page with all catalog data.
+     *
+     * @return \Inertia\Response
      */
-    public function index()
+    public function index(): \Inertia\Response
     {
-        // Load products (exclude archived categories)
-        $products = Product::where('is_active_pos', true)
+        return Inertia::render('POS/Index', [
+            'products' => $this->getProducts(),
+            'pizzaFlavors' => $this->getPizzaFlavors(),
+            'pizzaSizes' => $this->getPizzaSizes(),
+            'categories' => $this->getCategories(),
+            'borderOptions' => $this->getBorderOptions(),
+            'cashRegister' => $this->getCashRegisterData(),
+        ]);
+    }
+
+    private function getProducts(): array
+    {
+        return Product::where('is_active_pos', true)
             ->whereNotIn('category', ['Arquivo', 'arquivo', 'Extras', 'extras'])
             ->orderBy('name')
             ->get()
@@ -47,10 +60,12 @@ class PosController extends Controller
                 'image_url' => $p->image_url,
                 'variations' => $p->variations,
                 'type' => 'product',
-            ]);
+            ])->toArray();
+    }
 
-        // Load active pizza flavors
-        $pizzaFlavors = PizzaFlavor::where('is_active_pos', true)
+    private function getPizzaFlavors(): array
+    {
+        return PizzaFlavor::where('is_active_pos', true)
             ->orderBy('name')
             ->get()
             ->map(fn ($f) => [
@@ -62,9 +77,11 @@ class PosController extends Controller
                 'category' => 'Pizzas',
                 'image_url' => $f->image_url,
                 'type' => 'pizza_flavor',
-            ]);
+            ])->toArray();
+    }
 
-        // Build categories list
+    private function getCategories(): array
+    {
         $categories = Product::select('category')
             ->distinct()
             ->where('is_active_pos', true)
@@ -72,50 +89,58 @@ class PosController extends Controller
             ->pluck('category')
             ->toArray();
         array_unshift($categories, 'Pizzas');
+        return $categories;
+    }
 
-        // Cash register data
-        $cashRegister = null;
-        if (Auth::check()) {
-            $activeRegister = CashRegister::where('user_id', Auth::id())
-                ->where('status', 'open')
-                ->latest()
-                ->first();
-
-            if ($activeRegister) {
-                // Calculate summary
-                $orders = Order::where('cash_register_id', $activeRegister->id)
-                    ->where('status', 'paid')
-                    ->get();
-
-                // Fallback: time-based if no orders linked
-                if ($orders->isEmpty()) {
-                    $orders = Order::where('user_id', Auth::id())
-                        ->where('created_at', '>=', $activeRegister->opened_at)
-                        ->where('status', 'paid')
-                        ->get();
-                }
-
-                $cashRegister = [
-                    'id' => $activeRegister->id,
-                    'opening_balance' => (float) $activeRegister->opening_balance,
-                    'total_sales' => (float) $orders->sum('total_amount'),
-                    'order_count' => $orders->count(),
-                    'total_in_drawer' => (float) ($activeRegister->opening_balance + $orders->sum('total_amount')),
-                ];
-            }
+    private function getCashRegisterData(): ?array
+    {
+        if (! Auth::check()) {
+            return null;
         }
 
-        // Load pizza sizes for the builder modal
-        $pizzaSizes = PizzaSize::orderBy('id')->get()->map(fn ($s) => [
+        $activeRegister = CashRegister::where('user_id', Auth::id())
+            ->where('status', 'open')
+            ->latest()
+            ->first();
+
+        if (! $activeRegister) {
+            return null;
+        }
+
+        $orders = Order::where('cash_register_id', $activeRegister->id)
+            ->where('status', 'paid')
+            ->get();
+
+        if ($orders->isEmpty()) {
+            $orders = Order::where('user_id', Auth::id())
+                ->where('created_at', '>=', $activeRegister->opened_at)
+                ->where('status', 'paid')
+                ->get();
+        }
+
+        return [
+            'id' => $activeRegister->id,
+            'opening_balance' => (float) $activeRegister->opening_balance,
+            'total_sales' => (float) $orders->sum('total_amount'),
+            'order_count' => $orders->count(),
+            'total_in_drawer' => (float) ($activeRegister->opening_balance + $orders->sum('total_amount')),
+        ];
+    }
+
+    private function getPizzaSizes(): array
+    {
+        return PizzaSize::orderBy('id')->get()->map(fn ($s) => [
             'id' => $s->id,
             'name' => $s->name,
             'slices' => $s->slices,
             'max_flavors' => $s->max_flavors,
             'is_broto' => (bool) $s->is_special_broto_rule,
-        ]);
+        ])->toArray();
+    }
 
-        // Load border options (products in Extras category containing 'Borda')
-        $borderOptions = Product::where('category', 'Extras')
+    private function getBorderOptions(): array
+    {
+        return Product::where('category', 'Extras')
             ->where('name', 'like', '%Borda%')
             ->orderBy('price')
             ->get()
@@ -123,16 +148,7 @@ class PosController extends Controller
                 'id' => $p->id,
                 'name' => $p->name,
                 'price' => (float) $p->price,
-            ]);
-
-        return Inertia::render('POS/Index', [
-            'products' => $products,
-            'pizzaFlavors' => $pizzaFlavors,
-            'pizzaSizes' => $pizzaSizes,
-            'categories' => $categories,
-            'borderOptions' => $borderOptions,
-            'cashRegister' => $cashRegister,
-        ]);
+            ])->toArray();
     }
 
     /**

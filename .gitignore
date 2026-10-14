@@ -97,5 +97,6 @@ SCREENS.md
 .github/agents/
 .github/copilot/
 .github/prompts/
+strix_runs/
 
 composer.phar

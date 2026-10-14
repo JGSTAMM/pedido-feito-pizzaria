@@ -46,13 +46,14 @@ return Application::configure(basePath: dirname(__DIR__))
                 return null;
             }
 
-            if ($exception instanceof \Illuminate\Validation\ValidationException
-                || $exception instanceof \Illuminate\Auth\AuthenticationException
-                || $exception instanceof \Illuminate\Auth\Access\AuthorizationException) {
+            if (config('app.debug')) {
                 return null;
             }
 
-            if (config('app.debug')) {
+            if ($exception instanceof \Illuminate\Validation\ValidationException ||
+                $exception instanceof \Illuminate\Auth\AuthenticationException ||
+                $exception instanceof \Illuminate\Auth\Access\AuthorizationException ||
+                $exception instanceof \Illuminate\Database\Eloquent\ModelNotFoundException) {
                 return null;
             }
 
