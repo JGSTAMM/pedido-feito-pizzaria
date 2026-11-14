@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import CustomNumberInput from '@/Components/CustomNumberInput';
+import LoadingButton from '@/Components/LoadingButton';
 import { useCheckoutMath } from '../../hooks/useCheckoutMath';
 import BillConference from './BillConference';
 import ServiceFeeToggle from './ServiceFeeToggle';
@@ -398,20 +399,18 @@ export default function CheckoutModal({
                                     <span className="material-symbols-outlined text-[18px] sm:text-[20px]">print</span>
                                     <span>{t('floor.drawer.checkout.print_check')}</span>
                                 </button>
-                                <button
+                                <LoadingButton
                                     onClick={onFinish}
-                                    disabled={checkingOut || totalPaid < grandTotal - 0.01}
-                                    className="flex-[2] py-3 sm:py-4 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-20 disabled:bg-white/20 text-black font-black rounded-[16px] sm:rounded-2xl transition-all shadow-[0_20px_40px_-12px_rgba(16,185,129,0.3)] flex items-center justify-center gap-2 sm:gap-3 active:scale-[0.98]"
+                                    disabled={totalPaid < grandTotal - 0.01}
+                                    isLoading={checkingOut}
+                                    loadingText={t('floor.drawer.checkout.finish_table')}
+                                    variant="emerald"
+                                    size="lg"
+                                    icon="check_circle"
+                                    className="flex-[2] text-black font-black"
                                 >
-                                    {checkingOut ? (
-                                        <div className="size-5 border-2 border-black/30 border-t-black rounded-full animate-spin" />
-                                    ) : (
-                                        <>
-                                            <span className="material-symbols-outlined text-[20px] sm:text-[24px]">check_circle</span>
-                                            <span className="text-sm sm:text-base tracking-tight">{t('floor.drawer.checkout.finish_table')}</span>
-                                        </>
-                                    )}
-                                </button>
+                                    <span className="text-sm sm:text-base tracking-tight">{t('floor.drawer.checkout.finish_table')}</span>
+                                </LoadingButton>
                             </div>
 
                             {totalPaid < grandTotal - 0.01 && (

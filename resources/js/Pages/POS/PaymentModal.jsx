@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import CustomNumberInput from '@/Components/CustomNumberInput';
+import LoadingButton from '@/Components/LoadingButton';
 
 const PAYMENT_METHODS = [
     { method: 'credito', icon: 'credit_card', label: 'Cartão Crédito' },
@@ -9,10 +10,11 @@ const PAYMENT_METHODS = [
     { method: 'pix', icon: 'qr_code_2', label: 'Pix' },
 ];
 
-export default function PaymentModal({ isOpen, onClose, onConfirm, total }) {
+export default function PaymentModal({ isOpen, onClose, onConfirm, total, isProcessing = false }) {
     const [payments, setPayments] = useState([]);
     const [selectedMethod, setSelectedMethod] = useState(null);
     const [inputValue, setInputValue] = useState('');
+    const [submitting, setSubmitting] = useState(false);
     const inputRef = useRef(null);
 
     // Customer fields
@@ -208,8 +210,15 @@ export default function PaymentModal({ isOpen, onClose, onConfirm, total }) {
         setInputValue('');
     };
 
+    useEffect(() => {
+        if (!isOpen) {
+            setSubmitting(false);
+        }
+    }, [isOpen]);
+
     const handleConfirm = () => {
-        if (!canFinalize) return;
+        if (!canFinalize || submitting || isProcessing) return;
+        setSubmitting(true);
         const rawDigits = customerPhone.replace(/\D/g, '');
         onConfirm(
             payments.map(({ method, amount }) => ({ method, amount })),
@@ -451,31 +460,22 @@ export default function PaymentModal({ isOpen, onClose, onConfirm, total }) {
                         </div>
                     </div>
 
-                    <button
+                    <LoadingButton
                         onClick={handleConfirm}
                         disabled={!canFinalize}
-                        className={`w-full py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-2 transition-all ${canFinalize
-                            ? 'bg-primary hover:bg-primary-dark text-white shadow-lg shadow-primary/25'
-                            : 'bg-surface text-text-muted cursor-not-allowed border border-border-subtle'
-                            }`}
+                        isLoading={submitting || isProcessing}
+                        loadingText="Finalizando Venda..."
+                        variant={canFinalize ? 'primary' : 'secondary'}
+                        size="lg"
+                        className="w-full"
+                        icon={!canFinalize && customerName.trim().length === 0 ? 'person_off' : !canFinalize ? 'lock' : 'check_circle'}
                     >
-                        {canFinalize ? (
-                            <>
-                                <span className="material-symbols-outlined">check_circle</span>
-                                Finalizar Venda
-                            </>
-                        ) : customerName.trim().length === 0 ? (
-                            <>
-                                <span className="material-symbols-outlined">person_off</span>
-                                Informe o nome do cliente
-                            </>
-                        ) : (
-                            <>
-                                <span className="material-symbols-outlined">lock</span>
-                                Informe o valor restante
-                            </>
-                        )}
-                    </button>
+                        {canFinalize
+                            ? 'Finalizar Venda'
+                            : customerName.trim().length === 0
+                            ? 'Informe o nome do cliente'
+                            : 'Informe o valor restante'}
+                    </LoadingButton>
                 </div>
             </div>
         </div>

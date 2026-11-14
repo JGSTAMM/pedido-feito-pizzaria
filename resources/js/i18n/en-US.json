@@ -5,7 +5,9 @@
         "online": "Online",
         "to": "to",
         "to_range": " to ",
-        "whatsapp": "WhatsApp"
+        "whatsapp": "WhatsApp",
+        "loading": "Loading...",
+        "processing": "Processing..."
     },
     "status": {
         "pending": "Pending",
