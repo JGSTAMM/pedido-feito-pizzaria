@@ -83,11 +83,11 @@ pos.html
 .stitch-skills/
 .gemini/
 gemini_context.md
-stitch-mockups/
-mockups/
-screens/
-scratch/
-appDataDir/
+/stitch-mockups/
+/mockups/
+/screens/
+/scratch/
+/appDataDir/
 test_output.txt
 update_menu_colors.py
 DIGITAL_MENU_IMPLEMENTATION_PLAN.md
