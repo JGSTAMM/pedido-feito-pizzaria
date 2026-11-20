@@ -44,6 +44,7 @@ class SecurityHeaders
             . "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com{$viteHttp}; "
             . "font-src 'self' https://fonts.gstatic.com data:; "
             . "img-src 'self' data: https: blob:; "
+            . "frame-src 'self' https://www.google.com https://*.google.com https://*.mercadopago.com https://*.mercadolivre.com https://*.mercadolibre.com; "
             . "connect-src 'self' ws: wss: https:{$viteHttp}{$localWs};"
         );
 
