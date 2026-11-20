@@ -14,10 +14,12 @@ class AuthController extends Controller
      */
     public function showLoginForm()
     {
-        // Se o usuário já estiver logado, redireciona pelo middleware de role (simulado aqui)
+        // Se o usuário já estiver logado, redireciona pelo middleware de role
         if (Auth::check()) {
-            if (Auth::user()->role === 'waiter') {
-                return redirect()->intended('/waiter');
+            $role = Auth::user()->role;
+            if (in_array($role, ['waiter', 'garcom'])) {
+                session()->forget('url.intended');
+                return redirect('/waiter');
             }
 
             return redirect()->intended('/pos');
@@ -44,9 +46,11 @@ class AuthController extends Controller
             $request->session()->regenerate();
 
             // Role based redirect
-            if (Auth::user()->role === 'waiter') {
-                return redirect()->intended('/waiter');
-            } elseif (in_array(Auth::user()->role, ['admin', 'cashier'])) {
+            $role = Auth::user()->role;
+            if (in_array($role, ['waiter', 'garcom'])) {
+                session()->forget('url.intended');
+                return redirect('/waiter');
+            } elseif (in_array($role, ['admin', 'cashier', 'caixa'])) {
                 return redirect()->intended('/pos');
             }
 
