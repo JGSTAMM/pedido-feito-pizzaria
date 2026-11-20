@@ -257,8 +257,10 @@ class ReceiptFormatter
     {
         return match (strtolower($method)) {
             'dinheiro', 'cash' => 'Dinheiro',
-            'pix' => 'PIX',
+            'pix', 'pix_online' => 'PIX Online',
+            'pix_balcao' => 'PIX (Balcão)',
             'credito', 'credit' => 'Crédito',
+            'credito_online' => 'Crédito Online',
             'debito', 'debit' => 'Débito',
             default => ucfirst($method),
         };

@@ -20,10 +20,68 @@
         "dine_in": "Mesa"
     },
     "payment_methods": {
-        "pix": "Pix",
+        "pix": "PIX Online (MP)",
+        "pix_balcao": "PIX Balcão (QR Fixo)",
+        "pix_online": "PIX Online (MP)",
         "credit_card": "Cartão de Crédito",
+        "credito": "Cartão de Crédito",
+        "credito_online": "Crédito Online (MP)",
         "debit_card": "Cartão de Débito",
-        "cash": "Dinheiro"
+        "debito": "Cartão de Débito",
+        "cash": "Dinheiro",
+        "dinheiro": "Dinheiro"
+    },
+    "pos": {
+        "payment": {
+            "title": "Pagamento",
+            "subtitle": "Selecione um ou mais métodos",
+            "customer_section": "Identificação do Cliente",
+            "customer_name_placeholder": "Nome do Cliente *",
+            "returning_badge": "Recorrente",
+            "clear_customer": "Limpar cliente",
+            "no_phone": "Sem celular",
+            "order_singular": "pedido",
+            "order_plural": "pedidos",
+            "phone_placeholder": "Celular (opcional)",
+            "order_total": "Total do Pedido",
+            "quick_payment": "Pagamento Rápido (Valor Total)",
+            "split_payment": "Dividir Pagamento",
+            "add": "Adicionar",
+            "generate_pix_qr": "Gerar QR PIX",
+            "added_payments": "Pagamentos Adicionados",
+            "pix_approved_badge": "Aprovado MP",
+            "remaining_amount": "Valor Restante",
+            "change": "Troco",
+            "finalize_sale": "Finalizar Venda",
+            "enter_customer_name": "Informe o nome do cliente",
+            "enter_remaining_amount": "Informe o valor restante",
+            "methods": {
+                "credito": "Cartão Crédito",
+                "debito": "Cartão Débito",
+                "dinheiro": "Dinheiro",
+                "pix_balcao": "PIX Balcão (Fixo)",
+                "pix": "PIX Online (MP)",
+                "credito_short": "Crédito",
+                "debito_short": "Débito",
+                "dinheiro_short": "Dinheiro",
+                "pix_balcao_short": "PIX Fixo",
+                "pix_short": "PIX QR"
+            },
+            "pix_modal": {
+                "title": "PIX Online (Mercado Pago)",
+                "subtitle": "Mostre o QR Code para o cliente pagar. A confirmação é automática.",
+                "generating": "Gerando QR Code PIX...",
+                "amount": "Valor: :amount",
+                "countdown": "Expira em: :time",
+                "copy_code": "Copiar código Pix (Copia e Cola)",
+                "copied": "Código copiado!",
+                "waiting": "Aguardando aprovação do Mercado Pago...",
+                "approved": "Pagamento PIX Aprovado!",
+                "expired": "QR Code PIX expirado. Gere um novo código ou use PIX Balcão (QR Fixo).",
+                "error": "Erro ao gerar PIX. Tente novamente ou use PIX Balcão (QR Fixo).",
+                "cancel": "Voltar / Cancelar"
+            }
+        }
     },
     "dashboard": {
         "title": "Painel de Controle",
@@ -959,7 +1017,8 @@
             },
             "methods": {
                 "dinheiro": "Dinheiro",
-                "pix": "Pix",
+                "pix": "PIX Online",
+                "pix_balcao": "PIX Balcão",
                 "credito": "Crédito",
                 "debito": "Débito"
             },
@@ -1041,7 +1100,12 @@
         },
         "methods": {
             "dinheiro": "Dinheiro",
-            "debito": "Cartão de Débito"
+            "debito": "Cartão de Débito",
+            "credito": "Cartão de Crédito",
+            "pix": "PIX Online (Mercado Pago)",
+            "pix_balcao": "PIX Balcão (QR Fixo)",
+            "pix_online": "PIX Online (Delivery)",
+            "credito_online": "Crédito Online (Delivery)"
         },
         "salesSummary": {
             "totalSales": "Resumo de Vendas",

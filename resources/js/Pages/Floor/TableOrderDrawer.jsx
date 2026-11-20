@@ -265,22 +265,10 @@ export default function TableOrderDrawer({
                                         label: 'pix'
                                     };
 
-                                    setPayments(prev => {
-                                        const updatedPayments = [...prev, newPayment];
-                                        const totalPaid = updatedPayments.reduce((s, p) => s + p.amount, 0);
-                                        const remaining = tableTotal - totalPaid;
-
-                                        if (remaining <= 0.01) {
-                                            setTimeout(() => {
-                                                handleCheckout(updatedPayments);
-                                            }, 1500);
-                                        } else {
-                                            setTimeout(() => {
-                                                stopPixTracking();
-                                            }, 1500);
-                                        }
-                                        return updatedPayments;
-                                    });
+                                    setPayments(prev => [...prev, newPayment]);
+                                    setTimeout(() => {
+                                        stopPixTracking();
+                                    }, 1500);
                                 }
                             })
                             .catch(err => {

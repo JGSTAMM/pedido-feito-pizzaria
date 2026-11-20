@@ -155,8 +155,8 @@ function OrderDetailsModal({ order, onClose, t, statusConfig, typeConfig, format
                             order.payments.map((payment, idx) => (
                                 <div key={idx} className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 backdrop-blur-md shadow-sm">
                                     <span className="material-symbols-outlined text-text-muted text-[16px]">payments</span>
-                                    <span className="text-xs text-text-muted capitalize font-medium">
-                                        {payment.method} - <span className="font-bold text-emerald-400/90 font-mono">{formatCurrency(payment.amount)}</span>
+                                    <span className="text-xs text-text-muted font-medium">
+                                        {t(`payment_methods.${payment.method}`) || payment.method} - <span className="font-bold text-emerald-400/90 font-mono">{formatCurrency(payment.amount)}</span>
                                     </span>
                                 </div>
                             ))

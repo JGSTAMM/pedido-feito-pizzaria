@@ -216,7 +216,7 @@ class OrderController extends Controller
 
         $validated = $request->validate([
             'payments' => 'required|array',
-            'payments.*.method' => 'required|string',
+            'payments.*.method' => 'required|string|in:dinheiro,pix,pix_balcao,credito,debito',
             'payments.*.amount' => 'required|numeric|min:0',
         ]);
 

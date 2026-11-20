@@ -85,24 +85,26 @@ class ProcessOnlineCheckoutAction
 
             DB::commit();
 
-            // Enqueue kitchen ticket in print queue for local print-agent
-            try {
-                $this->printQueueService->enqueueKitchenTicket($order);
-            } catch (\Throwable $queueEx) {
-                Log::warning('Failed to enqueue kitchen print job for online order: '.$queueEx->getMessage());
-            }
+            // Cash orders go straight to the kitchen/KDS.
+            // Online payments (PIX / Card) enqueue kitchen printing and broadcast OrderCreated inside markOrderAsPaidOnline() upon approval.
+            if ($isCash) {
+                try {
+                    $this->printQueueService->enqueueKitchenTicket($order);
+                } catch (\Throwable $queueEx) {
+                    Log::warning('Failed to enqueue kitchen print job for online order: '.$queueEx->getMessage());
+                }
 
-            // Broadcast real-time event so KDS appears instantly
-            try {
-                event(new OrderCreated(
-                    orderId: $order->id,
-                    status: $order->status,
-                    type: $orderType,
-                    shortCode: $order->short_code ?? '',
-                    tableId: $tableId,
-                ));
-            } catch (\Throwable $broadcastEx) {
-                Log::warning('Broadcast failed for online order: '.$broadcastEx->getMessage());
+                try {
+                    event(new OrderCreated(
+                        orderId: $order->id,
+                        status: $order->status,
+                        type: $orderType,
+                        shortCode: $order->short_code ?? '',
+                        tableId: $tableId,
+                    ));
+                } catch (\Throwable $broadcastEx) {
+                    Log::warning('Broadcast failed for online order: '.$broadcastEx->getMessage());
+                }
             }
 
             return [

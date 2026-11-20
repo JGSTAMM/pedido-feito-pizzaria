@@ -49,6 +49,9 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index']);
         Route::get('/pos', [PosController::class, 'index']);
         Route::post('/pos/order', [PosController::class, 'store']);
+        Route::post('/pos/generate-pix', [PosController::class, 'generatePix'])
+            ->middleware('throttle:20,1');
+        Route::get('/pos/pix-status/{gatewayPaymentId}', [PosController::class, 'pixPaymentStatus']);
         Route::get('/api/customers/search', [CustomerController::class, 'search']);
         Route::get('/orders', [OrderController::class, 'index']);
         Route::get('/reports', [ReportController::class, 'index']);
