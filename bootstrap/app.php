@@ -6,6 +6,7 @@ use App\Http\Middleware\SetRequestLocale;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Exceptions\PostTooLargeException;
 use Illuminate\Http\Middleware\HandleCors;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -45,6 +46,20 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        $exceptions->render(function (PostTooLargeException $exception, Request $request) {
+            $message = 'Os arquivos enviados excedem o limite máximo de 80MB por envio (máx. 20MB por story e 5MB por logo/capa).';
+
+            if ($request->expectsJson() || $request->is('api/*')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $message,
+                    'error_code' => 'PAYLOAD_TOO_LARGE',
+                ], 413);
+            }
+
+            return redirect()->back()->with('error', $message);
+        });
+
         $exceptions->render(function (Throwable $exception, Request $request) {
             if (! $request->expectsJson() && ! $request->is('api/*')) {
                 return null;
@@ -59,6 +74,14 @@ return Application::configure(basePath: dirname(__DIR__))
                 $exception instanceof \Illuminate\Auth\Access\AuthorizationException ||
                 $exception instanceof \Illuminate\Database\Eloquent\ModelNotFoundException) {
                 return null;
+            }
+
+            if ($exception instanceof \Illuminate\Http\Exceptions\ThrottleRequestsException) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Muitas tentativas em pouco tempo. Aguarde alguns instantes antes de tentar novamente.',
+                    'error_code' => 'RATE_LIMIT_EXCEEDED',
+                ], 429);
             }
 
             $statusCode = $exception instanceof HttpExceptionInterface

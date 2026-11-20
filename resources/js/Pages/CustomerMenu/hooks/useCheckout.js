@@ -196,9 +196,11 @@ export function useCheckout({ items, clearCart, t, initialValues = {} }) {
             
             router.visit(`/menu/order/${response.order_id}/status`);
         } catch (error) {
-            const serverError = error?.response?.data?.error;
+            const serverError = error?.response?.data?.message || error?.response?.data?.error;
             if (error?.response?.status === 422) {
                 setSubmitError(t('digital_menu.checkout.errors.validation_failed'));
+            } else if (error?.response?.status === 429) {
+                setSubmitError(serverError || 'Muitas tentativas em pouco tempo. Aguarde alguns instantes e tente novamente.');
             } else if (serverError) {
                 setSubmitError(serverError);
             } else {

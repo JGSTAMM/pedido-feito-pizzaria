@@ -243,8 +243,12 @@ class ProcessOnlineCheckoutAction
             ];
         }
 
+        $payerEmail = ! empty(trim($validated['payer_email'] ?? ''))
+            ? trim($validated['payer_email'])
+            : 'cliente.'.preg_replace('/\D/', '', $validated['customer_phone'] ?? '0000').'@pedidofeito.tech';
+
         if ($validated['payment_method'] === 'pix') {
-            return $this->paymentGatewayService->createPixPayment($order, $validated['payer_email'] ?? 'pagamento@pedidofeito.com');
+            return $this->paymentGatewayService->createPixPayment($order, $payerEmail);
         }
 
         // Card (Credit or Debit) — card_token is mandatory
@@ -260,7 +264,7 @@ class ProcessOnlineCheckoutAction
         return $this->paymentGatewayService->createCardPayment(
             $order,
             $validated['card_token'],
-            $validated['payer_email'] ?? 'pagamento@pedidofeito.com',
+            $payerEmail,
             1, // Always 1 installment for food orders
             $onlineMethod
         );

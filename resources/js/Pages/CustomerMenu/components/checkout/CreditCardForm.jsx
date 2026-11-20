@@ -269,7 +269,12 @@ const CreditCardForm = ({ onTokenReceived, onTokenError, amount, payerEmail }) =
                         </div>
                     </div>
 
-                    <input type="email" id="form-checkout__cardholderEmail" defaultValue={payerEmail} className="hidden" />
+                    <input
+                        type="email"
+                        id="form-checkout__cardholderEmail"
+                        defaultValue={(payerEmail && payerEmail.includes('@')) ? payerEmail : 'cliente@pedidofeito.tech'}
+                        className="hidden"
+                    />
                 </div>
 
                 <button type="submit" id="form-checkout__submit" className="hidden">Submit</button>

@@ -18,21 +18,21 @@ use Illuminate\Cookie\Middleware\EncryptCookies;
 // ROTAS PÚBLICAS (com rate limiting)
 // ═══════════════════════════════════════════
 
-Route::middleware(['throttle:60,1', EncryptCookies::class, AddQueuedCookiesToResponse::class, StartSession::class])->group(function () {
+Route::middleware(['throttle:public-menu', EncryptCookies::class, AddQueuedCookiesToResponse::class, StartSession::class])->group(function () {
     Route::get('/digital-menu', [DigitalMenuController::class, 'index']);
     Route::post('/customers/identify', [CustomerIdentityController::class, 'identify']);
 });
 
 // Payment status polling — relaxed throttle to prevent 429 on 5-second intervals
-Route::middleware(['throttle:120,1', EncryptCookies::class, AddQueuedCookiesToResponse::class, StartSession::class])->group(function () {
+Route::middleware(['throttle:payment-status', EncryptCookies::class, AddQueuedCookiesToResponse::class, StartSession::class])->group(function () {
     Route::get('/orders/{order}/payment-status', [OnlinePaymentController::class, 'paymentStatus']);
 });
 
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
 
-// Online Payment (público — o cliente faz o pedido sem login)
+// Online Payment (público — o cliente faz o pedido sem login, rate limiter isolado)
 Route::post('/online-orders', [OnlinePaymentController::class, 'store'])
-    ->middleware(['throttle:10,1', EncryptCookies::class, AddQueuedCookiesToResponse::class, StartSession::class]);
+    ->middleware(['throttle:online-orders', EncryptCookies::class, AddQueuedCookiesToResponse::class, StartSession::class]);
 
 Route::post('/payments/webhook', [OnlinePaymentController::class, 'webhook'])
     ->middleware('throttle:60,1');
@@ -40,7 +40,7 @@ Route::post('/payments/webhook', [OnlinePaymentController::class, 'webhook'])
 // ═══════════════════════════════════════════
 // LOCAL PRINT AGENT API (ESC/POS RAW)
 // ═══════════════════════════════════════════
-Route::middleware('throttle:180,1')->group(function () {
+Route::middleware('throttle:print-agent')->group(function () {
     Route::match(['get', 'post'], '/print-agent/poll', [PrintAgentController::class, 'poll']);
     Route::post('/print-agent/jobs/{printJob}/ack', [PrintAgentController::class, 'ack']);
 });

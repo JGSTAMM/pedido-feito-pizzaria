@@ -6,8 +6,11 @@ use App\Models\Order;
 use App\Models\Table;
 use App\Policies\OrderPolicy;
 use App\Policies\TablePolicy;
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -29,5 +32,22 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Table::class, TablePolicy::class);
 
         Model::preventLazyLoading(! app()->isProduction());
+
+        // Dedicated, isolated rate limiters to prevent IP counter collisions
+        RateLimiter::for('online-orders', function (Request $request) {
+            return Limit::perMinute(30)->by($request->ip());
+        });
+
+        RateLimiter::for('print-agent', function (Request $request) {
+            return Limit::perMinute(300)->by($request->ip());
+        });
+
+        RateLimiter::for('public-menu', function (Request $request) {
+            return Limit::perMinute(120)->by($request->ip());
+        });
+
+        RateLimiter::for('payment-status', function (Request $request) {
+            return Limit::perMinute(180)->by($request->ip());
+        });
     }
 }
