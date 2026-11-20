@@ -73,8 +73,8 @@ export function useCheckout({ items, clearCart, t, initialValues = {} }) {
     const updateField = (fieldName, value) => {
         setFormValues((currentState) => {
             const next = { ...currentState, [fieldName]: value };
-            // Reset card token when switching away from credit_card
-            if (fieldName === 'paymentMethod' && value !== 'credit_card') {
+            // Reset card token when switching away from card payment methods
+            if (fieldName === 'paymentMethod' && value !== 'credit_card' && value !== 'debit_card') {
                 next.cardToken = null;
             }
             return next;
@@ -156,8 +156,8 @@ export function useCheckout({ items, clearCart, t, initialValues = {} }) {
                 items: mapCartItemsToPayload(items),
             };
 
-            // Only include card fields for credit_card
-            if (finalValues.paymentMethod === 'credit_card') {
+            // Only include card fields for credit_card or debit_card
+            if (finalValues.paymentMethod === 'credit_card' || finalValues.paymentMethod === 'debit_card') {
                 payload.card_token = finalValues.cardToken;
                 payload.installments = 1;
             }
@@ -210,7 +210,7 @@ export function useCheckout({ items, clearCart, t, initialValues = {} }) {
 
     // Effect to handle submission after tokenization
     useEffect(() => {
-        if (formValues.cardToken && formValues.paymentMethod === 'credit_card' && isSubmitting) {
+        if (formValues.cardToken && ['credit_card', 'debit_card'].includes(formValues.paymentMethod) && isSubmitting) {
             performSubmit(formValues);
         }
     }, [formValues.cardToken]);
@@ -235,8 +235,8 @@ export function useCheckout({ items, clearCart, t, initialValues = {} }) {
             return;
         }
 
-        // If Credit Card and no token yet, trigger SDK tokenization
-        if (formValues.paymentMethod === 'credit_card' && !formValues.cardToken) {
+        // If Credit or Debit Card and no token yet, trigger SDK tokenization
+        if (['credit_card', 'debit_card'].includes(formValues.paymentMethod) && !formValues.cardToken) {
             if (window.submitMPCardForm) {
                 setIsSubmitting(true);
                 window.submitMPCardForm();

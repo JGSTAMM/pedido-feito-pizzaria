@@ -44,9 +44,22 @@ class PaymentGatewayService
     {
         $secret = (string) config('services.mercadopago.webhook_secret');
         if ($secret === '') {
-            Log::error('Mercado Pago webhook secret is not configured');
+            // Fallback: When webhook secret is not yet configured in .env, verify notification directly with gateway API
+            // to avoid rejecting valid customer payments while logging a warning.
+            Log::warning('Mercado Pago webhook secret is not configured in .env. Falling back to direct API verification.');
 
-            return false;
+            $notificationId = $this->extractNotificationId($request);
+            if ($notificationId === null) {
+                return false;
+            }
+
+            try {
+                $payment = $this->fetchPaymentFromGateway($notificationId);
+                return isset($payment->id);
+            } catch (\Throwable $e) {
+                Log::error('Direct gateway payment verification failed: ' . $e->getMessage());
+                return false;
+            }
         }
 
         $signatureHeader = (string) $request->header('x-signature', '');
@@ -230,7 +243,8 @@ class PaymentGatewayService
         Order $order,
         string $token,
         string $payerEmail,
-        int $installments = 1
+        int $installments = 1,
+        string $onlineMethod = 'credito_online'
     ): array {
         try {
             $client = new PaymentClient;
@@ -243,7 +257,7 @@ class PaymentGatewayService
                 'payer' => [
                     'email' => $payerEmail,
                 ],
-                'external_reference' => (string) $order->id,
+                'external_reference' => (string) $order->id . '_' . time(),
             ];
 
             $webhookUrl = config('services.mercadopago.webhook_url');
@@ -255,7 +269,7 @@ class PaymentGatewayService
 
             $order->update([
                 'payment_gateway_id' => $payment->id,
-                'payment_method_online' => 'credito_online',
+                'payment_method_online' => $onlineMethod,
                 'online_payment_status' => $payment->status,
             ]);
 

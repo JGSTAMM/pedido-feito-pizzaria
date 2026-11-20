@@ -8,6 +8,7 @@ import { luccheseMenuTheme } from '../../theme/luccheseMenuTheme';
 const PAYMENT_OPTIONS = [
     { key: 'pix', icon: 'qr_code_2', enabled: true },
     { key: 'credit_card', icon: 'credit_card', enabled: true },
+    { key: 'debit_card', icon: 'credit_card', enabled: true },
     { key: 'cash', icon: 'payments', enabled: true },
 ];
 
@@ -543,7 +544,7 @@ export default function CheckoutFormPremium({
                     <FieldError message={fieldErrors.paymentMethod} />
                 </div>
 
-                {formValues.paymentMethod === 'credit_card' && (
+                {['credit_card', 'debit_card'].includes(formValues.paymentMethod) && (
                     <CreditCardForm
                         amount={totalAmount}
                         payerEmail={formValues.payerEmail || ''}

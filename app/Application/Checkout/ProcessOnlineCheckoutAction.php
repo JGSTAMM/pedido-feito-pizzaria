@@ -11,6 +11,7 @@ use App\Models\Product;
 use App\Models\Table;
 use App\Services\PaymentGatewayService;
 use App\Services\PizzaPriceService;
+use App\Services\StoreAvailabilityService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -22,11 +23,25 @@ class ProcessOnlineCheckoutAction
         private readonly PaymentGatewayService $paymentGatewayService,
         private readonly PizzaPriceService $pizzaPriceService,
         private readonly PrintQueueService $printQueueService,
+        private readonly StoreAvailabilityService $storeAvailabilityService,
     ) {}
 
     public function execute(array $validated): array
     {
         try {
+            $availability = $this->storeAvailabilityService->evaluate();
+
+            if (! $availability['is_accepting_orders']) {
+                return [
+                    'status' => 403,
+                    'payload' => [
+                        'success' => false,
+                        'reason' => $availability['reason'],
+                        'error' => $availability['message'],
+                    ],
+                ];
+            }
+
             [$tableId, $tableError] = $this->resolveDineInTable($validated);
 
             if ($tableError !== null) {
@@ -54,6 +69,7 @@ class ProcessOnlineCheckoutAction
                 'status' => $isCash ? Order::STATUS_PENDING : Order::STATUS_AWAITING_PAYMENT,
                 'type' => $orderType,
                 'table_id' => $tableId,
+                'cash_register_id' => $availability['cash_register_id'],
                 'customer_name' => $validated['customer_name'],
                 'customer_phone' => $validated['customer_phone'],
                 'neighborhood_id' => $validated['neighborhood_id'] ?? null,
@@ -231,19 +247,22 @@ class ProcessOnlineCheckoutAction
             return $this->paymentGatewayService->createPixPayment($order, $validated['payer_email'] ?? 'pagamento@pedidofeito.com');
         }
 
-        // Credit card — card_token is mandatory
+        // Card (Credit or Debit) — card_token is mandatory
         if (empty($validated['card_token'])) {
             return [
                 'success' => false,
-                'error' => 'Token do cartão é obrigatório para pagamento com cartão de crédito.',
+                'error' => 'Token do cartão é obrigatório para pagamento online.',
             ];
         }
+
+        $onlineMethod = $validated['payment_method'] === 'debit_card' ? 'debito_online' : 'credito_online';
 
         return $this->paymentGatewayService->createCardPayment(
             $order,
             $validated['card_token'],
             $validated['payer_email'] ?? 'pagamento@pedidofeito.com',
             1, // Always 1 installment for food orders
+            $onlineMethod
         );
     }
 

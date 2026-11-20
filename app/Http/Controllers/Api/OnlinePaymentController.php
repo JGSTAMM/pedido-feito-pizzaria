@@ -32,7 +32,7 @@ class OnlinePaymentController extends Controller
             'customer_phone' => 'required|string|max:20',
             'payer_email' => 'nullable|email',
             'type' => 'required|in:pickup,delivery,dine_in',
-            'payment_method' => 'required|in:pix,credit_card,cash',
+            'payment_method' => 'required|in:pix,credit_card,debit_card,cash',
             'items' => 'required|array|min:1',
             'items.*.type' => 'required|in:product,pizza',
             'items.*.product_id' => 'required_if:items.*.type,product|nullable|string',
@@ -79,7 +79,14 @@ class OnlinePaymentController extends Controller
 
         // Ownership validation: Store order ID in session for polling security
         if ($result['status'] === 201 && isset($result['payload']['order_id'])) {
-            session()->put('current_order_id', $result['payload']['order_id']);
+            $orderId = $result['payload']['order_id'];
+            $ownedIds = array_values(array_unique([
+                ...((array) session()->get('owned_order_ids', [])),
+                $orderId,
+            ]));
+
+            session()->put('current_order_id', $orderId);
+            session()->put('owned_order_ids', $ownedIds);
             session()->put('customer_phone', $validated['customer_phone']);
         }
 
@@ -106,26 +113,8 @@ class OnlinePaymentController extends Controller
      *
      * Allows the customer to poll for payment confirmation.
      */
-    public function paymentStatus(string $orderId)
+    public function paymentStatus(Request $request, string $orderId)
     {
-        // 1. Ownership Validation (Security: Prevent IDOR)
-        // For guest checkouts, we verify against the session ID stored during store()
-        $isAuthorized = (session()->get('current_order_id') === $orderId);
-
-        if (! $isAuthorized) {
-            Log::warning('Unauthorized order status access attempt (IDOR)', [
-                'requested_order_id' => $orderId,
-                'session_order_id' => session()->get('current_order_id'),
-                'ip' => request()->ip(),
-                'user_agent' => request()->userAgent(),
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'error' => __('digital_menu.errors.unauthorized_order_access'),
-            ], 403);
-        }
-
         $order = Order::find($orderId);
 
         if (! $order) {
@@ -134,6 +123,22 @@ class OnlinePaymentController extends Controller
                 'error' => __('digital_menu.errors.order_not_found'),
             ], 404);
         }
+
+        if (! $this->isAuthorizedToViewPaymentStatus($request, $order)) {
+            Log::warning('Unauthorized order status access attempt (IDOR)', [
+                'requested_order_id' => $orderId,
+                'session_order_id' => session()->get('current_order_id'),
+                'ip' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'error' => __('digital_menu.errors.unauthorized_order_access'),
+            ], 403);
+        }
+
+        $gatewayError = false;
 
         // Check directly with gateway if still pending
         if ($order->status === Order::STATUS_AWAITING_PAYMENT && $order->payment_gateway_id) {
@@ -153,21 +158,17 @@ class OnlinePaymentController extends Controller
                     $order->refresh();
                 }
             } catch (\Throwable $e) {
+                $gatewayError = true;
                 Log::error('Gateway polling failed: '.$e->getMessage(), [
                     'order_id' => $order->id,
                     'trace' => $e->getTraceAsString(),
-                ]);
-
-                return response()->json([
-                    'status' => $order->status,
-                    'gateway_error' => true,
-                    'message' => 'Payment gateway unreachable.',
                 ]);
             }
         }
 
         return response()->json([
             'success' => true,
+            'gateway_error' => $gatewayError,
             'message' => __('digital_menu.checkout.payment_status_loaded'),
             'order_id' => $order->id,
             'order_code' => $order->short_code,
@@ -181,5 +182,34 @@ class OnlinePaymentController extends Controller
             'pix_qr_code' => $order->pix_qr_code,
             'pix_qr_code_base64' => $order->pix_qr_code_base64,
         ]);
+    }
+
+    private function isAuthorizedToViewPaymentStatus(Request $request, Order $order): bool
+    {
+        if (session()->get('current_order_id') === $order->id) {
+            return true;
+        }
+
+        $ownedIds = (array) session()->get('owned_order_ids', []);
+        if (in_array($order->id, $ownedIds, true)) {
+            return true;
+        }
+
+        $user = $request->user();
+        if ($user && in_array($user->role, ['admin', 'cashier', 'caixa', 'waiter', 'garcom'], true)) {
+            return true;
+        }
+
+        $clientPhone = $this->normalizePhone(
+            $request->cookie('customer_phone') ?? session()->get('customer_phone')
+        );
+        $orderPhone = $this->normalizePhone($order->customer_phone);
+
+        return $clientPhone !== '' && $orderPhone !== '' && $clientPhone === $orderPhone;
+    }
+
+    private function normalizePhone(?string $phone): string
+    {
+        return preg_replace('/\D+/', '', (string) $phone) ?? '';
     }
 }
