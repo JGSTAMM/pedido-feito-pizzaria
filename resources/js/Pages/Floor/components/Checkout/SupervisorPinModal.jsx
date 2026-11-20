@@ -10,8 +10,22 @@ export default function SupervisorPinModal({ isOpen, onClose, onUnlock }) {
 
     if (!isOpen) return null;
 
+    const handleClose = () => {
+        setPin('');
+        setError('');
+        onClose();
+    };
+
+    const handlePinChange = (rawValue) => {
+        const digitsOnly = String(rawValue || '').replace(/\D/g, '').slice(0, 4);
+        setPin(digitsOnly);
+        if (error) {
+            setError('');
+        }
+    };
+
     const handleValidate = async () => {
-        if (!pin) return;
+        if (pin.length !== 4 || loading) return;
         setLoading(true);
         setError('');
         try {
@@ -24,7 +38,16 @@ export default function SupervisorPinModal({ isOpen, onClose, onUnlock }) {
                 setError(t('floor.drawer.checkout.invalid_pin'));
             }
         } catch (err) {
-            setError(t('floor.drawer.checkout.invalid_pin'));
+            const status = err?.response?.status;
+            const reason = err?.response?.data?.reason;
+
+            if (status === 429) {
+                setError(t('floor.drawer.checkout.too_many_attempts'));
+            } else if (reason === 'not_configured') {
+                setError(t('floor.drawer.checkout.pin_not_configured'));
+            } else {
+                setError(t('floor.drawer.checkout.invalid_pin'));
+            }
         } finally {
             setLoading(false);
         }
@@ -32,9 +55,9 @@ export default function SupervisorPinModal({ isOpen, onClose, onUnlock }) {
 
     return (
         <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-[#0D0D12]/60 backdrop-blur-md" onClick={onClose} />
-            <div className="relative w-full max-w-sm bg-[#12121A] border border-white/10 rounded-[28px] shadow-2xl p-6 flex flex-col items-center animate-scale-in">
-                <div className="size-12 rounded-full bg-orange-500/10 border border-orange-500/20 flex items-center justify-center mb-4">
+            <div className="absolute inset-0 bg-[#0D0D12]/60 backdrop-blur-md" onClick={handleClose} />
+            <div className="relative w-full max-w-md bg-[#12121A] border border-white/10 rounded-[28px] shadow-2xl p-6 sm:p-8 flex flex-col items-center animate-scale-in">
+                <div className="size-14 rounded-full bg-orange-500/10 border border-orange-500/20 flex items-center justify-center mb-4">
                     <span className="material-symbols-outlined text-orange-400 text-2xl">lock</span>
                 </div>
                 
@@ -45,10 +68,11 @@ export default function SupervisorPinModal({ isOpen, onClose, onUnlock }) {
                     <input
                         type="password"
                         inputMode="numeric"
+                        maxLength={4}
                         autoFocus
                         placeholder="****"
                         value={pin}
-                        onChange={(e) => setPin(e.target.value)}
+                        onChange={(e) => handlePinChange(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && handleValidate()}
                         className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-center text-2xl font-black tracking-[0.5em] text-white focus:outline-none focus:border-orange-500/50 transition-colors"
                     />
@@ -59,14 +83,16 @@ export default function SupervisorPinModal({ isOpen, onClose, onUnlock }) {
 
                     <div className="flex gap-2">
                         <button
-                            onClick={onClose}
+                            type="button"
+                            onClick={handleClose}
                             className="flex-1 py-3 bg-white/5 hover:bg-white/10 text-white font-bold rounded-xl transition-colors text-sm"
                         >
                             {t('floor.drawer.pix.cancel')}
                         </button>
                         <button
+                            type="button"
                             onClick={handleValidate}
-                            disabled={loading || !pin}
+                            disabled={loading || pin.length !== 4}
                             className="flex-[2] py-3 bg-orange-500 hover:bg-orange-400 disabled:opacity-50 text-black font-black rounded-xl transition-all shadow-[0_10px_20px_-10px_rgba(249,115,22,0.5)] active:scale-95 flex items-center justify-center gap-2 text-sm"
                         >
                             {loading ? (

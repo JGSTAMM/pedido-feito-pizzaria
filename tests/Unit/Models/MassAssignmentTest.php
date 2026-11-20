@@ -4,6 +4,7 @@ namespace Tests\Unit\Models;
 
 use App\Models\Customer;
 use App\Models\OrderItem;
+use App\Models\User;
 use Tests\TestCase;
 
 class MassAssignmentTest extends TestCase
@@ -30,5 +31,22 @@ class MassAssignmentTest extends TestCase
 
         $this->assertEquals(2, $orderItem->quantity);
         $this->assertNull($orderItem->fake_discount);
+    }
+
+    public function test_user_model_prevents_mass_assignment_and_hides_pin_hash()
+    {
+        $user = new User;
+        $user->fill([
+            'name' => 'Supervisor',
+            'pin_hash' => 'leaked-or-injected',
+        ]);
+
+        $this->assertEquals('Supervisor', $user->name);
+        $this->assertNull($user->pin_hash);
+
+        $user->pin_hash = 'hashed-pin-secret';
+        $serialized = $user->toArray();
+
+        $this->assertArrayNotHasKey('pin_hash', $serialized);
     }
 }

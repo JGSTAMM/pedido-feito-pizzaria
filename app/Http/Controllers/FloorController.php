@@ -4,8 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Application\CashRegister\CashRegisterLockService;
 use App\Application\Orders\OrderActionException;
+use App\Application\Printing\PrintQueueService;
 use App\Events\OrderCreated;
+use App\Events\OrderCreatedForPrinting;
 use App\Events\OrderStatusUpdated;
+use App\Events\TableBillPrintRequested;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Payment;
@@ -15,6 +18,7 @@ use App\Models\Product;
 use App\Models\Table;
 use App\Services\PizzaPriceService;
 use App\Services\PaymentGatewayService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Application\Orders\SettleTableModule;
@@ -30,6 +34,7 @@ class FloorController extends Controller
         private readonly CashRegisterLockService $cashRegisterLockService,
         private readonly PaymentGatewayService $paymentGatewayService,
         private readonly SettleTableModule $settleTableModule,
+        private readonly PrintQueueService $printQueueService,
     ) {}
 
     public function index(): \Inertia\Response
@@ -80,6 +85,8 @@ class FloorController extends Controller
                     $summaryOrder = [
                         'id' => $first->id,
                         'short_code' => $first->short_code,
+                        'table_name' => $table->name,
+                        'customer_name' => $first->customer_name ?? 'Cliente',
                         'total' => (float) $activeOrders->sum('total_amount'),
                         'status' => $first->status,
                         'created_at_time' => $first->created_at->format('H:i'),
@@ -88,12 +95,23 @@ class FloorController extends Controller
                         'lead_time' => $first->ready_at ? (int) $first->created_at->diffInMinutes($first->ready_at) : null,
                         'items' => $activeOrders->flatMap(function ($order) {
                             return $order->items->map(function ($item) {
+                                $isPizza = in_array($item->type, ['pizza', 'pizza_custom'], true);
+                                $name = $isPizza
+                                    ? ($item->pizzaSize?->name ? "PIZZA {$item->pizzaSize->name}" : 'PIZZA')
+                                    : ($item->product?->name ?? $item->description ?? 'Item');
+
                                 return [
                                     'id' => $item->id,
                                     'quantity' => $item->quantity,
-                                    'name' => $item->description ?? $item->product?->name ?? 'Item',
+                                    'name' => $name,
                                     'price' => (float) $item->unit_price,
+                                    'unit_price' => (float) $item->unit_price,
                                     'subtotal' => (float) $item->subtotal,
+                                    'type' => $item->type ?? 'product',
+                                    'is_pizza' => $isPizza,
+                                    'size_name' => $isPizza ? ($item->pizzaSize?->name ?? null) : null,
+                                    'flavor_names' => $isPizza ? $item->flavors->pluck('name')->values()->toArray() : [],
+                                    'notes' => $item->notes ?? null,
                                 ];
                             });
                         })->values()->toArray(),
@@ -266,6 +284,10 @@ class FloorController extends Controller
                     $sizeName = $size ? $size->name : 'Pizza';
                     $description = "Pizza {$sizeName}";
 
+                    if ($borderName && (! $customerObs || ! str_contains(mb_strtolower($customerObs), 'borda:'))) {
+                        $customerObs = $customerObs ? "Borda: {$borderName} | {$customerObs}" : "Borda: {$borderName}";
+                    }
+
                     $subtotal = $unitPrice * $item['quantity'];
                     $totalAmount += $subtotal;
 
@@ -301,12 +323,15 @@ class FloorController extends Controller
                 }
             }
 
+            $cleanTableName = trim((string) $table->name);
+            $customerTableLabel = preg_match('/^mesa\b/i', $cleanTableName) ? $cleanTableName : 'Mesa '.$cleanTableName;
+
             // ALWAYS create new dine_in order for this table to avoid "infinite order" bug in kitchen
             $order = Order::create([
                 'status' => 'pending',
                 'type' => 'dine_in',
                 'total_amount' => $totalAmount,
-                'customer_name' => 'Mesa '.$table->name,
+                'customer_name' => $customerTableLabel,
                 'table_id' => $table->id,
                 'cash_register_id' => $activeRegister?->id,
                 'user_id' => Auth::id(),
@@ -339,14 +364,34 @@ class FloorController extends Controller
 
             DB::commit();
 
+            // Enqueue kitchen ticket in print queue FIRST so Reverb unavailability never blocks printing
+            try {
+                $this->printQueueService->enqueueKitchenTicket($order);
+            } catch (\Throwable $queueEx) {
+                Log::warning('Failed to enqueue kitchen print job for floor order: '.$queueEx->getMessage());
+            }
+
             // Broadcast real-time event so KDS picks up this dine-in order instantly
-            event(new OrderCreated(
-                orderId: $order->id,
-                status: 'pending',
-                type: 'dine_in',
-                shortCode: $order->short_code ?? '',
-                tableId: $table->id,
-            ));
+            try {
+                event(new OrderCreated(
+                    orderId: $order->id,
+                    status: 'pending',
+                    type: 'dine_in',
+                    shortCode: $order->short_code ?? '',
+                    tableId: $table->id,
+                ));
+            } catch (\Throwable $broadcastEx) {
+                Log::warning('Broadcast failed after floor order creation: '.$broadcastEx->getMessage());
+            }
+
+            try {
+                event(new OrderCreatedForPrinting($order->id));
+            } catch (\Throwable $printException) {
+                Log::warning('Automatic thermal printing dispatch failed after floor order creation.', [
+                    'order_id' => $order->id,
+                    'error' => $printException->getMessage(),
+                ]);
+            }
 
             return redirect()->back()->with('success', "Itens enviados para a cozinha! Pedido #{$order->id}");
 
@@ -498,12 +543,19 @@ class FloorController extends Controller
     public function validateSupervisorPin(Request $request)
     {
         $request->validate([
-            'pin' => 'required|string',
+            'pin' => ['required', 'string', 'regex:/^\d{4}$/'],
         ]);
 
         $users = \App\Models\User::whereIn('role', ['admin', 'supervisor'])
             ->whereNotNull('pin_hash')
             ->get();
+
+        if ($users->isEmpty()) {
+            return response()->json([
+                'valid' => false,
+                'reason' => 'not_configured',
+            ], 401);
+        }
 
         foreach ($users as $user) {
             if (\Illuminate\Support\Facades\Hash::check($request->pin, $user->pin_hash)) {
@@ -515,6 +567,76 @@ class FloorController extends Controller
             }
         }
 
-        return response()->json(['valid' => false], 401);
+        return response()->json([
+            'valid' => false,
+            'reason' => 'invalid_pin',
+        ], 401);
+    }
+
+    /**
+     * Dispatch Table Bill Printing (for thermal printers via WebSocket or local).
+     */
+    public function printBill(Table $table): JsonResponse
+    {
+        $activeOrders = $table->activeOrders()->with(['items.product', 'items.pizzaSize', 'items.flavors'])->get();
+        if ($activeOrders->isEmpty()) {
+            return response()->json(['error' => __('order.payment.no_active_orders')], 400);
+        }
+
+        $first = $activeOrders->first();
+        $summaryOrder = [
+            'id' => $first->id,
+            'short_code' => $first->short_code,
+            'table_name' => $table->name,
+            'customer_name' => $first->customer_name ?? 'Cliente',
+            'total' => (float) $activeOrders->sum('total_amount'),
+            'status' => $first->status,
+            'created_at_time' => $first->created_at->format('H:i'),
+            'elapsed_minutes' => (int) $first->created_at->diffInMinutes(now()),
+            'items' => $activeOrders->flatMap(function ($order) {
+                return $order->items->map(function ($item) {
+                    $isPizza = in_array($item->type, ['pizza', 'pizza_custom'], true);
+                    $name = $isPizza
+                        ? ($item->pizzaSize?->name ? "PIZZA {$item->pizzaSize->name}" : 'PIZZA')
+                        : ($item->product?->name ?? $item->description ?? 'Item');
+
+                    return [
+                        'id' => $item->id,
+                        'quantity' => $item->quantity,
+                        'name' => $name,
+                        'price' => (float) $item->unit_price,
+                        'unit_price' => (float) $item->unit_price,
+                        'subtotal' => (float) $item->subtotal,
+                        'type' => $item->type ?? 'product',
+                        'is_pizza' => $isPizza,
+                        'size_name' => $isPizza ? ($item->pizzaSize?->name ?? null) : null,
+                        'flavor_names' => $isPizza ? $item->flavors->pluck('name')->values()->toArray() : [],
+                        'notes' => $item->notes ?? null,
+                    ];
+                });
+            })->values()->toArray(),
+        ];
+
+        $job = null;
+        try {
+            $job = $this->printQueueService->enqueueTableBill($table);
+        } catch (\Throwable $billEx) {
+            Log::warning('Failed to enqueue table bill print job: '.$billEx->getMessage());
+        }
+
+        try {
+            event(new TableBillPrintRequested($table->id, $table->name, $summaryOrder));
+        } catch (\Throwable $broadcastEx) {
+            Log::warning('Broadcast failed for table bill print: '.$broadcastEx->getMessage());
+        }
+
+        $agentStatus = $this->printQueueService->getAgentStatus();
+
+        return response()->json([
+            'success' => true,
+            'order' => $summaryOrder,
+            'job_id' => $job?->id,
+            'agent_online' => $agentStatus['is_online'],
+        ]);
     }
 }

@@ -204,6 +204,39 @@ class SettleTableModuleTest extends TestCase
         $this->assertEquals('completed', $order->status);
     }
 
+    public function test_settle_table_with_custom_service_fee_above_ten_percent(): void
+    {
+        $table = Table::create(['name' => 'Mesa 13B', 'status' => 'occupied']);
+        $order = Order::create([
+            'table_id' => $table->id,
+            'user_id' => $this->user->id,
+            'status' => Order::STATUS_PENDING,
+            'type' => 'salon',
+            'total_amount' => 50.00, // 5000 cents
+        ]);
+
+        // 18% service fee = 900 cents -> expected total 5900 cents
+        $result = $this->module->execute(
+            table: $table,
+            payments: [
+                ['method' => 'pix', 'amount' => 5900],
+            ],
+            settledBy: $this->user,
+            options: [
+                'amounts_in_cents' => true,
+                'service_fee_cents' => 900,
+                'discount_cents' => 0,
+            ]
+        );
+
+        $this->assertTrue($result->success);
+        $this->assertEquals(5900, $result->totalSettledCents);
+
+        $order->refresh();
+        $this->assertEquals(900, $order->service_fee_amount);
+        $this->assertEquals('completed', $order->status);
+    }
+
     public function test_settle_table_throws_when_payment_is_insufficient(): void
     {
         $table = Table::create(['name' => 'Mesa 14', 'status' => 'occupied']);

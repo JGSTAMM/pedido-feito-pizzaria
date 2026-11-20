@@ -89,6 +89,8 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/settings/printers', [SettingsController::class, 'storePrinter']);
         Route::put('/settings/printers/{printer}', [SettingsController::class, 'updatePrinter']);
         Route::delete('/settings/printers/{printer}', [SettingsController::class, 'destroyPrinter']);
+        Route::post('/settings/printers/test-agent', [SettingsController::class, 'testPrint']);
+        Route::post('/settings/printers/regenerate-token', [SettingsController::class, 'regenerateAgentToken']);
 
         Route::resource('/neighborhoods', NeighborhoodController::class)->except(['create', 'show', 'edit']);
     });
@@ -96,11 +98,14 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware('role:admin,cashier,caixa,waiter,garcom')->group(function () {
         Route::get('/kds', [KdsController::class, 'index']);
         Route::post('/kds/{order}/status/{status}', [KdsController::class, 'updateStatus']);
+        Route::post('/kds/{order}/print', [KdsController::class, 'reprint']);
+        Route::get('/kds/print-agent-status', [KdsController::class, 'agentStatus']);
         Route::get('/floor', [FloorController::class, 'index']);
         Route::post('/floor/{table}/add-items', [FloorController::class, 'addItems']);
         Route::post('/floor/validate-supervisor-pin', [FloorController::class, 'validateSupervisorPin'])
             ->middleware('throttle:5,1');
         Route::post('/floor/{table}/pay', [FloorController::class, 'payAndClose']);
+        Route::post('/floor/{table}/print-bill', [FloorController::class, 'printBill']);
         Route::post('/floor/{table}/generate-pix', [FloorController::class, 'generatePix']);
         Route::get('/floor/pix-status/{order}', [FloorController::class, 'pixPaymentStatus']);
     });
@@ -109,6 +114,10 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/floor', [FloorController::class, 'store']);
         Route::put('/floor/{table}', [FloorController::class, 'update']);
         Route::delete('/floor/{table}', [FloorController::class, 'destroy']);
+        Route::post('/settings/supervisor-pin', [SettingsController::class, 'updateSupervisorPin'])
+            ->name('settings.supervisor-pin.update');
+        Route::delete('/settings/supervisor-pin/{user}', [SettingsController::class, 'clearSupervisorPin'])
+            ->name('settings.supervisor-pin.destroy');
     });
 
     Route::middleware('role:waiter,garcom')->group(function () {

@@ -4,7 +4,7 @@ export function Modal({ isOpen, onClose, title, children }) {
     if (!isOpen) return null;
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background-dark/80 backdrop-blur-sm" onClick={onClose}>
-            <div className="bg-[#18181F] w-full max-w-md rounded-2xl border border-border-subtle shadow-2xl flex flex-col max-h-[90vh] overflow-hidden" onClick={e => e.stopPropagation()}>
+            <div className="bg-[#18181F] w-full max-w-2xl rounded-2xl border border-border-subtle shadow-2xl flex flex-col max-h-[90vh] overflow-hidden" onClick={e => e.stopPropagation()}>
                 <div className="flex justify-between items-center p-5 border-b border-border-subtle">
                     <h3 className="text-lg font-bold text-white">{title}</h3>
                     <button onClick={onClose} className="text-text-muted hover:text-white transition-colors"><span className="material-symbols-outlined">close</span></button>

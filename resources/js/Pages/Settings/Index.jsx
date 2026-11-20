@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import AppLayout from '@/Layouts/AppLayout';
 import { router, useForm, usePage } from '@inertiajs/react';
+import useI18n from '@/hooks/useI18n';
+import TabSeguranca from './Components/TabSeguranca';
 
 /* ── Tiny Modal Shell ── */
 function Modal({ isOpen, onClose, title, children }) {
@@ -40,10 +42,18 @@ const TABS = [
 /* ═══════════════════════════════════════════════════════════════════
    MAIN COMPONENT
    ═══════════════════════════════════════════════════════════════════ */
-export default function Index({ settings, printers = [] }) {
+export default function Index({ settings, printers = [], printAgent = {}, supervisorSecurity = {} }) {
+    const { t } = useI18n();
     const [activeTab, setActiveTab] = useState('perfil');
     const { flash } = usePage().props;
     const [toast, setToast] = useState(null);
+
+    const visibleTabs = supervisorSecurity?.can_manage
+        ? [
+            ...TABS,
+            { key: 'seguranca', label: t('settings.tabs.security'), icon: 'shield_lock' },
+        ]
+        : TABS;
 
     useEffect(() => {
         if (flash?.success) { setToast({ message: flash.success, type: 'success' }); }
@@ -73,7 +83,7 @@ export default function Index({ settings, printers = [] }) {
                 <div className="p-10 max-w-6xl flex gap-8">
                     {/* Sidebar Tabs */}
                     <div className="w-64 flex-shrink-0 flex flex-col gap-2">
-                        {TABS.map(tab => (
+                        {visibleTabs.map(tab => (
                             <button
                                 key={tab.key}
                                 onClick={() => setActiveTab(tab.key)}
@@ -89,8 +99,11 @@ export default function Index({ settings, printers = [] }) {
                     <div className="flex-1 space-y-6">
                         {activeTab === 'perfil' && <TabPerfil settings={settings} />}
                         {activeTab === 'recibos' && <TabRecibos settings={settings} />}
-                        {activeTab === 'impressoras' && <TabImpressoras printers={printers} />}
+                        {activeTab === 'impressoras' && <TabImpressoras printers={printers} printAgent={printAgent} />}
                         {activeTab === 'integracoes' && <TabIntegracoes settings={settings} />}
+                        {activeTab === 'seguranca' && supervisorSecurity?.can_manage && (
+                            <TabSeguranca supervisorSecurity={supervisorSecurity} />
+                        )}
                     </div>
                 </div>
             </div>
@@ -651,9 +664,11 @@ function TabRecibos({ settings }) {
 /* ═══════════════════════════════════════════════════════════════════
    TAB: IMPRESSORAS
    ═══════════════════════════════════════════════════════════════════ */
-function TabImpressoras({ printers }) {
+function TabImpressoras({ printers, printAgent = {} }) {
     const [modalOpen, setModalOpen] = useState(false);
     const [editingId, setEditingId] = useState(null);
+    const [testingTarget, setTestingTarget] = useState(null);
+    const [copiedToken, setCopiedToken] = useState(false);
     const { data, setData, post, put, processing, reset, clearErrors, errors } = useForm({ name: '', type: 'receipt', target: 'cash_register', ip_address: '' });
 
     const openCreate = () => { clearErrors(); reset(); setEditingId(null); setModalOpen(true); };
@@ -670,15 +685,151 @@ function TabImpressoras({ printers }) {
 
     const handleDelete = (id) => { if (confirm('Excluir esta impressora?')) router.delete(`/settings/printers/${id}`, { preserveScroll: true }); };
 
+    const handleTestAgent = (target) => {
+        setTestingTarget(target);
+        router.post('/settings/printers/test-agent', { target }, {
+            preserveScroll: true,
+            onFinish: () => setTestingTarget(null),
+        });
+    };
+
+    const handleRegenerateToken = () => {
+        if (confirm('Deseja realmente gerar um novo token? O agente local precisará ser atualizado com o novo token.')) {
+            router.post('/settings/printers/regenerate-token', {}, { preserveScroll: true });
+        }
+    };
+
+    const handleCopyToken = () => {
+        if (printAgent?.token) {
+            navigator.clipboard.writeText(printAgent.token);
+            setCopiedToken(true);
+            setTimeout(() => setCopiedToken(false), 2000);
+        }
+    };
+
+    const isAgentOnline = Boolean(printAgent?.status?.is_online ?? printAgent?.status?.online);
+    const detectedPrinters = Array.isArray(printAgent?.status?.printers)
+        ? printAgent.status.printers
+        : (Array.isArray(printAgent?.status?.details?.printers) ? printAgent.status.details.printers : []);
+
     const targetLabel = (t) => t === 'kitchen' ? 'Cozinha (Produção)' : 'Caixa (Recibo)';
     const typeLabel = (t) => t === 'production' ? 'Produção' : 'Recibos';
 
     return (
-        <>
+        <div className="space-y-6">
+            {/* ── Local Print Agent Card (ESC/POS RAW & Cloud/Zero Dialog) ── */}
+            <Card>
+                <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                        <div className={`size-11 rounded-2xl flex items-center justify-center ${isAgentOnline ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : 'bg-red-500/15 text-red-400 border border-red-500/30'}`}>
+                            <span className="material-symbols-outlined text-[24px]">hub</span>
+                        </div>
+                        <div>
+                            <div className="flex items-center gap-2">
+                                <h3 className="text-lg font-black text-white">Agente de Impressão Direta (Sem Diálogo)</h3>
+                                <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${isAgentOnline ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'}`}>
+                                    <span className={`size-1.5 rounded-full ${isAgentOnline ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
+                                    {isAgentOnline ? 'Online no Windows' : 'Aguardando Inicialização'}
+                                </span>
+                            </div>
+                            <p className="text-xs text-text-muted mt-0.5">
+                                Imprime comandas da cozinha e conferência da mesa direto nas impressoras térmicas (58mm e 80mm) sem abrir janela de impressão do Chrome.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 pt-4 border-t border-border-subtle/50">
+                    {/* Left: Token & Connection */}
+                    <div className="space-y-3 bg-black/20 p-4 rounded-2xl border border-white/5">
+                        <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+                                <span className="material-symbols-outlined text-[16px] text-primary">key</span>
+                                Token de Autenticação do Agente
+                            </span>
+                            <button
+                                type="button"
+                                onClick={handleRegenerateToken}
+                                className="text-[10px] font-bold text-text-muted hover:text-white transition-colors"
+                            >
+                                Regenerar
+                            </button>
+                        </div>
+                        <div className="flex gap-2">
+                            <input
+                                type="text"
+                                readOnly
+                                value={printAgent?.token || 'Carregando...'}
+                                className="w-full bg-surface border border-border-subtle rounded-xl px-3 py-2 text-xs font-mono text-white/90 select-all"
+                            />
+                            <button
+                                type="button"
+                                onClick={handleCopyToken}
+                                className="px-3 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1 shrink-0"
+                            >
+                                <span className="material-symbols-outlined text-[16px]">{copiedToken ? 'check' : 'content_copy'}</span>
+                                {copiedToken ? 'Copiado!' : 'Copiar'}
+                            </button>
+                        </div>
+                        <p className="text-[11px] text-text-muted leading-relaxed">
+                            O agente é executado via arquivo <code className="text-primary font-mono bg-white/5 px-1 py-0.5 rounded">iniciar-agente-impressao.bat</code> na pasta do sistema.
+                        </p>
+                    </div>
+
+                    {/* Right: Printers detected & Test buttons */}
+                    <div className="space-y-3 bg-black/20 p-4 rounded-2xl border border-white/5">
+                        <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+                                <span className="material-symbols-outlined text-[16px] text-emerald-400">print</span>
+                                Impressoras Detectadas no Windows
+                            </span>
+                            <span className="text-[10px] text-text-muted">
+                                {detectedPrinters.length > 0 ? `${detectedPrinters.length} encontrada(s)` : 'Nenhuma reportada'}
+                            </span>
+                        </div>
+                        {detectedPrinters.length > 0 ? (
+                            <div className="flex flex-wrap gap-1.5">
+                                {detectedPrinters.map((prn, idx) => (
+                                    <span key={idx} className="bg-white/10 border border-white/10 px-2.5 py-1 rounded-lg text-xs font-mono text-emerald-300">
+                                        {prn}
+                                    </span>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="text-xs text-text-muted italic">
+                                Quando o agente estiver rodando, as impressoras instaladas no Windows aparecerão aqui.
+                            </p>
+                        )}
+
+                        <div className="pt-2 flex gap-2">
+                            <button
+                                type="button"
+                                disabled={testingTarget !== null}
+                                onClick={() => handleTestAgent('kitchen')}
+                                className="flex-1 py-2 px-3 bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/20 text-orange-400 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 disabled:opacity-50"
+                            >
+                                <span className="material-symbols-outlined text-[16px]">soup_kitchen</span>
+                                {testingTarget === 'kitchen' ? 'Imprimindo...' : 'Testar Cozinha (80mm)'}
+                            </button>
+                            <button
+                                type="button"
+                                disabled={testingTarget !== null}
+                                onClick={() => handleTestAgent('cash_register')}
+                                className="flex-1 py-2 px-3 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 text-blue-400 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 disabled:opacity-50"
+                            >
+                                <span className="material-symbols-outlined text-[16px]">receipt</span>
+                                {testingTarget === 'cash_register' ? 'Imprimindo...' : 'Testar Caixa (58mm)'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </Card>
+
+            {/* Standard Network/Thermal Printers List */}
             <Card>
                 <div className="flex items-center justify-between mb-6">
                     <div>
-                        <h3 className="text-lg font-bold text-white mb-1">Impressoras Configuradas</h3>
+                        <h3 className="text-lg font-bold text-white mb-1">Impressoras Configuradas (Rede / Legado)</h3>
                         <p className="text-sm text-text-muted">Gerencie as impressoras térmicas conectadas ao PDV e KDS.</p>
                     </div>
                     <button onClick={openCreate} className="flex items-center gap-2 px-4 py-2 bg-primary text-white text-sm font-bold rounded-xl hover:bg-primary-dark transition-all shadow-lg shadow-primary/20">
@@ -746,7 +897,7 @@ function TabImpressoras({ printers }) {
                     <ModalFooter onClose={() => setModalOpen(false)} processing={processing} label={editingId ? 'Salvar' : 'Adicionar'} />
                 </form>
             </Modal>
-        </>
+        </div>
     );
 }
 
