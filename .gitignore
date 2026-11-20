@@ -2,6 +2,10 @@
 # Laravel & PHP
 ##########################
 *.log
+*.sql
+*.dump
+/backup_nuvem/
+/print-agent/config.json
 .env
 .env.backup
 .env.production
