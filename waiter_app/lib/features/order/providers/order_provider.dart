@@ -155,4 +155,10 @@ class OrderProvider with ChangeNotifier {
       return false;
     }
   }
+
+  void clearCart() {
+    _cartItems.clear();
+    _isSending = false;
+    notifyListeners();
+  }
 }

@@ -20,6 +20,8 @@ export default function CheckoutModal({
     generatePixPayment,
     formatCurrency,
     t,
+    onPrintBill,
+    isPrintingBill = false,
     
     // PIX states
     generatingPix,
@@ -40,6 +42,11 @@ export default function CheckoutModal({
     const {
         serviceFeeEnabled,
         setServiceFeeEnabled,
+        serviceFeeMode,
+        serviceFeeValue,
+        setServiceFeeValue,
+        changeServiceFeeMode,
+        selectServiceFeePreset,
         discountValue,
         discountMode,
         discountUnlocked,
@@ -66,16 +73,16 @@ export default function CheckoutModal({
     };
 
     return (
-        <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center p-2 sm:p-4">
+        <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center p-2 sm:p-4 md:p-6">
             <div
-                className="absolute inset-0 bg-[#0D0D12]/40 backdrop-blur-md animate-fade-in"
+                className="absolute inset-0 bg-[#0D0D12]/60 backdrop-blur-md animate-fade-in"
                 onClick={() => !checkingOut && onClose()}
             />
 
-            <div className="relative w-full max-w-lg max-h-[92dvh] bg-[#12121A]/95 sm:bg-[#12121A]/80 backdrop-blur-2xl border border-white/10 rounded-t-[32px] sm:rounded-[32px] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)] flex flex-col overflow-hidden animate-scale-in">
+            <div className="relative w-full max-w-4xl max-h-[94dvh] bg-[#12121A]/95 sm:bg-[#12121A]/90 backdrop-blur-2xl border border-white/10 rounded-t-[32px] sm:rounded-[32px] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)] flex flex-col overflow-hidden animate-scale-in">
 
                 {/* Header Section */}
-                <div className="p-4 sm:p-8 pb-2 sm:pb-4 flex items-center justify-between shrink-0">
+                <div className="p-4 sm:p-6 pb-2 sm:pb-3 flex items-center justify-between shrink-0 border-b border-white/5">
                     <div>
                         <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2">
                             <span className="material-symbols-outlined text-emerald-400">account_balance_wallet</span>
@@ -94,25 +101,25 @@ export default function CheckoutModal({
                     </div>
                 </div>
 
-                {/* Summary Dashboard - Fixed at top */}
-                <div className="px-4 sm:px-8 py-2 sm:py-4 grid grid-cols-2 gap-2 sm:gap-3 shrink-0">
-                    <div className="col-span-2 bg-emerald-500/5 border border-emerald-500/20 p-4 sm:p-5 rounded-[20px] sm:rounded-[24px] relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 p-3 sm:p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                            <span className="material-symbols-outlined text-4xl sm:text-6xl text-emerald-400">payments</span>
+                {/* Summary Dashboard - 3 columns on tablet/desktop */}
+                <div className="px-4 sm:px-6 py-3 grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3 shrink-0 bg-black/20">
+                    <div className="bg-emerald-500/10 border border-emerald-500/25 p-3.5 sm:p-4 rounded-[18px] sm:rounded-[22px] relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 p-2 sm:p-3 opacity-15 group-hover:opacity-25 transition-opacity">
+                            <span className="material-symbols-outlined text-3xl sm:text-4xl text-emerald-400">payments</span>
                         </div>
-                        <p className="text-[9px] sm:text-[10px] uppercase font-black text-emerald-400/60 tracking-[0.2em] mb-1">{t('floor.drawer.checkout.total_label')}</p>
-                        <p className="text-2xl sm:text-4xl font-black text-white tracking-tighter">
+                        <p className="text-[10px] uppercase font-black text-emerald-400/80 tracking-[0.15em] mb-0.5">{t('floor.drawer.checkout.total_label')}</p>
+                        <p className="text-xl sm:text-3xl font-black text-white tracking-tight">
                             {formatCurrency(grandTotal)}
                         </p>
                     </div>
 
                     {/* Remaining Card */}
-                    <div className={`p-3 sm:p-4 rounded-[16px] sm:rounded-[20px] border transition-all ${remaining > 0.01
-                            ? 'bg-orange-500/5 border-orange-500/20'
-                            : 'bg-emerald-500/5 border-emerald-500/20'
+                    <div className={`p-3.5 sm:p-4 rounded-[18px] sm:rounded-[22px] border transition-all ${remaining > 0.01
+                            ? 'bg-orange-500/10 border-orange-500/25'
+                            : 'bg-emerald-500/10 border-emerald-500/25'
                         }`}>
-                        <p className="text-[8px] sm:text-[9px] uppercase font-bold text-text-muted tracking-widest mb-0.5 sm:mb-1">{t('floor.drawer.checkout.remaining_label')}</p>
-                        <p className={`text-base sm:text-xl font-black tracking-tight ${remaining > 0.01
+                        <p className="text-[10px] uppercase font-bold text-text-muted tracking-widest mb-0.5">{t('floor.drawer.checkout.remaining_label')}</p>
+                        <p className={`text-xl sm:text-3xl font-black tracking-tight ${remaining > 0.01
                                 ? 'text-orange-400'
                                 : 'text-emerald-400'
                             }`}>
@@ -121,9 +128,9 @@ export default function CheckoutModal({
                     </div>
 
                     {/* Change Card */}
-                    <div className="bg-blue-500/5 border border-blue-500/20 p-3 sm:p-4 rounded-[16px] sm:rounded-[20px]">
-                        <p className="text-[8px] sm:text-[9px] uppercase font-bold text-text-muted tracking-widest mb-0.5 sm:mb-1">{t('floor.drawer.checkout.change_label')}</p>
-                        <p className="text-base sm:text-xl font-black text-blue-400 tracking-tight">
+                    <div className="bg-blue-500/10 border border-blue-500/25 p-3.5 sm:p-4 rounded-[18px] sm:rounded-[22px]">
+                        <p className="text-[10px] uppercase font-bold text-text-muted tracking-widest mb-0.5">{t('floor.drawer.checkout.change_label')}</p>
+                        <p className="text-xl sm:text-3xl font-black text-blue-400 tracking-tight">
                             {formatCurrency(change)}
                         </p>
                     </div>
@@ -251,157 +258,188 @@ export default function CheckoutModal({
                     </div>
                 ) : (
                     <>
-                        {/* Interaction Area - Scrollable Body */}
-                        <div className="px-4 sm:px-8 py-4 sm:py-6 overflow-y-auto custom-scrollbar flex-1 space-y-5 sm:space-y-6 min-h-0">
+                        {/* Interaction Area - Scrollable Body with 2 columns on lg: */}
+                        <div className="px-4 sm:px-6 py-4 overflow-y-auto custom-scrollbar flex-1 min-h-0">
+                            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+                                {/* Left Column: Review, Fees & Discounts */}
+                                <div className="lg:col-span-6 space-y-4">
+                                    <BillConference activeOrders={activeOrders} formatCurrency={formatCurrency} />
 
-                            <BillConference activeOrders={activeOrders} formatCurrency={formatCurrency} />
+                                    <ServiceFeeToggle 
+                                        serviceFeeEnabled={serviceFeeEnabled}
+                                        setServiceFeeEnabled={setServiceFeeEnabled}
+                                        serviceFeeMode={serviceFeeMode}
+                                        serviceFeeValue={serviceFeeValue}
+                                        setServiceFeeValue={setServiceFeeValue}
+                                        changeServiceFeeMode={changeServiceFeeMode}
+                                        selectServiceFeePreset={selectServiceFeePreset}
+                                        serviceFeeAmount={serviceFeeAmount}
+                                        formatCurrency={formatCurrency}
+                                    />
 
-                            <ServiceFeeToggle 
-                                serviceFeeEnabled={serviceFeeEnabled}
-                                setServiceFeeEnabled={setServiceFeeEnabled}
-                                serviceFeeAmount={serviceFeeAmount}
-                                formatCurrency={formatCurrency}
-                            />
+                                    <DiscountSection 
+                                        discountUnlocked={discountUnlocked}
+                                        discountAmount={discountAmount}
+                                        discountValue={discountValue}
+                                        discountMode={discountMode}
+                                        supervisorName={supervisorName}
+                                        supervisorId={supervisorId}
+                                        applyDiscount={applyDiscount}
+                                        resetDiscount={resetDiscount}
+                                        formatCurrency={formatCurrency}
+                                    />
+                                </div>
 
-                            <DiscountSection 
-                                discountUnlocked={discountUnlocked}
-                                discountAmount={discountAmount}
-                                discountValue={discountValue}
-                                discountMode={discountMode}
-                                supervisorName={supervisorName}
-                                applyDiscount={applyDiscount}
-                                resetDiscount={resetDiscount}
-                                formatCurrency={formatCurrency}
-                            />
+                                {/* Right Column: Payment Methods & Inputs */}
+                                <div className="lg:col-span-6 space-y-4">
+                                    {/* Payment Methods Grid */}
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] sm:text-[11px] font-black text-text-muted uppercase tracking-[0.1em] ml-1 block">
+                                            {t('floor.drawer.checkout.payment_method_label')}
+                                        </label>
+                                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                            {[
+                                                { method: 'dinheiro', icon: 'payments', label: t('floor.drawer.methods.dinheiro') },
+                                                { method: 'pix', icon: 'qr_code_2', label: t('floor.drawer.methods.pix') },
+                                                { method: 'credito', icon: 'credit_card', label: t('floor.drawer.methods.credito') },
+                                                { method: 'debito', icon: 'credit_card', label: t('floor.drawer.methods.debito') },
+                                            ].map(m => (
+                                                <button
+                                                    key={m.method}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setCheckoutPaymentMethod(m.method);
+                                                        if (!paymentInputValue) {
+                                                            const rem = Math.max(0, grandTotal - payments.reduce((s, p) => s + p.amount, 0));
+                                                            if (rem > 0) setPaymentInputValue(rem.toFixed(2));
+                                                        }
+                                                    }}
+                                                    className={`flex flex-col items-center justify-center p-3 rounded-2xl border transition-all duration-300 group ${checkoutPaymentMethod === m.method
+                                                            ? 'bg-emerald-500/15 border-emerald-500/40 text-white shadow-lg'
+                                                            : 'bg-white/5 border-white/5 text-text-muted hover:bg-white/[0.08] hover:text-white'
+                                                        }`}
+                                                >
+                                                    <div className={`size-8 sm:size-9 rounded-xl flex items-center justify-center transition-colors mb-1 ${checkoutPaymentMethod === m.method ? 'bg-white text-black' : 'bg-white/5 text-white/50'
+                                                        }`}>
+                                                        <span className="material-symbols-outlined text-[18px] sm:text-[20px]">{m.icon}</span>
+                                                    </div>
+                                                    <span className="text-[10px] font-bold uppercase tracking-wide truncate max-w-full">{m.label}</span>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
 
-                            {/* Payment Methods Grid */}
-                            <div className="space-y-2 sm:space-y-3">
-                                <label className="text-[10px] sm:text-[11px] font-black text-text-muted uppercase tracking-[0.1em] ml-1">{t('floor.drawer.checkout.payment_method_label')}</label>
-                                <div className="grid grid-cols-2 gap-2">
-                                    {[
-                                        { method: 'dinheiro', icon: 'payments', label: t('floor.drawer.methods.dinheiro') },
-                                        { method: 'pix', icon: 'qr_code_2', label: t('floor.drawer.methods.pix') },
-                                        { method: 'credito', icon: 'credit_card', label: t('floor.drawer.methods.credito') },
-                                        { method: 'debito', icon: 'credit_card', label: t('floor.drawer.methods.debito') },
-                                    ].map(m => (
-                                        <button
-                                            key={m.method}
-                                            onClick={() => {
-                                                setCheckoutPaymentMethod(m.method);
-                                                if (!paymentInputValue) {
-                                                    const rem = Math.max(0, grandTotal - payments.reduce((s, p) => s + p.amount, 0));
-                                                    if (rem > 0) setPaymentInputValue(rem.toFixed(2));
-                                                }
-                                            }}
-                                            className={`flex items-center gap-2 sm:gap-3 p-3 sm:p-4 rounded-[16px] sm:rounded-2xl border transition-all duration-300 group ${checkoutPaymentMethod === m.method
-                                                    ? 'bg-white/10 border-white/20 text-white shadow-lg scale-[1.02]'
-                                                    : 'bg-white/5 border-white/5 text-text-muted hover:bg-white/[0.08] hover:text-white'
-                                                }`}
-                                        >
-                                            <div className={`size-8 sm:size-10 rounded-xl flex items-center justify-center transition-colors ${checkoutPaymentMethod === m.method ? 'bg-white text-black' : 'bg-white/5 text-white/40'
-                                                }`}>
-                                                <span className="material-symbols-outlined text-[20px] sm:text-[24px]">{m.icon}</span>
+                                    {/* Amount Input */}
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] sm:text-[11px] font-black text-text-muted uppercase tracking-[0.1em] ml-1 block">
+                                            {t('floor.drawer.checkout.payment_amount_label')}
+                                        </label>
+                                        <div className="flex gap-2">
+                                            <CustomNumberInput
+                                                value={paymentInputValue}
+                                                onChange={val => setPaymentInputValue(val)}
+                                                onFocus={() => {
+                                                    if (!paymentInputValue) {
+                                                        const rem = Math.max(0, grandTotal - payments.reduce((s, p) => s + p.amount, 0));
+                                                        if (rem > 0) setPaymentInputValue(rem.toFixed(2));
+                                                    }
+                                                }}
+                                                prefix="R$"
+                                                step={0.01}
+                                                min={0.01}
+                                                placeholder="0,00"
+                                                className="w-full"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const val = parseFloat(paymentInputValue);
+                                                    if (val > 0) {
+                                                        if (checkoutPaymentMethod === 'pix') {
+                                                            generatePixPayment(val);
+                                                        } else {
+                                                            setPayments(prev => [...prev, { id: Date.now(), method: checkoutPaymentMethod, amount: val, label: checkoutPaymentMethod }]);
+                                                            setPaymentInputValue('');
+                                                        }
+                                                    }
+                                                }}
+                                                disabled={!paymentInputValue || parseFloat(paymentInputValue) <= 0}
+                                                className="px-5 sm:px-6 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-30 disabled:bg-white/10 text-black font-black rounded-2xl transition-all shadow-lg active:scale-95 flex items-center justify-center shrink-0"
+                                            >
+                                                <span className="material-symbols-outlined text-[24px]">add</span>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Payments List */}
+                                    {payments.length > 0 && (
+                                        <div className="space-y-2 animate-fade-in pt-1">
+                                            <div className="flex items-center justify-between px-1">
+                                                <p className="text-[10px] sm:text-[11px] font-black text-text-muted uppercase tracking-widest">{t('floor.drawer.checkout.added_payments_label')}</p>
+                                                <button type="button" onClick={() => setPayments([])} className="text-[10px] font-black text-red-400/70 hover:text-red-400 uppercase tracking-tighter transition-colors">{t('floor.drawer.checkout.clear_all')}</button>
                                             </div>
-                                            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wide">{m.label}</span>
-                                        </button>
-                                    ))}
+                                            <div className="grid gap-2 max-h-48 overflow-y-auto custom-scrollbar">
+                                                {payments.map(p => (
+                                                    <div key={p.id} className="flex items-center justify-between bg-white/5 p-3 rounded-2xl border border-white/5 group hover:border-white/20 transition-all">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="size-8 rounded-xl bg-white/5 flex items-center justify-center">
+                                                                <span className="material-symbols-outlined text-[18px] text-white/60">
+                                                                    {p.method === 'dinheiro' ? 'payments' : p.method === 'pix' ? 'qr_code_2' : 'credit_card'}
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex flex-col">
+                                                                <span className="text-white text-xs font-black uppercase tracking-tight">
+                                                                    {t(`floor.drawer.methods.${p.method}`)}
+                                                                </span>
+                                                                <span className="text-[9px] text-text-muted font-bold uppercase tracking-widest">
+                                                                    {t('floor.drawer.checkout.payment_added')}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex items-center gap-3">
+                                                            <span className="text-base font-black text-white">{formatCurrency(p.amount)}</span>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setPayments(prev => prev.filter(x => x.id !== p.id))}
+                                                                className="size-8 rounded-lg flex items-center justify-center text-text-muted hover:text-red-400 hover:bg-red-400/10 transition-all"
+                                                            >
+                                                                <span className="material-symbols-outlined text-[18px]">delete</span>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
-
-                            {/* Amount Input */}
-                            <div className="space-y-2 sm:space-y-3">
-                                <label className="text-[10px] sm:text-[11px] font-black text-text-muted uppercase tracking-[0.1em] ml-1">{t('floor.drawer.checkout.payment_amount_label')}</label>
-                                <div className="flex gap-2">
-                                        <CustomNumberInput
-                                            value={paymentInputValue}
-                                            onChange={val => setPaymentInputValue(val)}
-                                            onFocus={() => {
-                                                if (!paymentInputValue) {
-                                                    const rem = Math.max(0, grandTotal - payments.reduce((s, p) => s + p.amount, 0));
-                                                    if (rem > 0) setPaymentInputValue(rem.toFixed(2));
-                                                }
-                                            }}
-                                            prefix="R$"
-                                            step={0.01}
-                                            min={0.01}
-                                            placeholder="0,00"
-                                            className="w-full"
-                                        />
-                                    <button
-                                        onClick={() => {
-                                            const val = parseFloat(paymentInputValue);
-                                            if (val > 0) {
-                                                if (checkoutPaymentMethod === 'pix') {
-                                                    generatePixPayment(val);
-                                                } else {
-                                                    setPayments(prev => [...prev, { id: Date.now(), method: checkoutPaymentMethod, amount: val, label: checkoutPaymentMethod }]);
-                                                    setPaymentInputValue('');
-                                                }
-                                            }
-                                        }}
-                                        disabled={!paymentInputValue || parseFloat(paymentInputValue) <= 0}
-                                        className="px-5 sm:px-6 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-30 disabled:bg-white/10 text-black font-black rounded-[16px] sm:rounded-2xl transition-all shadow-lg active:scale-95 flex items-center justify-center"
-                                    >
-                                        <span className="material-symbols-outlined text-[24px] sm:text-[28px]">add</span>
-                                    </button>
-                                </div>
-                            </div>
-
-                            {/* Payments List */}
-                            {payments.length > 0 && (
-                                <div className="space-y-3 animate-fade-in pb-4">
-                                    <div className="flex items-center justify-between px-1">
-                                        <p className="text-[10px] sm:text-[11px] font-black text-text-muted uppercase tracking-widest">{t('floor.drawer.checkout.added_payments_label')}</p>
-                                        <button onClick={() => setPayments([])} className="text-[10px] font-black text-red-400/60 hover:text-red-400 uppercase tracking-tighter transition-colors">{t('floor.drawer.checkout.clear_all')}</button>
-                                    </div>
-                                    <div className="grid gap-2">
-                                        {payments.map(p => (
-                                            <div key={p.id} className="flex items-center justify-between bg-white/5 p-3 sm:p-4 rounded-[16px] sm:rounded-2xl border border-white/5 group hover:border-white/20 transition-all">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="size-8 sm:size-10 rounded-xl bg-white/5 flex items-center justify-center">
-                                                        <span className="material-symbols-outlined text-[18px] sm:text-[22px] text-white/60">
-                                                            {p.method === 'dinheiro' ? 'payments' : p.method === 'pix' ? 'qr_code_2' : 'credit_card'}
-                                                        </span>
-                                                    </div>
-                                                    <div className="flex flex-col">
-                                                        <span className="text-white text-[12px] sm:text-sm font-black uppercase tracking-tight">
-                                                            {t(`floor.drawer.methods.${p.method}`)}
-                                                        </span>
-                                                        <span className="text-[9px] text-text-muted font-bold uppercase tracking-widest">
-                                                            {t('floor.drawer.checkout.payment_added')}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                                <div className="flex items-center gap-3 sm:gap-4">
-                                                    <span className="text-base sm:text-lg font-black text-white">{formatCurrency(p.amount)}</span>
-                                                    <button
-                                                        onClick={() => setPayments(prev => prev.filter(x => x.id !== p.id))}
-                                                        className="size-8 rounded-lg flex items-center justify-center text-text-muted hover:text-red-400 hover:bg-red-400/10 transition-all opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
-                                                    >
-                                                        <span className="material-symbols-outlined text-[18px] sm:text-[20px]">delete</span>
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
                         </div>
 
                         {/* Action Bar - Fixed at bottom */}
-                        <div className="p-4 sm:p-8 pt-2 sm:pt-4 bg-white/[0.04] sm:bg-white/[0.02] border-t border-white/10 flex flex-col gap-2 sm:gap-3 shrink-0 pb-safe">
+                        <div className="p-4 sm:p-6 bg-white/[0.04] sm:bg-white/[0.02] border-t border-white/10 flex flex-col gap-2 shrink-0 pb-safe">
                             <div className="flex gap-2 sm:gap-3">
                                 <button
-                                    onClick={() => window.print()}
-                                    className="flex-1 flex items-center justify-center gap-2 py-3 sm:py-4 rounded-[16px] sm:rounded-2xl bg-white/5 hover:bg-white/10 text-white text-xs sm:text-sm font-bold transition-all border border-white/5 active:scale-95"
+                                    type="button"
+                                    onClick={() => {
+                                        if (typeof onPrintBill === 'function') {
+                                            onPrintBill();
+                                        } else {
+                                            window.print();
+                                        }
+                                    }}
+                                    disabled={isPrintingBill}
+                                    className="flex-1 flex items-center justify-center gap-2 py-3.5 sm:py-4 rounded-2xl bg-white/5 hover:bg-white/10 text-white text-xs sm:text-sm font-bold transition-all border border-white/5 active:scale-95 disabled:opacity-50"
                                 >
-                                    <span className="material-symbols-outlined text-[18px] sm:text-[20px]">print</span>
-                                    <span>{t('floor.drawer.checkout.print_check')}</span>
+                                    <span className="material-symbols-outlined text-[18px] sm:text-[20px]">
+                                        {isPrintingBill ? 'hourglass_top' : 'print'}
+                                    </span>
+                                    <span>{isPrintingBill ? 'Enviando...' : t('floor.drawer.checkout.print_check')}</span>
                                 </button>
                                 <button
+                                    type="button"
                                     onClick={onFinish}
                                     disabled={checkingOut || totalPaid < grandTotal - 0.01}
-                                    className="flex-[2] py-3 sm:py-4 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-20 disabled:bg-white/20 text-black font-black rounded-[16px] sm:rounded-2xl transition-all shadow-[0_20px_40px_-12px_rgba(16,185,129,0.3)] flex items-center justify-center gap-2 sm:gap-3 active:scale-[0.98]"
+                                    className="flex-[2] py-3.5 sm:py-4 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-20 disabled:bg-white/20 text-black font-black rounded-2xl transition-all shadow-[0_20px_40px_-12px_rgba(16,185,129,0.3)] flex items-center justify-center gap-2 sm:gap-3 active:scale-[0.98]"
                                 >
                                     {checkingOut ? (
                                         <div className="size-5 border-2 border-black/30 border-t-black rounded-full animate-spin" />

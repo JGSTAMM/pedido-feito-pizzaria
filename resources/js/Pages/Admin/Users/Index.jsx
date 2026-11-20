@@ -201,7 +201,7 @@ export default function Index({ users }) {
             {isModalOpen && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-background-dark/80 backdrop-blur-sm" onClick={closeModal} />
-                    <div className="relative w-full max-w-md bg-surface border border-border-subtle rounded-2xl shadow-2xl overflow-hidden animate-scale-in">
+                    <div className="relative w-full max-w-2xl bg-surface border border-border-subtle rounded-2xl shadow-2xl overflow-hidden animate-scale-in">
                         <div className="p-5 border-b border-border-subtle flex items-center justify-between bg-black/20">
                             <h3 className="text-lg font-bold text-white flex items-center gap-2">
                                 <div className="size-8 rounded-lg bg-primary/20 flex items-center justify-center text-primary">

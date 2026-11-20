@@ -41,7 +41,7 @@ export default function CartDrawer({
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="cart-drawer-title"
-                className="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-gray-900 shadow-2xl ring-1 ring-white/10 flex flex-col"
+                className="fixed inset-y-0 right-0 z-50 w-full max-w-xl bg-gray-900 shadow-2xl ring-1 ring-white/10 flex flex-col"
             >
                 <div className="flex h-full flex-col">
                     <header className="p-6 border-b border-gray-800 flex items-center justify-between gap-4">

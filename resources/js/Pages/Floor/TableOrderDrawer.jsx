@@ -322,6 +322,34 @@ export default function TableOrderDrawer({
     const activeOrders = Array.isArray(table?.active_orders) ? table.active_orders : [];
     const tableTotal = activeOrders.reduce((sum, o) => sum + (Number(o.total) || 0), 0);
 
+    const [isPrintingBill, setIsPrintingBill] = useState(false);
+    const [billPrintSuccess, setBillPrintSuccess] = useState(false);
+
+    const handlePrintBill = async () => {
+        if (!table?.id) return;
+        setIsPrintingBill(true);
+        setBillPrintSuccess(false);
+
+        try {
+            const res = await axios.post(`/floor/${table.id}/print-bill`);
+            setBillPrintSuccess(true);
+            setTimeout(() => setBillPrintSuccess(false), 4000);
+
+            // Se o agente local estiver online, o trabalho já foi enviado diretamente para a impressora física via RAW (sem popup).
+            // Apenas aciona print do navegador se o agente estiver offline.
+            const agentOnline = res?.data?.agent_online;
+            if (!agentOnline && typeof window !== 'undefined' && !isMobile) {
+                setTimeout(() => {
+                    window.print();
+                }, 120);
+            }
+        } catch (err) {
+            console.error('Falha ao solicitar impressão da conta:', err);
+        } finally {
+            setIsPrintingBill(false);
+        }
+    };
+
     // ── Catalog Filtering ──
     const allItems = useMemo(() => [...products, ...pizzaFlavors], [products, pizzaFlavors]);
 
@@ -553,7 +581,7 @@ export default function TableOrderDrawer({
     // Desktop: render with fixed backdrop + slide-in sidebar
     const drawerClasses = isMobile
         ? 'fixed inset-0 w-full h-[100dvh] max-w-full max-h-full m-0 p-0 rounded-none bg-[#120F1D] z-[9999] flex flex-col overflow-hidden'
-        : 'fixed top-0 right-0 z-50 h-full w-full max-w-[520px] bg-background-dark/95 backdrop-blur-2xl border-l border-border-subtle shadow-2xl flex flex-col animate-slide-in-right';
+        : 'fixed top-0 right-0 z-50 h-full w-full max-w-2xl bg-background-dark/95 backdrop-blur-2xl border-l border-border-subtle shadow-2xl flex flex-col animate-slide-in-right';
 
     return (
         <>
@@ -726,13 +754,31 @@ export default function TableOrderDrawer({
                                         ))}
                                     </div>
 
-                                    <button
-                                        onClick={() => setShowCheckoutModal(true)}
-                                        className="w-full py-4 bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:text-red-300 font-bold rounded-2xl border border-red-500/20 hover:border-red-500/30 transition-all flex items-center justify-center gap-2 shadow-[0_10px_30px_rgba(239,68,68,0.15)]"
-                                    >
-                                        <span className="material-symbols-outlined text-[20px]">receipt_long</span>
-                                        {t('floor.drawer.actions.closeAccount')}
-                                    </button>
+                                    <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                                        <button
+                                            type="button"
+                                            onClick={handlePrintBill}
+                                            disabled={isPrintingBill}
+                                            className="flex-1 py-4 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 hover:text-blue-300 font-bold rounded-2xl border border-blue-500/20 hover:border-blue-500/30 transition-all flex items-center justify-center gap-2 shadow-[0_10px_30px_rgba(59,130,246,0.15)] active:scale-[0.98] disabled:opacity-50"
+                                        >
+                                            <span className="material-symbols-outlined text-[20px]">print</span>
+                                            {isPrintingBill ? 'Enviando...' : (t('floor.drawer.actions.printBill') || 'Imprimir Conta')}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowCheckoutModal(true)}
+                                            className="flex-1 py-4 bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:text-red-300 font-bold rounded-2xl border border-red-500/20 hover:border-red-500/30 transition-all flex items-center justify-center gap-2 shadow-[0_10px_30px_rgba(239,68,68,0.15)] active:scale-[0.98]"
+                                        >
+                                            <span className="material-symbols-outlined text-[20px]">receipt_long</span>
+                                            {t('floor.drawer.actions.closeAccount')}
+                                        </button>
+                                    </div>
+                                    {billPrintSuccess && (
+                                        <p className="text-xs text-emerald-400 font-bold text-center mt-2 animate-fade-in flex items-center justify-center gap-1">
+                                            <span className="material-symbols-outlined text-sm">check_circle</span>
+                                            Conta enviada para a impressora!
+                                        </p>
+                                    )}
                                 </>
                             ) : (
                                 <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -917,7 +963,7 @@ export default function TableOrderDrawer({
                 <div className="fixed inset-0 z-[9999]">
                     {/* Backdrop — only visible on desktop */}
                     <div className="absolute inset-0 bg-background-dark/80 sm:backdrop-blur-sm" onClick={() => setSelectedQuickItem(null)} />
-                    <div className={`relative w-full h-[100dvh] bg-[#120F1D] flex flex-col overflow-hidden sm:absolute sm:inset-auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:w-full sm:max-w-sm sm:h-auto sm:rounded-2xl sm:border sm:border-border-subtle sm:shadow-2xl sm:animate-scale-in`}>
+                    <div className={`relative w-full h-[100dvh] bg-[#120F1D] flex flex-col overflow-hidden sm:absolute sm:inset-auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:w-full sm:max-w-lg sm:h-auto sm:rounded-2xl sm:border sm:border-border-subtle sm:shadow-2xl sm:animate-scale-in`}>
 
                         {/* ── Image Placeholder ── */}
                         <div className="w-full h-44 bg-surface-hover flex items-center justify-center relative shrink-0">
@@ -1019,6 +1065,8 @@ export default function TableOrderDrawer({
                     handleCheckout={handleCheckout}
                     checkingOut={checkingOut}
                     onClose={() => setShowCheckoutModal(false)}
+                    onPrintBill={handlePrintBill}
+                    isPrintingBill={isPrintingBill}
                     generatePixPayment={generatePixPayment}
                     formatCurrency={formatCurrency}
                     t={t}

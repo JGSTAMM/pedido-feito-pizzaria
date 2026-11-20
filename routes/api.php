@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\DataController;
 use App\Http\Controllers\Api\DigitalMenuController;
 use App\Http\Controllers\Api\OnlinePaymentController;
 use App\Http\Controllers\Api\OrderController;
+use App\Http\Controllers\Api\PrintAgentController;
 use Illuminate\Http\Request;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Route;
@@ -35,6 +36,14 @@ Route::post('/online-orders', [OnlinePaymentController::class, 'store'])
 
 Route::post('/payments/webhook', [OnlinePaymentController::class, 'webhook'])
     ->middleware('throttle:60,1');
+
+// ═══════════════════════════════════════════
+// LOCAL PRINT AGENT API (ESC/POS RAW)
+// ═══════════════════════════════════════════
+Route::middleware('throttle:180,1')->group(function () {
+    Route::match(['get', 'post'], '/print-agent/poll', [PrintAgentController::class, 'poll']);
+    Route::post('/print-agent/jobs/{printJob}/ack', [PrintAgentController::class, 'ack']);
+});
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', function (Request $request) {

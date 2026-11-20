@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Application\CashRegister\CashRegisterLockService;
+use App\Application\Printing\PrintQueueService;
 use App\Application\Orders\OrderActionException;
 use App\Events\OrderCreated;
+use App\Events\OrderCreatedForPrinting;
 use App\Models\CashRegister;
 use App\Models\Customer;
 use App\Models\Order;
@@ -27,6 +29,7 @@ class PosController extends Controller
     public function __construct(
         private readonly PizzaPriceService $pizzaPriceService,
         private readonly CashRegisterLockService $cashRegisterLockService,
+        private readonly PrintQueueService $printQueueService,
     ) {}
 
     /**
@@ -253,6 +256,10 @@ class PosController extends Controller
                     $sizeName = $size ? $size->name : 'Pizza';
                     $description = "Pizza {$sizeName}";
 
+                    if ($borderName && (! $customerObs || ! str_contains(mb_strtolower($customerObs), 'borda:'))) {
+                        $customerObs = $customerObs ? "Borda: {$borderName} | {$customerObs}" : "Borda: {$borderName}";
+                    }
+
                     $subtotal = $unitPrice * $item['quantity'];
                     $totalAmount += $subtotal;
 
@@ -366,14 +373,34 @@ class PosController extends Controller
 
             DB::commit();
 
+            // Enqueue kitchen ticket in print queue FIRST so Reverb unavailability never blocks printing
+            try {
+                $this->printQueueService->enqueueKitchenTicket($order);
+            } catch (\Throwable $queueEx) {
+                Log::warning('Failed to enqueue kitchen print job for POS order: '.$queueEx->getMessage());
+            }
+
             // Broadcast real-time event so KDS shows this order instantly
-            event(new OrderCreated(
-                orderId: $order->id,
-                status: 'pending',
-                type: 'pickup',
-                shortCode: $order->short_code ?? '',
-                tableId: null,
-            ));
+            try {
+                event(new OrderCreated(
+                    orderId: $order->id,
+                    status: 'pending',
+                    type: 'pickup',
+                    shortCode: $order->short_code ?? '',
+                    tableId: null,
+                ));
+            } catch (\Throwable $broadcastEx) {
+                Log::warning('Broadcast failed after POS order creation: '.$broadcastEx->getMessage());
+            }
+
+            try {
+                event(new OrderCreatedForPrinting($order->id));
+            } catch (\Throwable $printException) {
+                Log::warning('Automatic thermal printing dispatch failed after POS order creation.', [
+                    'order_id' => $order->id,
+                    'error' => $printException->getMessage(),
+                ]);
+            }
 
             return redirect()->back()->with('success', "Pedido #{$order->id} finalizado com sucesso! Total: R$ ".number_format($totalAmount, 2, ',', '.'));
 

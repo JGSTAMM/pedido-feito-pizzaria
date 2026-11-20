@@ -2,14 +2,21 @@
 
 namespace App\Http\Controllers;
 
+use App\Application\Printing\PrintQueueService;
 use App\Models\Printer;
 use App\Models\StoreSetting;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
 
 class SettingsController extends Controller
 {
-    public function index()
+    public function __construct(
+        private readonly PrintQueueService $printQueueService,
+    ) {}
+
+    public function index(Request $request)
     {
         $settings = StoreSetting::firstOrCreate(
             ['id' => 1],
@@ -29,9 +36,35 @@ class SettingsController extends Controller
             ]
         );
 
+        $currentUser = $request->user();
+        $isAdmin = $currentUser && strtolower((string) $currentUser->role) === 'admin';
+
+        $supervisors = $isAdmin
+            ? User::whereIn('role', ['admin', 'supervisor'])
+                ->orderBy('name')
+                ->get(['id', 'name', 'email', 'role', 'pin_hash'])
+                ->map(fn (User $supervisor) => [
+                    'id' => $supervisor->id,
+                    'name' => $supervisor->name,
+                    'email' => $supervisor->email,
+                    'role' => $supervisor->role,
+                    'has_pin' => ! empty($supervisor->pin_hash),
+                ])
+                ->values()
+            : [];
+
         return Inertia::render('Settings/Index', [
             'settings' => $settings->makeVisible(['mercadopago_access_token', 'google_maps_api_key', 'ifood_merchant_id']),
             'printers' => Printer::orderBy('name')->get(),
+            'printAgent' => [
+                'token' => $this->printQueueService->getOrCreateAgentToken(),
+                'status' => $this->printQueueService->getAgentStatus(),
+            ],
+            'supervisorSecurity' => [
+                'can_manage' => $isAdmin,
+                'current_user_id' => $currentUser?->id,
+                'supervisors' => $supervisors,
+            ],
         ]);
     }
 
@@ -222,5 +255,72 @@ class SettingsController extends Controller
         $printer->delete();
 
         return redirect()->back()->with('success', 'Impressora excluída.');
+    }
+
+    public function testPrint(Request $request)
+    {
+        $target = (string) $request->input('target', 'kitchen');
+        $this->printQueueService->enqueueTestTicket($target);
+
+        return redirect()->back()->with('success', 'Teste de impressão enviado para a fila do agente!');
+    }
+
+    public function regenerateAgentToken()
+    {
+        $this->printQueueService->regenerateAgentToken();
+
+        return redirect()->back()->with('success', 'Novo token de conexão gerado com sucesso!');
+    }
+
+    // ── Supervisor Security PIN ──
+    public function updateSupervisorPin(Request $request)
+    {
+        $validated = $request->validate([
+            'user_id' => ['nullable', 'uuid', 'exists:users,id'],
+            'pin' => ['required', 'string', 'regex:/^\d{4}$/', 'confirmed'],
+        ], [
+            'pin.required' => 'Informe o PIN de 4 dígitos.',
+            'pin.regex' => 'O PIN deve conter exatamente 4 dígitos numéricos.',
+            'pin.confirmed' => 'A confirmação do PIN não confere.',
+        ]);
+
+        $targetUser = ! empty($validated['user_id'])
+            ? User::findOrFail($validated['user_id'])
+            : $request->user();
+
+        if (! $targetUser || ! in_array(strtolower((string) $targetUser->role), ['admin', 'supervisor'], true)) {
+            return redirect()->back()->withErrors([
+                'user_id' => 'Apenas administradores ou supervisores podem possuir PIN de autorização.',
+            ]);
+        }
+
+        $duplicatePinExists = User::whereIn('role', ['admin', 'supervisor'])
+            ->where('id', '!=', $targetUser->id)
+            ->whereNotNull('pin_hash')
+            ->get()
+            ->contains(fn (User $other) => Hash::check($validated['pin'], $other->pin_hash));
+
+        if ($duplicatePinExists) {
+            return redirect()->back()->withErrors([
+                'pin' => 'Este PIN já está em uso por outro supervisor. Escolha outro código de 4 dígitos.',
+            ]);
+        }
+
+        $targetUser->pin_hash = Hash::make($validated['pin']);
+        $targetUser->save();
+
+        return redirect()->back()->with('success', 'PIN do supervisor atualizado com sucesso.');
+    }
+
+    public function clearSupervisorPin(User $user)
+    {
+        if (! in_array(strtolower((string) $user->role), ['admin', 'supervisor'], true)) {
+            abort(422, 'Apenas administradores ou supervisores possuem PIN de autorização.');
+        }
+
+        $user->pin_hash = null;
+        $user->save();
+
+        return redirect()->back()->with('success', 'PIN do supervisor removido com sucesso.');
     }
 }

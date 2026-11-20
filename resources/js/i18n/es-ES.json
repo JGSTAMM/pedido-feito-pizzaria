@@ -203,7 +203,8 @@
             "branding": "Branding",
             "receipt": "Recibo",
             "printers": "Impresoras",
-            "neighborhoods": "Barrios / Tasas"
+            "neighborhoods": "Barrios / Tasas",
+            "security": "Seguridad"
         },
         "general": {
             "title": "Configuraciones Generales",
@@ -227,6 +228,27 @@
             "cover": "Imagen de Portada",
             "primary_color": "Color Principal",
             "save": "Guardar Branding"
+        },
+        "security": {
+            "title": "PIN del Supervisor",
+            "subtitle": "Configure la clave numérica de 4 dígitos para autorizar descuentos al cerrar una mesa.",
+            "usage_hint": "Este PIN se solicita cuando el cajero o mesero hace clic en \"Liberar Descuento (PIN)\" en el cierre de cuenta.",
+            "status_configured": "PIN Configurado",
+            "status_not_configured": "PIN No Configurado",
+            "supervisor_label": "Supervisor / Administrador",
+            "current_user_badge": "Tú",
+            "new_pin_label": "Nuevo PIN (4 dígitos)",
+            "confirm_pin_label": "Confirmar Nuevo PIN",
+            "pin_placeholder": "Ej: 1234",
+            "show_pin": "Mostrar PIN",
+            "hide_pin": "Ocultar PIN",
+            "digits_hint": "Use exactamente 4 números. Cada supervisor debe tener un PIN único para mantener la auditoría.",
+            "save_pin": "Guardar PIN",
+            "saving_pin": "Guardando...",
+            "remove_pin": "Eliminar PIN",
+            "confirm_remove_pin": "¿Seguro que desea eliminar el PIN de este supervisor? No podrá autorizar descuentos hasta definir uno nuevo.",
+            "supervisors_list_title": "Supervisores Autorizados",
+            "no_supervisors": "No se encontraron administradores ni supervisores."
         }
     },
     "digital_menu": {
@@ -898,7 +920,28 @@
                 "finish_table": "Finalizar Mesa",
                 "missing_amount": "Faltan :amount para finalizar",
                 "closeAccount": "Cerrar Cuenta",
-                "payment_added": "Pago Añadido"
+                "payment_added": "Pago Añadido",
+                "bill_conference": "Conferencia de Ítems",
+                "items": "ítems",
+                "service_fee": "Tasa de Servicio",
+                "service_fee_fixed_badge": "Monto Fijo",
+                "service_fee_percent_label": "Porcentaje (%)",
+                "service_fee_amount_label": "Monto Fijo (R$)",
+                "removed": "Eliminada (0%)",
+                "discount": "Descuento",
+                "unlocked_by": "Autorizado por",
+                "unlock_discount": "Liberar Descuento (PIN)",
+                "apply": "Aplicar",
+                "applied": "Descuento Aplicado",
+                "supervisor_pin_title": "PIN del Supervisor",
+                "supervisor_pin_subtitle": "Ingrese el PIN de 4 dígitos para autorizar el descuento.",
+                "invalid_pin": "PIN inválido o no autorizado.",
+                "pin_not_configured": "Ningún PIN de supervisor configurado. Defina uno en Configuraciones → Seguridad.",
+                "too_many_attempts": "Demasiados intentos incorrectos. Espere 1 minuto para intentar de nuevo.",
+                "unlock": "Liberar",
+                "calculator_title": "Calculadora",
+                "calculator_open": "Abrir calculadora",
+                "calculator_close": "Cerrar calculadora"
             },
             "pix": {
                 "generating": "Generando código QR PIX...",

@@ -54,7 +54,7 @@ function OrderDetailsModal({ order, onClose, t, statusConfig, typeConfig, format
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background-dark/80 backdrop-blur-sm">
-            <div className="bg-surface w-full max-w-2xl rounded-2xl border border-border-subtle shadow-2xl flex flex-col max-h-[90vh]">
+            <div className="bg-surface w-full max-w-4xl rounded-2xl border border-border-subtle shadow-2xl flex flex-col max-h-[92vh]">
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b border-border-subtle">
                     <div>

@@ -9,6 +9,7 @@ use App\Models\Payment;
 use App\Models\Table;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Throwable;
 
 class SettleTableModule
@@ -55,14 +56,17 @@ class SettleTableModule
             }
         }
 
+        $statusEvents = [];
+
         try {
-            return DB::transaction(function () use (
+            $result = DB::transaction(function () use (
                 $table,
                 $paymentPool,
                 $activeRegister,
                 $serviceFeeCents,
                 $discountCents,
-                $discountSupervisorId
+                $discountSupervisorId,
+                &$statusEvents
             ) {
                 /** @var \Illuminate\Database\Eloquent\Collection<Order> $orders */
                 $orders = $table->activeOrders()
@@ -146,13 +150,13 @@ class SettleTableModule
                     $previousStatus = $order->status ?? 'ready';
                     $order->update($updateData);
 
-                    event(new OrderStatusUpdated(
-                        orderId: $order->id,
-                        status: 'completed',
-                        previousStatus: $previousStatus,
-                        type: $order->type,
-                        tableId: $table->id,
-                    ));
+                    $statusEvents[] = [
+                        'orderId' => $order->id,
+                        'status' => 'completed',
+                        'previousStatus' => $previousStatus,
+                        'type' => $order->type,
+                        'tableId' => $table->id,
+                    ];
                 }
 
                 $table->update(['status' => 'available']);
@@ -172,5 +176,21 @@ class SettleTableModule
 
             throw new OrderActionException('order.payment.error', 500, [], $exception);
         }
+
+        foreach ($statusEvents as $eventData) {
+            try {
+                event(new OrderStatusUpdated(
+                    orderId: $eventData['orderId'],
+                    status: $eventData['status'],
+                    previousStatus: $eventData['previousStatus'],
+                    type: $eventData['type'],
+                    tableId: $eventData['tableId'],
+                ));
+            } catch (Throwable $broadcastEx) {
+                Log::warning('Broadcast failed after table settlement: '.$broadcastEx->getMessage());
+            }
+        }
+
+        return $result;
     }
 }

@@ -226,7 +226,7 @@ export default function PizzaBuilderModal({ isOpen, onClose, onConfirm, pizzaFla
             onClick={handleClose}
         >
             <div
-                className="w-full h-[100dvh] bg-[#120F1D] flex flex-col overflow-hidden sm:relative sm:w-full sm:max-w-3xl sm:min-h-[600px] sm:max-h-[90vh] sm:rounded-2xl sm:border sm:border-border-subtle sm:shadow-2xl sm:animate-scale-in"
+                className="w-full h-[100dvh] bg-[#120F1D] flex flex-col overflow-hidden sm:relative sm:w-full sm:max-w-5xl sm:min-h-[600px] sm:max-h-[92vh] sm:rounded-2xl sm:border sm:border-border-subtle sm:shadow-2xl sm:animate-scale-in"
                 onClick={e => e.stopPropagation()}
             >
                 {/* Header */}
@@ -591,7 +591,7 @@ export default function PizzaBuilderModal({ isOpen, onClose, onConfirm, pizzaFla
                 {/* ─── Info Modal (read-only) ─── */}
                 {viewingInfoFlavor && (
                     <div className="absolute inset-0 z-[60] bg-background-dark/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in" onClick={() => setViewingInfoFlavor(null)}>
-                        <div className="bg-surface border border-border-subtle rounded-3xl p-6 w-full max-w-[320px] shadow-2xl animate-scale-in" onClick={e => e.stopPropagation()}>
+                        <div className="bg-surface border border-border-subtle rounded-3xl p-6 w-full max-w-md shadow-2xl animate-scale-in" onClick={e => e.stopPropagation()}>
                             <div className="flex items-start justify-between mb-4">
                                 <h3 className="text-lg font-bold text-white leading-tight pr-4">{viewingInfoFlavor.name}</h3>
                                 <button onClick={() => setViewingInfoFlavor(null)} className="size-8 rounded-full bg-white/5 text-text-muted hover:text-white hover:bg-white/10 flex items-center justify-center shrink-0 transition-colors">

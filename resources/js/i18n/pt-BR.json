@@ -214,7 +214,8 @@
             "branding": "Branding",
             "receipt": "Recibo",
             "printers": "Impressoras",
-            "neighborhoods": "Bairros / Taxas"
+            "neighborhoods": "Bairros / Taxas",
+            "security": "Segurança"
         },
         "general": {
             "title": "Configurações Gerais",
@@ -238,6 +239,27 @@
             "cover": "Imagem de Capa",
             "primary_color": "Cor Principal",
             "save": "Salvar Branding"
+        },
+        "security": {
+            "title": "PIN do Supervisor",
+            "subtitle": "Defina a senha numérica de 4 dígitos para autorizar descontos no fechamento de mesa.",
+            "usage_hint": "Este PIN é solicitado sempre que o caixa ou garçom clicar em \"Liberar Desconto (PIN)\" no fechamento da conta.",
+            "status_configured": "PIN Configurado",
+            "status_not_configured": "PIN Não Configurado",
+            "supervisor_label": "Supervisor / Administrador",
+            "current_user_badge": "Você",
+            "new_pin_label": "Novo PIN (4 dígitos)",
+            "confirm_pin_label": "Confirmar Novo PIN",
+            "pin_placeholder": "Ex: 1234",
+            "show_pin": "Mostrar PIN",
+            "hide_pin": "Ocultar PIN",
+            "digits_hint": "Use exatamente 4 números. Cada supervisor deve ter um PIN exclusivo para manter a auditoria.",
+            "save_pin": "Salvar PIN",
+            "saving_pin": "Salvando...",
+            "remove_pin": "Remover PIN",
+            "confirm_remove_pin": "Tem certeza que deseja remover o PIN deste supervisor? Ele não poderá mais autorizar descontos até definir um novo PIN.",
+            "supervisors_list_title": "Supervisores Autorizados",
+            "no_supervisors": "Nenhum administrador ou supervisor encontrado."
         }
     },
     "digital_menu": {
@@ -955,7 +977,28 @@
                 "finish_table": "Finalizar Mesa",
                 "missing_amount": "Faltam :amount para finalizar",
                 "closeAccount": "Fechar Conta",
-                "payment_added": "Pagamento Adicionado"
+                "payment_added": "Pagamento Adicionado",
+                "bill_conference": "Conferência de Itens",
+                "items": "itens",
+                "service_fee": "Taxa de Serviço",
+                "service_fee_fixed_badge": "Valor Fixo",
+                "service_fee_percent_label": "Percentual (%)",
+                "service_fee_amount_label": "Valor Fixo (R$)",
+                "removed": "Removida (0%)",
+                "discount": "Desconto",
+                "unlocked_by": "Liberado por",
+                "unlock_discount": "Liberar Desconto (PIN)",
+                "apply": "Aplicar",
+                "applied": "Desconto Aplicado",
+                "supervisor_pin_title": "PIN do Supervisor",
+                "supervisor_pin_subtitle": "Digite o PIN de 4 dígitos para autorizar o desconto.",
+                "invalid_pin": "PIN inválido ou não autorizado.",
+                "pin_not_configured": "Nenhum PIN de supervisor configurado. Defina em Configurações → Segurança.",
+                "too_many_attempts": "Muitas tentativas incorretas. Aguarde 1 minuto para tentar novamente.",
+                "unlock": "Liberar",
+                "calculator_title": "Calculadora",
+                "calculator_open": "Abrir calculadora",
+                "calculator_close": "Fechar calculadora"
             },
             "pix": {
                 "generating": "Gerando QR Code PIX...",
@@ -970,7 +1013,8 @@
                 "cancel": "Voltar / Cancelar"
             },
             "actions": {
-                "closeAccount": "Fechar Conta"
+                "closeAccount": "Fechar Conta",
+                "printBill": "Imprimir Conta"
             }
         }
     },

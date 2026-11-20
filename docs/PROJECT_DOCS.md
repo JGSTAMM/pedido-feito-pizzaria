@@ -797,8 +797,8 @@ npm run dev
 ```
 
 **Credenciais padrão (seed):**
-- Admin: `admin@lucchese.com` / `admin123`
-- Garçom: `waiter@lucchese.com` / `password`
+- Admin: `admin@pedidofeito.com` / `admin123`
+- Garçom: `waiter@pedidofeito.com` / `password`
 
 ### 3. App Flutter — Garçom
 

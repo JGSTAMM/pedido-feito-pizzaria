@@ -2,6 +2,7 @@
 
 namespace App\Application\Checkout;
 
+use App\Application\Printing\PrintQueueService;
 use App\Events\OrderCreated;
 use App\Models\Neighborhood;
 use App\Models\Order;
@@ -20,6 +21,7 @@ class ProcessOnlineCheckoutAction
     public function __construct(
         private readonly PaymentGatewayService $paymentGatewayService,
         private readonly PizzaPriceService $pizzaPriceService,
+        private readonly PrintQueueService $printQueueService,
     ) {}
 
     public function execute(array $validated): array
@@ -83,14 +85,25 @@ class ProcessOnlineCheckoutAction
 
             DB::commit();
 
+            // Enqueue kitchen ticket in print queue for local print-agent
+            try {
+                $this->printQueueService->enqueueKitchenTicket($order);
+            } catch (\Throwable $queueEx) {
+                Log::warning('Failed to enqueue kitchen print job for online order: '.$queueEx->getMessage());
+            }
+
             // Broadcast real-time event so KDS appears instantly
-            event(new OrderCreated(
-                orderId: $order->id,
-                status: $order->status,
-                type: $orderType,
-                shortCode: $order->short_code ?? '',
-                tableId: $tableId,
-            ));
+            try {
+                event(new OrderCreated(
+                    orderId: $order->id,
+                    status: $order->status,
+                    type: $orderType,
+                    shortCode: $order->short_code ?? '',
+                    tableId: $tableId,
+                ));
+            } catch (\Throwable $broadcastEx) {
+                Log::warning('Broadcast failed for online order: '.$broadcastEx->getMessage());
+            }
 
             return [
                 'status' => 201,

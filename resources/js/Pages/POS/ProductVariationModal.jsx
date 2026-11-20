@@ -37,7 +37,7 @@ export default function ProductVariationModal({ isOpen, onClose, onConfirm, prod
             />
 
             {/* Modal Container */}
-            <div className="relative w-full max-w-md bg-[#120F1D] rounded-3xl border border-white/10 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)] flex flex-col overflow-hidden animate-scale-in">
+            <div className="relative w-full max-w-xl max-h-[85vh] bg-[#120F1D] rounded-3xl border border-white/10 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)] flex flex-col overflow-hidden animate-scale-in">
                 
                 {/* Header */}
                 <div className="p-6 sm:p-8 border-b border-white/5 flex items-start justify-between bg-white/[0.02]">

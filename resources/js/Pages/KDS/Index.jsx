@@ -1,8 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import axios from 'axios';
 import { router } from '@inertiajs/react';
 import { useOrderChannel } from '@/hooks/useOrderChannel';
 import AppLayout from '@/Layouts/AppLayout';
 import KitchenReceiptPrint from '@/Components/KitchenReceiptPrint';
+import ReceiptPrint from '@/Components/ReceiptPrint';
 import KdsColumn from './Components/KdsColumn';
 
 /* ─── Detail Modal ─── */
@@ -19,7 +21,7 @@ function OrderDetailModal({ order, isOpen, onClose }) {
     return (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-background-dark/90 backdrop-blur-md" onClick={onClose}>
             <div
-                className="bg-[#14141A] w-full max-w-2xl rounded-3xl border border-white/10 shadow-2xl flex flex-col max-h-[90vh] overflow-hidden animate-in fade-in zoom-in duration-200"
+                className="bg-[#14141A] w-full max-w-4xl rounded-3xl border border-white/10 shadow-2xl flex flex-col max-h-[92vh] overflow-hidden animate-in fade-in zoom-in duration-200"
                 onClick={e => e.stopPropagation()}
             >
                 {/* Header */}
@@ -165,6 +167,19 @@ function OrderDetailModal({ order, isOpen, onClose }) {
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <p className="text-lg font-black text-white uppercase tracking-tight leading-none mb-1">{item.name}</p>
+                                        {Array.isArray(item.flavor_names) && item.flavor_names.length > 0 && (
+                                            <ul className="mt-2 space-y-1">
+                                                {item.flavor_names.map((flavor, fIdx) => (
+                                                    <li key={fIdx} className="text-sm font-bold text-amber-300 uppercase tracking-wide flex items-start gap-1.5">
+                                                        <span className="text-primary font-black shrink-0">•</span>
+                                                        <span>
+                                                            {item.flavor_names.length > 1 ? `1/${item.flavor_names.length} ` : ''}
+                                                            {flavor}
+                                                        </span>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        )}
                                         {item.customization && (
                                             <div className="mt-1.5 space-y-1">
                                                 {item.customization.split('|').map((c, idx) => (
@@ -180,7 +195,7 @@ function OrderDetailModal({ order, isOpen, onClose }) {
                                                     {item.notes.split('|').map((note, idx) => (
                                                         <p key={idx} className="text-xs font-black text-red-300 uppercase tracking-widest flex items-start gap-1.5">
                                                             {idx === 0 && <span className="material-symbols-outlined text-[14px] text-red-400">warning</span>}
-                                                            <span className={idx === 0 ? '' : 'ml-[20px]'}>{note.trim()}</span>
+                                                            <span className={idx === 0 ? '' : 'ml-[20px]'}>{note.trim().replace(/^[⚠️❌]\s*/u, '')}</span>
                                                         </p>
                                                     ))}
                                                 </div>
@@ -260,14 +275,105 @@ function OrderDetailModal({ order, isOpen, onClose }) {
 }
 
 /* ─── Main Page ─── */
-export default function Index({ orders = [], counts = {} }) {
+export default function Index({ orders = [], counts = {}, printAgent = {} }) {
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
     const [printOrder, setPrintOrder] = useState(null);
+    const [billPrintOrder, setBillPrintOrder] = useState(null);
+    const [agentStatus, setAgentStatus] = useState(printAgent || {});
+    const isAgentOnline = Boolean(agentStatus?.is_online);
+
+    const [autoPrint, setAutoPrint] = useState(() => {
+        if (typeof window === 'undefined') return true;
+        return window.localStorage.getItem('kds_auto_print') !== 'false';
+    });
+    const [paperWidth, setPaperWidth] = useState(() => {
+        if (typeof window === 'undefined') return '58mm';
+        return window.localStorage.getItem('thermal_paper_width') || '58mm';
+    });
     const printTimeoutRef = useRef(null);
+    const knownOrderIdsRef = useRef(new Set(orders.map((o) => o.id)));
+    const pendingPrintIdsRef = useRef(new Set());
+
+    // Poll agent heartbeat status every 10 seconds
+    useEffect(() => {
+        const interval = setInterval(async () => {
+            try {
+                const res = await axios.get('/kds/print-agent-status');
+                if (res.data) setAgentStatus(res.data);
+            } catch {
+                // Ignore
+            }
+        }, 10000);
+        return () => clearInterval(interval);
+    }, []);
+
+    const hasKitchenItems = useCallback((order) => {
+        return Array.isArray(order?.items) && order.items.some((i) => !i.is_beverage);
+    }, []);
+
+    const handlePrintOrder = useCallback(async (order) => {
+        if (!hasKitchenItems(order)) return;
+
+        // If local agent is online, dispatch silently via API!
+        if (isAgentOnline) {
+            try {
+                await axios.post(`/kds/${order.id}/print`);
+                return;
+            } catch (err) {
+                console.error('Falha ao enviar impressão para o agente:', err);
+            }
+        }
+
+        // Fallback local via window.print()
+        setBillPrintOrder(null);
+        setPrintOrder(order);
+        if (printTimeoutRef.current) clearTimeout(printTimeoutRef.current);
+        printTimeoutRef.current = setTimeout(() => {
+            window.print();
+        }, 120);
+    }, [hasKitchenItems, isAgentOnline]);
+
+    const handlePrintBill = useCallback((order) => {
+        if (!order || isAgentOnline) return;
+        setPrintOrder(null);
+        setBillPrintOrder(order);
+        if (printTimeoutRef.current) clearTimeout(printTimeoutRef.current);
+        printTimeoutRef.current = setTimeout(() => {
+            window.print();
+        }, 120);
+    }, [isAgentOnline]);
+
+    const handleOrderEvent = useCallback((eventName, payload) => {
+        if (eventName === 'created' && payload?.order_id) {
+            pendingPrintIdsRef.current.add(payload.order_id);
+        } else if (eventName === 'billPrinted' && payload?.order) {
+            handlePrintBill(payload.order);
+        }
+    }, [handlePrintBill]);
 
     // Real-time WebSocket subscription — KDS updates instantly on any order event
-    useOrderChannel({ only: ['orders', 'counts'] });
+    useOrderChannel({ only: ['orders', 'counts'], onEvent: handleOrderEvent });
+
+    useEffect(() => {
+        const newOrdersToPrint = orders.filter((order) => {
+            const isPendingOrPreparing = order.status === 'pending' || order.status === 'preparing';
+            const wasSignaled = pendingPrintIdsRef.current.has(order.id);
+            const isUnknown = !knownOrderIdsRef.current.has(order.id);
+            const shouldPrint = wasSignaled || (isUnknown && isPendingOrPreparing);
+            return shouldPrint && hasKitchenItems(order);
+        });
+
+        orders.forEach((order) => {
+            knownOrderIdsRef.current.add(order.id);
+            pendingPrintIdsRef.current.delete(order.id);
+        });
+
+        // If agent is online, backend already enqueued it! No popup!
+        if (autoPrint && newOrdersToPrint.length > 0 && !isAgentOnline) {
+            handlePrintOrder(newOrdersToPrint[newOrdersToPrint.length - 1]);
+        }
+    }, [orders, autoPrint, handlePrintOrder, hasKitchenItems, isAgentOnline]);
 
     useEffect(() => {
         return () => {
@@ -275,12 +381,28 @@ export default function Index({ orders = [], counts = {} }) {
         };
     }, []);
 
-    const handlePrintOrder = (order) => {
-        setPrintOrder(order);
-        if (printTimeoutRef.current) clearTimeout(printTimeoutRef.current);
-        printTimeoutRef.current = setTimeout(() => {
-            window.print();
-        }, 100);
+    const toggleAutoPrint = () => {
+        setAutoPrint((prev) => {
+            const next = !prev;
+            try {
+                window.localStorage.setItem('kds_auto_print', String(next));
+            } catch {
+                // Ignore storage errors
+            }
+            return next;
+        });
+    };
+
+    const togglePaperWidth = () => {
+        setPaperWidth((prev) => {
+            const next = prev === '58mm' ? '80mm' : '58mm';
+            try {
+                window.localStorage.setItem('thermal_paper_width', next);
+            } catch {
+                // Ignore storage errors
+            }
+            return next;
+        });
     };
 
     const pendingOrders = orders.filter(o => o.status === 'pending');
@@ -304,7 +426,42 @@ export default function Index({ orders = [], counts = {} }) {
                         Conexão em tempo real ativa
                     </p>
                 </div>
-                <div className="flex items-center gap-4">
+                <div className="flex flex-wrap items-center gap-4">
+                    <div
+                        className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl border text-xs font-black uppercase tracking-wider transition-all ${
+                            isAgentOnline
+                                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                                : 'bg-amber-500/10 border-amber-500/30 text-amber-400'
+                        }`}
+                        title={isAgentOnline ? `Agente Local Ativo (${agentStatus.active_printer || 'Térmica'})` : 'Agente de impressão local offline'}
+                    >
+                        <span className={`w-2.5 h-2.5 rounded-full ${isAgentOnline ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
+                        <span>Agente: {isAgentOnline ? 'ONLINE' : 'OFFLINE'}</span>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={toggleAutoPrint}
+                        className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border text-xs font-black uppercase tracking-wider transition-all ${
+                            autoPrint
+                                ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/25'
+                                : 'bg-white/[0.02] border-border-subtle text-text-muted hover:text-white hover:bg-white/5'
+                        }`}
+                        title="Ativar ou pausar impressão automática de novos pedidos"
+                    >
+                        <span className="material-symbols-outlined text-[18px]">
+                            {autoPrint ? 'print' : 'print_disabled'}
+                        </span>
+                        <span>Auto-Impressão: {autoPrint ? 'ATIVA' : 'PAUSADA'}</span>
+                    </button>
+                    <button
+                        type="button"
+                        onClick={togglePaperWidth}
+                        className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-primary/30 bg-primary/15 text-primary hover:bg-primary/25 text-xs font-black uppercase tracking-wider transition-all"
+                        title="Alternar largura da impressora térmica entre 58mm e 80mm"
+                    >
+                        <span className="material-symbols-outlined text-[18px]">straighten</span>
+                        <span>Bobina: {paperWidth}</span>
+                    </button>
                     <div className="flex flex-col items-center justify-center bg-white/[0.02] border border-border-subtle rounded-xl px-5 py-2 min-w-[100px]">
                         <span className="text-amber-400 text-xs font-bold uppercase tracking-wider mb-0.5">Pendentes</span>
                         <span className="text-white text-2xl font-bold">{counts.pending ?? 0}</span>
@@ -337,7 +494,11 @@ export default function Index({ orders = [], counts = {} }) {
                     onClose={() => setIsDetailModalOpen(false)}
                 />
                 
-                <KitchenReceiptPrint order={printOrder} />
+                {billPrintOrder ? (
+                    <ReceiptPrint order={billPrintOrder} paperWidth={paperWidth} />
+                ) : (
+                    <KitchenReceiptPrint order={printOrder} paperWidth={paperWidth} />
+                )}
             </div>
         </AppLayout>
     );

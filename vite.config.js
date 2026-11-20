@@ -4,6 +4,22 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 
 import path from 'path';
+import os from 'os';
+
+function getLocalIp() {
+    const ifaces = os.networkInterfaces();
+    for (const name of Object.keys(ifaces)) {
+        if (/vEthernet|Virtual|Loopback/i.test(name)) continue;
+        for (const iface of ifaces[name]) {
+            if (iface.family === 'IPv4' && !iface.internal) {
+                return iface.address;
+            }
+        }
+    }
+    return '127.0.0.1';
+}
+
+const localIp = getLocalIp();
 
 export default defineConfig({
     resolve: {
@@ -56,12 +72,14 @@ export default defineConfig({
         react(),
     ],
     server: {
-        host: '127.0.0.1',
+        host: '0.0.0.0',
+        origin: `http://${localIp}:5173`,
+        cors: true,
         watch: {
             ignored: ['**/storage/framework/views/**'],
         },
         hmr: {
-            host: '127.0.0.1',
+            host: localIp,
         },
     },
 });

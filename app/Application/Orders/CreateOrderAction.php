@@ -3,6 +3,8 @@
 namespace App\Application\Orders;
 
 use App\Application\CashRegister\CashRegisterLockService;
+use App\Application\Printing\PrintQueueService;
+use App\Events\OrderCreated;
 use App\Events\OrderCreatedForPrinting;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -19,6 +21,7 @@ class CreateOrderAction
     public function __construct(
         private readonly PizzaPriceService $priceService,
         private readonly CashRegisterLockService $cashRegisterLockService,
+        private readonly PrintQueueService $printQueueService,
     ) {}
 
     public function execute(array $validated, User $user): Order
@@ -95,7 +98,24 @@ class CreateOrderAction
 
             $order->update(['total_amount' => $totalAmount]);
             DB::afterCommit(function () use ($order): void {
-                event(new OrderCreatedForPrinting($order->id));
+                try {
+                    $this->printQueueService->enqueueKitchenTicket($order);
+                } catch (\Throwable $queueEx) {
+                    \Illuminate\Support\Facades\Log::warning('Failed to enqueue kitchen print job for api order: '.$queueEx->getMessage());
+                }
+
+                try {
+                    event(new OrderCreatedForPrinting($order->id));
+                    event(new OrderCreated(
+                        orderId: $order->id,
+                        status: (string) $order->status,
+                        type: (string) $order->type,
+                        shortCode: (string) ($order->short_code ?? ''),
+                        tableId: $order->table_id,
+                    ));
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::warning('Post-commit broadcast/print event failed: '.$e->getMessage());
+                }
             });
             DB::commit();
 

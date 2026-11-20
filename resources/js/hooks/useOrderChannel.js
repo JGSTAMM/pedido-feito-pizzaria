@@ -34,6 +34,9 @@ export function useOrderChannel({ only = [], onEvent } = {}) {
             .listen('.order.status.updated', (e) => {
                 onEvent?.('statusUpdated', e);
                 handleReload();
+            })
+            .listen('.table.bill.printed', (e) => {
+                onEvent?.('billPrinted', e);
             });
 
         return () => {

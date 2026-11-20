@@ -2,6 +2,7 @@
 
 namespace App\Application\Orders;
 
+use App\Application\Printing\OrderItemClassifier;
 use App\Models\Order;
 use Illuminate\Support\Collection;
 
@@ -31,37 +32,33 @@ class BuildKdsOrdersAction
                 'total_amount' => (float) $order->total_amount,
                 'notes' => $order->notes,
                 'items' => $order->items->map(function ($item) {
-                    $isPizza = in_array($item->type, ['pizza', 'pizza_custom']);
+                    $isPizza = in_array($item->type, ['pizza', 'pizza_custom'], true);
+                    $sizeName = $isPizza ? ($item->pizzaSize?->name ?? null) : null;
+                    $flavorNames = $isPizza ? $item->flavors->pluck('name')->filter()->values()->toArray() : [];
+                    $flavorsCount = count($flavorNames);
 
                     if ($isPizza) {
-                        $size = $item->pizzaSize?->name ?? '';
-                        $flavors = $item->flavors->pluck('name')->join(', ');
-                        $name = trim("{$size} — {$flavors}", ' — ');
-                        if (empty($name)) {
-                            $name = 'Pizza';
-                        }
+                        $name = OrderItemClassifier::formatPizzaTitle($sizeName, $flavorsCount, $item->description);
                     } else {
                         $name = $item->product?->name ?? 'Item';
                     }
 
-                    // Unified modifications logic for KDS (Description + Notes)
-                    $rawCustom = (string)$item->description;
-                    $rawNotes = (string)$item->notes;
+                    $productName = $item->product?->name;
+                    $unifiedNotes = OrderItemClassifier::cleanNotes(
+                        rawCustom: $item->description,
+                        rawNotes: $item->notes,
+                        itemName: $name,
+                        productName: $productName,
+                        isPizza: $isPizza,
+                        sizeName: $sizeName
+                    );
 
-                    // Clean up redundant pizza size info
-                    if ($isPizza && isset($size) && $size) {
-                        $sizePattern = "Pizza {$size}";
-                        $rawCustom = str_ireplace([$sizePattern, $size], '', $rawCustom);
-                        $rawNotes = str_ireplace([$sizePattern, $size], '', $rawNotes);
-                    }
-
-                    $parts = array_filter([
-                        trim($rawCustom, " |,-."),
-                        trim($rawNotes, " |,-.")
-                    ]);
-
-                    $unifiedNotes = implode('|', $parts);
-                    $unifiedNotes = empty($unifiedNotes) ? null : $unifiedNotes;
+                    $isBeverage = OrderItemClassifier::isBeverage(
+                        isPizza: $isPizza,
+                        category: $item->product?->category,
+                        productName: $productName,
+                        itemName: $name
+                    );
 
                     return [
                         'id' => $item->id,
@@ -69,9 +66,11 @@ class BuildKdsOrdersAction
                         'name' => $name,
                         'type' => $item->type ?? 'product',
                         'is_pizza' => $isPizza,
+                        'size_name' => $sizeName,
+                        'flavor_names' => $flavorNames,
                         'customization' => null,
                         'notes' => $unifiedNotes,
-                        'is_beverage' => $item->product && in_array(strtolower($item->product->category), ['bebida', 'bebidas', 'drinks', 'suco', 'sucos', 'refrigerante', 'cerveja']),
+                        'is_beverage' => $isBeverage,
                     ];
                 }),
                 'created_at' => $order->created_at->format('H:i'),

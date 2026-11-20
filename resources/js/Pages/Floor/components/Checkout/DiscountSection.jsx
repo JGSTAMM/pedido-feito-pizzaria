@@ -9,6 +9,7 @@ export default function DiscountSection({
     discountValue,
     discountMode,
     supervisorName, 
+    supervisorId,
     applyDiscount, 
     resetDiscount,
     formatCurrency
@@ -22,8 +23,7 @@ export default function DiscountSection({
 
     const handleApply = () => {
         if (!localVal || parseFloat(localVal) <= 0) return;
-        applyDiscount(parseFloat(localVal), localMode, supervisorName, null); 
-        // We reuse the existing supervisorName and Id that was unlocked
+        applyDiscount(parseFloat(localVal), localMode, supervisorName, supervisorId); 
     };
 
     return (

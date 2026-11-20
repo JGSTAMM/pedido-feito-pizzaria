@@ -9,6 +9,7 @@ use App\Models\Table;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
@@ -33,6 +34,7 @@ class DatabaseSeeder extends Seeder
             'email' => 'admin@pedidofeito.com',
             'password' => bcrypt('admin123'),
             'role' => 'admin',
+            'pin_hash' => Hash::make('1234'),
         ]);
 
         // ── Pizza Sizes ──

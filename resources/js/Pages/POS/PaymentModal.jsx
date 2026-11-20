@@ -221,7 +221,7 @@ export default function PaymentModal({ isOpen, onClose, onConfirm, total }) {
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background-dark/85 backdrop-blur-sm" onClick={onClose}>
             <div
-                className="bg-[#14141A] w-full max-w-lg rounded-2xl border border-border-subtle shadow-2xl flex flex-col max-h-[90vh] overflow-hidden"
+                className="bg-[#14141A] w-full max-w-2xl rounded-2xl border border-border-subtle shadow-2xl flex flex-col max-h-[92vh] overflow-hidden"
                 onClick={e => e.stopPropagation()}
             >
                 {/* Header */}

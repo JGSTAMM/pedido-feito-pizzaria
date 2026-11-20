@@ -214,7 +214,8 @@
             "branding": "Branding",
             "receipt": "Receipt",
             "printers": "Printers",
-            "neighborhoods": "Neighborhoods / Fees"
+            "neighborhoods": "Neighborhoods / Fees",
+            "security": "Security"
         },
         "general": {
             "title": "General Settings",
@@ -238,6 +239,27 @@
             "cover": "Cover Image",
             "primary_color": "Primary Color",
             "save": "Save Branding"
+        },
+        "security": {
+            "title": "Supervisor PIN",
+            "subtitle": "Set the 4-digit numeric PIN required to authorize discounts when closing a table.",
+            "usage_hint": "This PIN is requested whenever a cashier or waiter clicks \"Unlock Discount (PIN)\" during table checkout.",
+            "status_configured": "PIN Configured",
+            "status_not_configured": "PIN Not Configured",
+            "supervisor_label": "Supervisor / Administrator",
+            "current_user_badge": "You",
+            "new_pin_label": "New PIN (4 digits)",
+            "confirm_pin_label": "Confirm New PIN",
+            "pin_placeholder": "e.g. 1234",
+            "show_pin": "Show PIN",
+            "hide_pin": "Hide PIN",
+            "digits_hint": "Use exactly 4 numbers. Each supervisor must have a unique PIN for accurate audit logs.",
+            "save_pin": "Save PIN",
+            "saving_pin": "Saving...",
+            "remove_pin": "Remove PIN",
+            "confirm_remove_pin": "Are you sure you want to remove this supervisor's PIN? They will not be able to authorize discounts until a new PIN is set.",
+            "supervisors_list_title": "Authorized Supervisors",
+            "no_supervisors": "No administrators or supervisors found."
         }
     },
     "digital_menu": {
@@ -909,7 +931,28 @@
                 "finish_table": "Finish Table",
                 "missing_amount": ":amount missing to finish",
                 "closeAccount": "Close Account",
-                "payment_added": "Payment Added"
+                "payment_added": "Payment Added",
+                "bill_conference": "Bill Review",
+                "items": "items",
+                "service_fee": "Service Fee",
+                "service_fee_fixed_badge": "Fixed",
+                "service_fee_percent_label": "Percentage (%)",
+                "service_fee_amount_label": "Fixed Amount (R$)",
+                "removed": "Removed (0%)",
+                "discount": "Discount",
+                "unlocked_by": "Unlocked by",
+                "unlock_discount": "Unlock Discount (PIN)",
+                "apply": "Apply",
+                "applied": "Discount Applied",
+                "supervisor_pin_title": "Supervisor PIN",
+                "supervisor_pin_subtitle": "Enter the 4-digit PIN to authorize the discount.",
+                "invalid_pin": "Invalid or unauthorized PIN.",
+                "pin_not_configured": "No supervisor PIN configured. Set one in Settings → Security.",
+                "too_many_attempts": "Too many incorrect attempts. Please wait 1 minute before trying again.",
+                "unlock": "Unlock",
+                "calculator_title": "Calculator",
+                "calculator_open": "Open calculator",
+                "calculator_close": "Close calculator"
             },
             "pix": {
                 "generating": "Generating PIX QR Code...",
