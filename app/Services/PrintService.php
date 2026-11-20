@@ -6,6 +6,7 @@ use App\Application\Printing\Exceptions\PrinterHardwareException;
 use App\Application\Printing\Exceptions\PrinterNetworkException;
 use App\Application\Printing\Formatters\ReceiptFormatter;
 use App\Models\Order;
+use App\Models\Printer as PrinterModel;
 use App\Models\PrinterSetting;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -34,12 +35,46 @@ class PrintService
         return $settings[$key] ?? $default;
     }
 
+    protected function isPrinterEnabled(string $printerType): bool
+    {
+        $settingKey = $printerType === 'kitchen' ? 'kitchen_enabled' : 'cashier_enabled';
+        $settingValue = $this->getSetting($settingKey);
+
+        if ($settingValue === 'true') {
+            return true;
+        }
+
+        if ($settingValue === 'false') {
+            return false;
+        }
+
+        return $this->resolvePrinterIp($printerType) !== null;
+    }
+
+    protected function resolvePrinterIp(string $printerType): ?string
+    {
+        $ip = $this->getSetting("{$printerType}_ip");
+        if (! empty($ip)) {
+            return (string) $ip;
+        }
+
+        $target = $printerType === 'kitchen' ? 'kitchen' : 'cash_register';
+        $printerRecord = PrinterModel::query()
+            ->where('target', $target)
+            ->where('is_online', true)
+            ->whereNotNull('ip_address')
+            ->where('ip_address', '!=', '')
+            ->first();
+
+        return $printerRecord?->ip_address ? (string) $printerRecord->ip_address : null;
+    }
+
     /**
      * Print kitchen ticket (comanda)
      */
     public function printKitchenTicket(Order $order): bool
     {
-        if ($this->getSetting('kitchen_enabled') !== 'true') {
+        if (! $this->isPrinterEnabled('kitchen')) {
             return false;
         }
 
@@ -67,7 +102,7 @@ class PrintService
      */
     public function printCustomerReceipt(Order $order): bool
     {
-        if ($this->getSetting('cashier_enabled') !== 'true') {
+        if (! $this->isPrinterEnabled('cashier')) {
             return false;
         }
 
@@ -96,7 +131,7 @@ class PrintService
     protected function connectToPrinter(string $printerType): Printer
     {
         // $printerType is 'kitchen' or 'cashier'
-        $ip = $this->getSetting("{$printerType}_ip");
+        $ip = $this->resolvePrinterIp($printerType);
         $port = $this->getSetting("{$printerType}_port", 9100);
 
         if (empty($ip)) {

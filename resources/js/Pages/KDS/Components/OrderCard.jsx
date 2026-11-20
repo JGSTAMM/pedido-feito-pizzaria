@@ -21,6 +21,22 @@ function KdsItemRow({ item, compact = false, dimmed = false }) {
                     <span className={`font-black text-lg md:text-xl tracking-wide uppercase ${nameColor}`}>
                         {item.name}
                     </span>
+                    {Array.isArray(item.flavor_names) && item.flavor_names.length > 0 && (
+                        <ul className="mt-1.5 space-y-1">
+                            {item.flavor_names.map((flavor, fIdx) => (
+                                <li
+                                    key={fIdx}
+                                    className={`text-sm md:text-base font-bold uppercase tracking-wide flex items-start gap-1.5 leading-snug ${dimmed ? 'text-slate-500 line-through' : 'text-amber-300'}`}
+                                >
+                                    <span className="text-primary font-black shrink-0">•</span>
+                                    <span>
+                                        {item.flavor_names.length > 1 ? `1/${item.flavor_names.length} ` : ''}
+                                        {flavor}
+                                    </span>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
                 </div>
             </div>
             {item.notes && (
@@ -29,7 +45,7 @@ function KdsItemRow({ item, compact = false, dimmed = false }) {
                         {item.notes.split('|').map((note, idx) => (
                             <p key={idx} className="text-white font-black text-sm md:text-lg uppercase tracking-widest leading-snug drop-shadow-md flex items-start gap-2">
                                 {idx === 0 && <span className="material-symbols-outlined text-red-500 text-[20px] flex-shrink-0 animate-pulse font-black">warning</span>}
-                                <span className={idx === 0 ? '' : 'ml-7'}>{note.trim()}</span>
+                                <span className={idx === 0 ? '' : 'ml-7'}>{note.trim().replace(/^[⚠️❌]\s*/u, '')}</span>
                             </p>
                         ))}
                     </div>

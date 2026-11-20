@@ -114,7 +114,9 @@ class ReceiptFormatter
             }
 
             if (! empty($item->notes)) {
+                $printer->setEmphasis(true);
                 $printer->text("   OBS: {$item->notes}\n");
+                $printer->setEmphasis(false);
             }
         }
 
@@ -193,6 +195,12 @@ class ReceiptFormatter
             }
 
             $printer->text($line.str_pad($priceStr, $this->paperWidth - strlen($line), ' ', STR_PAD_LEFT)."\n");
+
+            if (! empty($item->notes)) {
+                $printer->setEmphasis(true);
+                $printer->text("   OBS: {$item->notes}\n");
+                $printer->setEmphasis(false);
+            }
         }
 
         if ($order->type === 'delivery' && $order->delivery_fee > 0) {

@@ -1,0 +1,12 @@
+{
+  "server_url": "https://suapizzaria.com.br",
+  "token": "COLE_O_TOKEN_GERADO_NO_SISTEMA_AQUI",
+  "poll_interval_ms": 1500,
+  "mode": "windows",
+  "default_printer": "POS-58",
+  "kitchen_printer": "POS-80 CORRETA",
+  "kitchen_paper_width": "80mm",
+  "cashier_printer": "POS-58",
+  "cashier_paper_width": "58mm",
+  "fallback_printer": "POS-58"
+}
