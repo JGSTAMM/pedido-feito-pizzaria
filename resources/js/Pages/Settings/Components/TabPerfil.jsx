@@ -2,6 +2,7 @@ import React from 'react';
 import { useForm, router } from '@inertiajs/react';
 import { useI18n } from '@/hooks/useI18n';
 import { Card, Label } from './Shared';
+import TimeInput24 from '@/Components/TimeInput24';
 
 export default function TabPerfil({ settings, days }) {
     const { t } = useI18n();
@@ -160,9 +161,17 @@ export default function TabPerfil({ settings, days }) {
                                 <div className="flex flex-1 items-center gap-2">
                                     {!hoursForm.data.hours[day.id]?.is_closed ? (
                                         <>
-                                            <input type="time" value={hoursForm.data.hours[day.id]?.open} onChange={e => hoursForm.setData('hours', { ...hoursForm.data.hours, [day.id]: { ...hoursForm.data.hours[day.id], open: e.target.value } })} className="flex-1 bg-surface border border-border-subtle rounded-lg px-2 py-1 text-xs text-white focus:border-primary outline-none" />
+                                            <TimeInput24
+                                                value={hoursForm.data.hours[day.id]?.open}
+                                                onChange={val => hoursForm.setData('hours', { ...hoursForm.data.hours, [day.id]: { ...hoursForm.data.hours[day.id], open: val } })}
+                                                className="flex-1 bg-surface border border-border-subtle rounded-lg px-2 py-1 text-xs text-white font-mono text-center focus:border-primary outline-none"
+                                            />
                                             <span className="text-text-muted text-[10px]">até</span>
-                                            <input type="time" value={hoursForm.data.hours[day.id]?.close} onChange={e => hoursForm.setData('hours', { ...hoursForm.data.hours, [day.id]: { ...hoursForm.data.hours[day.id], close: e.target.value } })} className="flex-1 bg-surface border border-border-subtle rounded-lg px-2 py-1 text-xs text-white focus:border-primary outline-none" />
+                                            <TimeInput24
+                                                value={hoursForm.data.hours[day.id]?.close}
+                                                onChange={val => hoursForm.setData('hours', { ...hoursForm.data.hours, [day.id]: { ...hoursForm.data.hours[day.id], close: val } })}
+                                                className="flex-1 bg-surface border border-border-subtle rounded-lg px-2 py-1 text-xs text-white font-mono text-center focus:border-primary outline-none"
+                                            />
                                         </>
                                     ) : (
                                         <span className="flex-1 text-[10px] font-bold text-red-400/70 uppercase text-center py-1 bg-red-400/5 rounded-lg border border-red-400/10 tracking-widest">Fechado o dia todo</span>

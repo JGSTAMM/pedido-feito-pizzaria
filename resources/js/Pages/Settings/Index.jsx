@@ -5,6 +5,7 @@ import useI18n from '@/hooks/useI18n';
 import TabSeguranca from './Components/TabSeguranca';
 import TabEntregas from './Components/TabEntregas';
 import TabImpressoras from './Components/TabImpressoras';
+import TimeInput24 from '@/Components/TimeInput24';
 
 /* ── Tiny Modal Shell ── */
 function Modal({ isOpen, onClose, title, children }) {
@@ -597,11 +598,17 @@ function TabPerfil({ settings }) {
                                         <>
                                             <div className="flex items-center gap-3">
                                                 <span className="text-xs font-bold text-text-muted uppercase">Abre:</span>
-                                                <input type="time" value={d.open} onChange={e => handleHourChange(dayKey, 'open', e.target.value)} className="bg-surface border border-border-subtle rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all" />
+                                                <TimeInput24
+                                                    value={d.open}
+                                                    onChange={val => handleHourChange(dayKey, 'open', val)}
+                                                />
                                             </div>
                                             <div className="flex items-center gap-3">
                                                 <span className="text-xs font-bold text-text-muted uppercase">Fecha:</span>
-                                                <input type="time" value={d.close} onChange={e => handleHourChange(dayKey, 'close', e.target.value)} className="bg-surface border border-border-subtle rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all" />
+                                                <TimeInput24
+                                                    value={d.close}
+                                                    onChange={val => handleHourChange(dayKey, 'close', val)}
+                                                />
                                             </div>
                                         </>
                                     )}
