@@ -20,7 +20,8 @@ export default function StoreProfile() {
     const customInfo = store.custom_info || '';
     const logoUrl = store.logo_url;
     const coverUrl = store.cover_url;
-    const mapEmbedUrl = store.google_maps_embed_url;
+    const rawMapEmbedUrl = store.google_maps_embed_url || '';
+    const mapEmbedUrl = rawMapEmbedUrl.match(/src=["']([^"']+)["']/i)?.[1] || rawMapEmbedUrl;
 
     const formatPhoneForUrl = (p) => p.replace(/\D/g, '');
 
@@ -190,6 +191,58 @@ export default function StoreProfile() {
                                 </div>
                             </div>
                         )}
+
+                        {/* Modalidades e Tamanhos */}
+                        <section className={`${luccheseMenuTheme.glass} rounded-3xl p-6 space-y-4`}>
+                            <h2 className="text-[11px] font-black uppercase tracking-[0.2em] text-primary italic">Modalidades &amp; Tamanhos</h2>
+                            <ul className="list-disc list-inside text-xs text-white/75 space-y-1.5">
+                                <li>Delivery por bairro em Torres-RS e região</li>
+                                <li>Retirada no balcão sem taxa de entrega</li>
+                                <li>Consumo na mesa com acompanhamento ao vivo</li>
+                            </ul>
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left text-xs text-white/80 border-collapse">
+                                    <thead>
+                                        <tr className="border-b border-white/10 text-white/50 uppercase text-[10px]">
+                                            <th className="py-2 pr-3">Tamanho</th>
+                                            <th className="py-2 pr-3">Fatias</th>
+                                            <th className="py-2">Sabores</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr className="border-b border-white/5">
+                                            <td className="py-2 pr-3 font-semibold">Broto</td>
+                                            <td className="py-2 pr-3">6 fatias</td>
+                                            <td className="py-2">1 sabor</td>
+                                        </tr>
+                                        <tr>
+                                            <td className="py-2 pr-3 font-semibold">Grande</td>
+                                            <td className="py-2 pr-3">12 fatias</td>
+                                            <td className="py-2">Até 3 sabores</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+
+                        {/* FAQ */}
+                        <section className={`${luccheseMenuTheme.glass} rounded-3xl p-6 space-y-3`}>
+                            <h2 className="text-[11px] font-black uppercase tracking-[0.2em] text-primary italic">Perguntas Frequentes</h2>
+                            <div className="space-y-3 text-xs text-white/75">
+                                <div>
+                                    <h3 className="font-bold text-white">Como montar uma pizza com mais de um sabor?</h3>
+                                    <p className="text-white/65 mt-1">Escolha o tamanho Grande (até 3 sabores) no montador e personalize ingredientes por metade ou fração.</p>
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-white">Quais formas de pagamento são aceitas online?</h3>
+                                    <p className="text-white/65 mt-1">Aceitamos PIX dinâmico instantâneo, cartão de crédito e pagamento presencial conforme seleção no checkout.</p>
+                                </div>
+                            </div>
+                        </section>
+
+                        <footer className="pt-4 pb-6 text-center text-xs text-white/40">
+                            Desenvolvido por <span className="text-white/75 font-bold">Pixirica Tecnologias</span>
+                        </footer>
                     </div>
                 </>
             )}

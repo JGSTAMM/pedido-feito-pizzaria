@@ -2,18 +2,25 @@
 
 namespace App\Http\Controllers;
 
+use App\Application\Printing\PrintAgentPackageBuilder;
 use App\Application\Printing\PrintQueueService;
+use App\Application\Security\AdminPinAuthorizationService;
+use App\Models\Neighborhood;
 use App\Models\Printer;
 use App\Models\StoreSetting;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
 use Inertia\Inertia;
 
 class SettingsController extends Controller
 {
     public function __construct(
         private readonly PrintQueueService $printQueueService,
+        private readonly PrintAgentPackageBuilder $printAgentPackageBuilder,
+        private readonly AdminPinAuthorizationService $adminPinService,
     ) {}
 
     public function index(Request $request)
@@ -56,9 +63,18 @@ class SettingsController extends Controller
         return Inertia::render('Settings/Index', [
             'settings' => $settings->makeVisible(['mercadopago_access_token', 'google_maps_api_key', 'ifood_merchant_id']),
             'printers' => Printer::orderBy('name')->get(),
+            'neighborhoods' => Neighborhood::select('id', 'name', 'city', 'delivery_fee', 'observation')
+                ->orderBy('city')
+                ->orderBy('name')
+                ->get(),
+            'deliveryFeeSecurity' => $this->adminPinService->getDeliveryFeeSecurityState($request),
             'printAgent' => [
-                'token' => $this->printQueueService->getOrCreateAgentToken(),
+                'canManage' => $isAdmin,
+                'token' => $isAdmin ? $this->printQueueService->getOrCreateAgentToken() : null,
                 'status' => $this->printQueueService->getAgentStatus(),
+                'config' => $this->printAgentPackageBuilder->getConfig(),
+                'queueStats' => $this->printQueueService->getQueueStats(),
+                'serverUrl' => rtrim((string) ($request->getSchemeAndHttpHost() ?: config('app.url')), '/'),
             ],
             'supervisorSecurity' => [
                 'can_manage' => $isAdmin,
@@ -99,7 +115,7 @@ class SettingsController extends Controller
             'payment_methods' => 'nullable|array',
             'custom_info' => 'nullable|string',
         ]);
-        StoreSetting::first()->update($request->only(
+        $data = $request->only(
             'store_name',
             'cnpj',
             'phone',
@@ -108,7 +124,15 @@ class SettingsController extends Controller
             'google_maps_place_url',
             'payment_methods',
             'custom_info'
-        ));
+        );
+
+        if (! empty($data['google_maps_embed_url'])) {
+            if (preg_match('/src=["\']([^"\']+)["\']/i', (string) $data['google_maps_embed_url'], $matches)) {
+                $data['google_maps_embed_url'] = $matches[1];
+            }
+        }
+
+        StoreSetting::first()->update($data);
 
         return redirect()->back()->with('success', 'Perfil da loja atualizado.');
     }
@@ -129,6 +153,21 @@ class SettingsController extends Controller
             'cover_image.max' => 'A imagem de capa não pode ter mais que 5MB.',
             'logo_image.max' => 'A logo não pode ter mais que 5MB.',
         ]);
+
+        if ($request->has('story_media') && is_array($request->story_media)) {
+            foreach ($request->story_media as $index => $item) {
+                if ($item instanceof UploadedFile) {
+                    Validator::make(
+                        ['story_media' => $item],
+                        ['story_media' => 'file|mimes:jpeg,png,jpg,gif,webp,mp4,webm,mov,m4v|max:20480'],
+                        [
+                            'story_media.mimes' => 'Formato inválido no story #'.($index + 1).'. Use JPG, PNG, WebP, GIF, MP4, WebM ou MOV.',
+                            'story_media.max' => 'O arquivo do story #'.($index + 1).' excede o limite de 20MB.',
+                        ]
+                    )->validate();
+                }
+            }
+        }
 
         $settings = StoreSetting::first();
         $data = [];
@@ -270,6 +309,66 @@ class SettingsController extends Controller
         $this->printQueueService->regenerateAgentToken();
 
         return redirect()->back()->with('success', 'Novo token de conexão gerado com sucesso!');
+    }
+
+    public function updateAgentConfig(Request $request)
+    {
+        $validated = $request->validate([
+            'mode' => 'required|in:auto,tcp',
+            'kitchen_printer' => 'required|string|max:255',
+            'kitchen_paper_width' => 'required|in:58mm,80mm',
+            'cashier_printer' => 'required|string|max:255',
+            'cashier_paper_width' => 'required|in:58mm,80mm',
+            'default_printer' => 'required|string|max:255',
+            'fallback_printer' => 'nullable|string|max:255',
+            'tcp_ip' => 'nullable|required_if:mode,tcp|string|max:100',
+            'tcp_port' => 'nullable|integer|min:1|max:65535',
+            'poll_interval_ms' => 'nullable|integer|min:500|max:10000',
+        ], [
+            'tcp_ip.required_if' => 'Informe o IP da impressora de rede quando o modo TCP/IP estiver selecionado.',
+        ]);
+
+        $this->printAgentPackageBuilder->saveConfig($validated);
+
+        return redirect()->back()->with('success', 'Configurações do Agente de Impressão salvas!');
+    }
+
+    public function downloadPrintAgent(Request $request)
+    {
+        $serverUrl = rtrim((string) ($request->getSchemeAndHttpHost() ?: config('app.url')), '/');
+        $zipPath = $this->printAgentPackageBuilder->createZipArchive($serverUrl);
+
+        return response()
+            ->download($zipPath, 'PedidoFeito-Agente-Impressao.zip', ['Content-Type' => 'application/zip'])
+            ->deleteFileAfterSend(true);
+    }
+
+    public function downloadPrintConfig(Request $request)
+    {
+        $serverUrl = rtrim((string) ($request->getSchemeAndHttpHost() ?: config('app.url')), '/');
+        $json = json_encode(
+            $this->printAgentPackageBuilder->buildClientConfigPayload($serverUrl),
+            JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
+        )."\n";
+
+        return response($json, 200, [
+            'Content-Type' => 'application/json; charset=utf-8',
+            'Content-Disposition' => 'attachment; filename="config.json"',
+        ]);
+    }
+
+    public function clearPrintQueue()
+    {
+        $removed = $this->printQueueService->clearPendingJobs();
+
+        return redirect()->back()->with('success', "Fila limpa ({$removed} impressão(ões) pendente(s) removida(s)).");
+    }
+
+    public function retryFailedPrintJobs()
+    {
+        $retried = $this->printQueueService->retryFailedJobs();
+
+        return redirect()->back()->with('success', "{$retried} impressão(ões) com falha recolocada(s) na fila.");
     }
 
     // ── Supervisor Security PIN ──
