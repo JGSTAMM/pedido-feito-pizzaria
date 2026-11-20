@@ -20,7 +20,7 @@ class TablesScreen extends StatefulWidget {
 class _TablesScreenState extends State<TablesScreen> with TickerProviderStateMixin {
   late AnimationController _animationController;
   Timer? _pollTimer;
-  final List<int> _notifiedOrderIds = [];
+  final Set<String> _notifiedOrderIds = {};
 
   @override
   void initState() {
@@ -63,9 +63,10 @@ class _TablesScreenState extends State<TablesScreen> with TickerProviderStateMix
 
 
     for (var order in orders) {
-      if (!_notifiedOrderIds.contains(order['id'])) {
-        _notifiedOrderIds.add(order['id']);
-        
+      final orderIdStr = order['id']?.toString() ?? '';
+      if (orderIdStr.isNotEmpty && !_notifiedOrderIds.contains(orderIdStr)) {
+        _notifiedOrderIds.add(orderIdStr);
+
         // Show notification
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

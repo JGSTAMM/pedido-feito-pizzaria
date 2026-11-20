@@ -67,18 +67,18 @@ class PizzaPriceServiceTest extends TestCase
         $this->assertEquals(30.00, $price);
     }
 
-    public function test_calculate_returns_zero_if_size_not_found()
+    public function test_calculate_throws_exception_if_size_not_found()
     {
+        $this->expectException(\InvalidArgumentException::class);
         $flavor = PizzaFlavor::factory()->create(['base_price' => 50.00]);
-        $price = $this->service->calculateItemPrice(999, [$flavor->id]);
-        $this->assertEquals(0.0, $price);
+        $this->service->calculateItemPrice('00000000-0000-0000-0000-000000000999', [$flavor->id]);
     }
 
-    public function test_calculate_returns_zero_if_no_flavors_provided()
+    public function test_calculate_throws_exception_if_no_flavors_provided()
     {
+        $this->expectException(\InvalidArgumentException::class);
         $size = PizzaSize::factory()->create();
-        $price = $this->service->calculateItemPrice($size->id, []);
-        $this->assertEquals(0.0, $price);
+        $this->service->calculateItemPrice($size->id, []);
     }
 
     public function test_calculate_broto_pizza_multiple_flavors_takes_highest_price()

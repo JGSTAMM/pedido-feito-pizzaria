@@ -20,10 +20,31 @@ class SecurityHeaders
         $response->headers->set('X-Content-Type-Options', 'nosniff');
         $response->headers->set('X-Frame-Options', 'SAMEORIGIN');
         $response->headers->set('X-XSS-Protection', '1; mode=block');
-        $response->headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+        if ($request->isSecure()) {
+            $response->headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+        }
+
+        $host = $request->getHost();
+        $scheme = $request->getScheme();
+        $wsScheme = $request->isSecure() ? 'wss' : 'ws';
+
+        $isLocal = app()->environment('local', 'testing')
+            || in_array($host, ['localhost', '127.0.0.1'], true)
+            || str_starts_with($host, '192.168.')
+            || str_starts_with($host, '10.')
+            || str_starts_with($host, '172.');
+
+        $viteHttp = $isLocal ? " {$scheme}://{$host}:5173 http://localhost:5173" : '';
+        $localWs = $isLocal ? " {$wsScheme}://{$host}:5173 ws://localhost:5173 {$wsScheme}://{$host}:8080 ws://localhost:8080" : '';
+
         $response->headers->set(
             'Content-Security-Policy',
-            "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://sdk.mercadopago.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' ws: wss: https:;"
+            "default-src 'self' data: blob:{$viteHttp}; "
+            . "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://sdk.mercadopago.com{$viteHttp}; "
+            . "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com{$viteHttp}; "
+            . "font-src 'self' https://fonts.gstatic.com data:; "
+            . "img-src 'self' data: https: blob:; "
+            . "connect-src 'self' ws: wss: https:{$viteHttp}{$localWs};"
         );
 
         return $response;

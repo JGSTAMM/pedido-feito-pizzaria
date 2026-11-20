@@ -1,7 +1,6 @@
 import { Link } from '@inertiajs/react';
 import useI18n from '@/hooks/useI18n';
 import { luccheseMenuTheme } from '../../theme/luccheseMenuTheme';
-import LoadingButton from '@/Components/LoadingButton';
 
 export default function CheckoutSummaryCard({
     items,
@@ -73,21 +72,19 @@ export default function CheckoutSummaryCard({
                 >
                     {t('digital_menu.checkout.back_to_menu')}
                 </Link>
-                <LoadingButton
+                <button
                     type="submit"
                     form="checkout-form-premium"
-                    disabled={isCartEmpty}
-                    isLoading={isSubmitting}
-                    loadingText={t('digital_menu.checkout.submitting_order')}
+                    disabled={isSubmitting || isCartEmpty}
                     onMouseEnter={onSubmitIntent}
                     onFocus={onSubmitIntent}
                     onTouchStart={onSubmitIntent}
-                    variant="primary"
-                    size="md"
-                    className="inline-flex h-12 w-full sm:w-auto text-sm font-bold text-white shadow-[0_0_24px_rgba(255,107,53,0.35)]"
+                    className="inline-flex h-12 items-center justify-center rounded-xl bg-gradient-to-r from-primary to-primary-dark px-4 text-sm font-bold text-white shadow-[0_0_24px_rgba(139,92,246,0.35)] transition-all hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background-dark disabled:opacity-60"
                 >
-                    {t('digital_menu.checkout.submit_order')}
-                </LoadingButton>
+                    {isSubmitting
+                        ? t('digital_menu.checkout.submitting_order')
+                        : t('digital_menu.checkout.submit_order')}
+                </button>
             </div>
         </aside>
     );

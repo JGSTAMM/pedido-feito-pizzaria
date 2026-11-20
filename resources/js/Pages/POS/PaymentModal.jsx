@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import CustomNumberInput from '@/Components/CustomNumberInput';
-import LoadingButton from '@/Components/LoadingButton';
 
 const PAYMENT_METHODS = [
     { method: 'credito', icon: 'credit_card', label: 'Cartão Crédito' },
@@ -10,11 +9,10 @@ const PAYMENT_METHODS = [
     { method: 'pix', icon: 'qr_code_2', label: 'Pix' },
 ];
 
-export default function PaymentModal({ isOpen, onClose, onConfirm, total, isProcessing = false }) {
+export default function PaymentModal({ isOpen, onClose, onConfirm, total }) {
     const [payments, setPayments] = useState([]);
     const [selectedMethod, setSelectedMethod] = useState(null);
     const [inputValue, setInputValue] = useState('');
-    const [submitting, setSubmitting] = useState(false);
     const inputRef = useRef(null);
 
     // Customer fields
@@ -210,15 +208,8 @@ export default function PaymentModal({ isOpen, onClose, onConfirm, total, isProc
         setInputValue('');
     };
 
-    useEffect(() => {
-        if (!isOpen) {
-            setSubmitting(false);
-        }
-    }, [isOpen]);
-
     const handleConfirm = () => {
-        if (!canFinalize || submitting || isProcessing) return;
-        setSubmitting(true);
+        if (!canFinalize) return;
         const rawDigits = customerPhone.replace(/\D/g, '');
         onConfirm(
             payments.map(({ method, amount }) => ({ method, amount })),
@@ -230,7 +221,7 @@ export default function PaymentModal({ isOpen, onClose, onConfirm, total, isProc
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background-dark/85 backdrop-blur-sm" onClick={onClose}>
             <div
-                className="bg-[#14141A] w-full max-w-lg rounded-2xl border border-border-subtle shadow-2xl flex flex-col max-h-[90vh] overflow-hidden"
+                className="bg-[#14141A] w-full max-w-2xl rounded-2xl border border-border-subtle shadow-2xl flex flex-col max-h-[92vh] overflow-hidden"
                 onClick={e => e.stopPropagation()}
             >
                 {/* Header */}
@@ -460,22 +451,31 @@ export default function PaymentModal({ isOpen, onClose, onConfirm, total, isProc
                         </div>
                     </div>
 
-                    <LoadingButton
+                    <button
                         onClick={handleConfirm}
                         disabled={!canFinalize}
-                        isLoading={submitting || isProcessing}
-                        loadingText="Finalizando Venda..."
-                        variant={canFinalize ? 'primary' : 'secondary'}
-                        size="lg"
-                        className="w-full"
-                        icon={!canFinalize && customerName.trim().length === 0 ? 'person_off' : !canFinalize ? 'lock' : 'check_circle'}
+                        className={`w-full py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-2 transition-all ${canFinalize
+                            ? 'bg-primary hover:bg-primary-dark text-white shadow-lg shadow-primary/25'
+                            : 'bg-surface text-text-muted cursor-not-allowed border border-border-subtle'
+                            }`}
                     >
-                        {canFinalize
-                            ? 'Finalizar Venda'
-                            : customerName.trim().length === 0
-                            ? 'Informe o nome do cliente'
-                            : 'Informe o valor restante'}
-                    </LoadingButton>
+                        {canFinalize ? (
+                            <>
+                                <span className="material-symbols-outlined">check_circle</span>
+                                Finalizar Venda
+                            </>
+                        ) : customerName.trim().length === 0 ? (
+                            <>
+                                <span className="material-symbols-outlined">person_off</span>
+                                Informe o nome do cliente
+                            </>
+                        ) : (
+                            <>
+                                <span className="material-symbols-outlined">lock</span>
+                                Informe o valor restante
+                            </>
+                        )}
+                    </button>
                 </div>
             </div>
         </div>

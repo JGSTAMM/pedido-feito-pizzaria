@@ -331,7 +331,7 @@ export default function Index({ register = null, summary = null, history = null,
             {selectedHistory && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-background-dark/80 backdrop-blur-sm" onClick={() => setSelectedHistory(null)} />
-                    <div className="relative w-full max-w-lg bg-[#120F1D] rounded-2xl border border-border-subtle shadow-[0_0_50px_rgba(0,0,0,0.5)] flex flex-col overflow-hidden max-h-[90vh] animate-scale-in">
+                    <div className="relative w-full max-w-2xl bg-[#120F1D] rounded-2xl border border-border-subtle shadow-[0_0_50px_rgba(0,0,0,0.5)] flex flex-col overflow-hidden max-h-[92vh] animate-scale-in">
                         <div className="p-5 border-b border-border-subtle flex items-center justify-between bg-surface">
                             <div className="flex items-center gap-3">
                                 <div className="size-10 bg-primary/20 rounded-xl flex items-center justify-center text-primary border border-primary/20">

@@ -5,7 +5,6 @@ import { norm } from '@/utils/normalize';
 import PizzaBuilderModal from './PizzaBuilderModal';
 import PaymentModal from './PaymentModal';
 import ProductVariationModal from './ProductVariationModal';
-import LoadingButton from '@/Components/LoadingButton';
 
 const CartItem = ({ item, getCartImageSrc, formatBRL, updateQuantity }) => {
     const [isExpanded, setIsExpanded] = useState(false);
@@ -504,17 +503,28 @@ export default function Index({ products = [], pizzaFlavors = [], pizzaSizes = [
                                 <span>{formatBRL(total)}</span>
                             </div>
                         </div>
-                        <LoadingButton
+                        <button
                             onClick={handleOpenPayment}
-                            disabled={cart.length === 0 || !cashRegister}
-                            isLoading={processing}
-                            loadingText="Processando..."
-                            size="lg"
-                            className="w-full"
-                            icon="point_of_sale"
+                            disabled={cart.length === 0 || processing || !cashRegister}
+                            className={`w-full py-4 rounded-xl bg-primary hover:bg-primary-dark text-white font-bold text-lg shadow-lg shadow-primary/25 transition-all flex items-center justify-center gap-2 ${cart.length === 0 || processing || !cashRegister ? 'opacity-50 cursor-not-allowed' : ''
+                                }`}
                         >
-                            Finalizar Venda
-                        </LoadingButton>
+                            {processing ? (
+                                <>
+                                    <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                                    </svg>
+                                    Processando...
+                                </>
+                            ) : (
+                                <>
+                                    <span className="material-symbols-outlined">point_of_sale</span>
+                                    Finalizar Venda
+                                    <span className="material-symbols-outlined">arrow_forward</span>
+                                </>
+                            )}
+                        </button>
                     </div>
                 </div>
             </div>
@@ -524,7 +534,6 @@ export default function Index({ products = [], pizzaFlavors = [], pizzaSizes = [
                 onClose={() => setShowPaymentModal(false)}
                 onConfirm={handleConfirmPayment}
                 total={total}
-                isProcessing={processing}
             />
             {/* Pizza Builder Modal */}
             <PizzaBuilderModal

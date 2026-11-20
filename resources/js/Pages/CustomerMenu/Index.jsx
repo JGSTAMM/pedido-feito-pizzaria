@@ -148,7 +148,6 @@ export default function CustomerMenu() {
 
             <div className="px-4 mt-10">
                 <CatalogList
-                    isLoading={isLoading}
                     filteredCategories={filteredCategories}
                     t={t}
                     formatCurrency={formatCurrency}

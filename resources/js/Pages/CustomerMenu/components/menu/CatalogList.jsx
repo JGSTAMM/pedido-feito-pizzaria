@@ -1,22 +1,7 @@
 import React from 'react';
 import { luccheseMenuTheme } from '../../theme/luccheseMenuTheme';
-import { ProductCardSkeleton } from '@/Components/Skeleton';
 
-export default function CatalogList({ isLoading = false, filteredCategories, t, formatCurrency, onAddItem, onOpenFlavorDetail, onOpenPizzaBuilder }) {
-    if (isLoading) {
-        return (
-            <div className="space-y-4 pb-10">
-                <div className="h-6 w-36 rounded-md bg-white/10 animate-pulse mb-4" />
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <ProductCardSkeleton />
-                    <ProductCardSkeleton />
-                    <ProductCardSkeleton />
-                    <ProductCardSkeleton />
-                </div>
-            </div>
-        );
-    }
-
+export default function CatalogList({ filteredCategories, t, formatCurrency, onAddItem, onOpenFlavorDetail, onOpenPizzaBuilder }) {
     return (
         <div className="space-y-8 pb-10">
             {filteredCategories.map(category => (

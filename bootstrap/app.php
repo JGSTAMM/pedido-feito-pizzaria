@@ -24,20 +24,24 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => EnsureUserHasRole::class,
         ]);
 
+        $middleware->trustProxies(at: '*');
+
         $middleware->encryptCookies(except: [
-            'customer_phone',
             'app_locale',
             'menu_locale_selected',
         ]);
 
         $middleware->web(
             append: [
+                \App\Http\Middleware\SecurityHeaders::class,
+                \Illuminate\Session\Middleware\AuthenticateSession::class,
                 SetRequestLocale::class,
                 HandleInertiaRequests::class,
             ],
         );
         $middleware->api(prepend: [
             HandleCors::class,
+            \App\Http\Middleware\SecurityHeaders::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
