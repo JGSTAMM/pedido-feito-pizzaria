@@ -1,0 +1,25 @@
+{
+  "id": "/waiter",
+  "name": "App do Garçom — Sr. & Sra. Lucchese",
+  "short_name": "Garçom",
+  "description": "App do Garçom para mesas, comandas e vendas balcão.",
+  "start_url": "/waiter",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0D0D12",
+  "theme_color": "#8B5CF6",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "/icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}

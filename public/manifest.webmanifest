@@ -1,0 +1,25 @@
+{
+  "id": "/",
+  "name": "Sr. & Sra. Lucchese Pizzaria — Cardápio Digital",
+  "short_name": "Lucchese Pizza",
+  "description": "Peça pizzas artesanais na Sr. & Sra. Lucchese Pizzaria em Torres-RS. Cardápio digital com PIX online, entrega rápida e retirada.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0D0D12",
+  "theme_color": "#E11D48",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "/icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}

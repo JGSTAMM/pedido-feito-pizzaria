@@ -2,34 +2,23 @@
 
 namespace App\Http\Controllers;
 
-use App\Application\CashRegister\CashRegisterLockService;
-use App\Application\Printing\PrintQueueService;
+use App\Application\Orders\CreateCounterOrderAction;
 use App\Application\Orders\OrderActionException;
-use App\Events\OrderCreated;
-use App\Events\OrderCreatedForPrinting;
 use App\Models\CashRegister;
-use App\Models\Customer;
 use App\Models\Order;
-use App\Models\OrderItem;
-use App\Models\Payment;
 use App\Models\PizzaFlavor;
 use App\Models\PizzaSize;
 use App\Models\Product;
-use App\Services\PizzaPriceService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
 class PosController extends Controller
 {
     public function __construct(
-        private readonly PizzaPriceService $pizzaPriceService,
-        private readonly CashRegisterLockService $cashRegisterLockService,
-        private readonly PrintQueueService $printQueueService,
+        private readonly CreateCounterOrderAction $createCounterOrderAction,
     ) {}
 
     /**
@@ -71,16 +60,8 @@ class PosController extends Controller
         return PizzaFlavor::where('is_active_pos', true)
             ->orderBy('name')
             ->get()
-            ->map(fn ($f) => [
-                'id' => $f->id,
-                'name' => $f->name,
-                'price' => (float) $f->base_price,
-                'ingredients' => $f->ingredients,
-                'flavor_category' => $f->flavor_category,
-                'category' => 'Pizzas',
-                'image_url' => $f->image_url,
-                'type' => 'pizza_flavor',
-            ])->toArray();
+            ->map(fn (PizzaFlavor $flavor) => $flavor->toStaffBuilderArray())
+            ->toArray();
     }
 
     private function getCategories(): array
@@ -186,226 +167,13 @@ class PosController extends Controller
         }
 
         try {
-            $activeRegister = $this->cashRegisterLockService->requireOpenRegister();
+            $order = $this->createCounterOrderAction->execute($validated, $request->user(), true);
+            $totalAmount = (float) $order->total_amount;
+
+            return redirect()->back()->with('success', "Pedido #{$order->short_code} finalizado com sucesso! Total: R$ ".number_format($totalAmount, 2, ',', '.'));
         } catch (OrderActionException $exception) {
             return redirect()->back()->with('error', $exception->getMessage());
-        }
-
-        try {
-            DB::beginTransaction();
-
-            // Calculate total from server-side prices (security)
-            $totalAmount = 0;
-            $itemsData = [];
-
-            $priceService = $this->pizzaPriceService;
-
-            foreach ($validated['items'] as $item) {
-                if ($item['type'] === 'product') {
-                    $product = Product::findOrFail($item['id']);
-                    $unitPrice = (float) $product->price;
-                    $description = $product->name;
-                    $observation = $item['observation'] ?? null;
-
-                    // Check for variations in the JSON column
-                    if ($observation && !empty($product->variations)) {
-                        foreach ($product->variations as $variation) {
-                            if ($variation['name'] === $observation) {
-                                $unitPrice = (float) $variation['price'];
-                                $description = "{$product->name} ({$variation['name']})";
-                                break;
-                            }
-                        }
-                    }
-
-                    $subtotal = $unitPrice * $item['quantity'];
-                    $totalAmount += $subtotal;
-
-                    $itemsData[] = [
-                        'type' => 'product',
-                        'product_id' => $item['id'],
-                        'pizza_size_id' => null,
-                        'flavor_ids' => [],
-                        'quantity' => $item['quantity'],
-                        'unit_price' => $unitPrice,
-                        'subtotal' => $subtotal,
-                        'description' => $description,
-                        'notes' => $observation,
-                    ];
-                } elseif ($item['type'] === 'pizza_custom') {
-                    // Pizza Builder item — validate server-side
-                    $sizeId = $item['size_id'];
-                    $flavorIds = $item['flavor_ids'] ?? [];
-                    $borderId = $item['border_id'] ?? null;
-                    $customerObs = $item['observation'] ?? null;
-
-                    $unitPrice = $priceService->calculateItemPrice($sizeId, $flavorIds);
-                    $borderName = null;
-                    if ($borderId) {
-                        $borderProd = Product::find($borderId);
-                        if ($borderProd) {
-                            $unitPrice += (float) $borderProd->price;
-                            $borderName = $borderProd->name;
-                        }
-                    }
-
-                    $size = PizzaSize::find($sizeId);
-                    $flavors = PizzaFlavor::whereIn('id', $flavorIds)->pluck('name')->toArray();
-
-                    // Build a clean description for the item title
-                    $sizeName = $size ? $size->name : 'Pizza';
-                    $description = "Pizza {$sizeName}";
-
-                    if ($borderName && (! $customerObs || ! str_contains(mb_strtolower($customerObs), 'borda:'))) {
-                        $customerObs = $customerObs ? "Borda: {$borderName} | {$customerObs}" : "Borda: {$borderName}";
-                    }
-
-                    $subtotal = $unitPrice * $item['quantity'];
-                    $totalAmount += $subtotal;
-
-                    $itemsData[] = [
-                        'type' => 'pizza_custom',
-                        'product_id' => null,
-                        'pizza_size_id' => $sizeId,
-                        'flavor_ids' => $flavorIds,
-                        'quantity' => $item['quantity'],
-                        'unit_price' => $unitPrice,
-                        'subtotal' => $subtotal,
-                        'description' => $description,
-                        'flavor_names' => $flavors,
-                        'border_name' => $borderName,
-                        'notes' => $customerObs,
-                    ];
-                } else {
-                    // pizza_flavor — simple add (legacy)
-                    $flavor = PizzaFlavor::findOrFail($item['id']);
-                    $unitPrice = (float) $flavor->base_price;
-
-                    $subtotal = $unitPrice * $item['quantity'];
-                    $totalAmount += $subtotal;
-
-                    $itemsData[] = [
-                        'type' => 'pizza_flavor',
-                        'product_id' => null,
-                        'pizza_size_id' => null,
-                        'flavor_ids' => [$item['id']],
-                        'quantity' => $item['quantity'],
-                        'unit_price' => $unitPrice,
-                        'subtotal' => $subtotal,
-                        'description' => $flavor->name,
-                        'notes' => $item['observation'] ?? null,
-                    ];
-                }
-            }
-
-            // ── Customer Logic (Omnichannel) ──
-            $customerId = null;
-            $customerName = $validated['customer_name'];
-            $rawPhone = preg_replace('/\D/', '', $validated['customer_phone'] ?? '');
-
-            if (strlen($rawPhone) >= 10) {
-                // Phone provided → find or create a Customer record
-                $customer = Customer::firstOrCreate(
-                    ['phone' => $rawPhone],
-                    ['name' => $customerName]
-                );
-                // Update name if it changed
-                if ($customer->name !== $customerName) {
-                    $customer->update(['name' => $customerName]);
-                }
-                $customerId = $customer->id;
-            }
-
-            // Create order
-            $order = Order::create([
-                'status' => 'pending',
-                'type' => 'pickup',
-                'total_amount' => $totalAmount,
-                'customer_name' => $customerName,
-                'customer_id' => $customerId,
-                'paid_at' => now(),
-                'cash_register_id' => $activeRegister?->id,
-                'user_id' => Auth::id(),
-            ]);
-
-            // Create order items
-            foreach ($itemsData as $data) {
-                $orderItem = OrderItem::create([
-                    'order_id' => $order->id,
-                    'product_id' => $data['product_id'],
-                    'pizza_size_id' => $data['pizza_size_id'],
-                    'quantity' => $data['quantity'],
-                    'unit_price' => $data['unit_price'],
-                    'subtotal' => $data['subtotal'],
-                    'type' => $data['type'],
-                    'description' => $data['description'] ?? null,
-                    'notes' => $data['notes'],
-                ]);
-
-                if (! empty($data['flavor_ids'])) {
-                    $fraction = '1/'.count($data['flavor_ids']);
-                    foreach ($data['flavor_ids'] as $flavorId) {
-                        $orderItem->flavors()->attach($flavorId, [
-                            'id' => Str::uuid()->toString(),
-                            'fraction' => $fraction,
-                        ]);
-                    }
-                }
-            }
-
-            // Create payment record(s) — supports split payment
-            if (! empty($validated['payments'])) {
-                foreach ($validated['payments'] as $paymentData) {
-                    Payment::create([
-                        'order_id' => $order->id,
-                        'method' => $paymentData['method'],
-                        'amount' => $paymentData['amount'],
-                    ]);
-                }
-            } else {
-                // Legacy single payment fallback
-                Payment::create([
-                    'order_id' => $order->id,
-                    'method' => $validated['payment_method'],
-                    'amount' => $totalAmount,
-                ]);
-            }
-
-            DB::commit();
-
-            // Enqueue kitchen ticket in print queue FIRST so Reverb unavailability never blocks printing
-            try {
-                $this->printQueueService->enqueueKitchenTicket($order);
-            } catch (\Throwable $queueEx) {
-                Log::warning('Failed to enqueue kitchen print job for POS order: '.$queueEx->getMessage());
-            }
-
-            // Broadcast real-time event so KDS shows this order instantly
-            try {
-                event(new OrderCreated(
-                    orderId: $order->id,
-                    status: 'pending',
-                    type: 'pickup',
-                    shortCode: $order->short_code ?? '',
-                    tableId: null,
-                ));
-            } catch (\Throwable $broadcastEx) {
-                Log::warning('Broadcast failed after POS order creation: '.$broadcastEx->getMessage());
-            }
-
-            try {
-                event(new OrderCreatedForPrinting($order->id));
-            } catch (\Throwable $printException) {
-                Log::warning('Automatic thermal printing dispatch failed after POS order creation.', [
-                    'order_id' => $order->id,
-                    'error' => $printException->getMessage(),
-                ]);
-            }
-
-            return redirect()->back()->with('success', "Pedido #{$order->id} finalizado com sucesso! Total: R$ ".number_format($totalAmount, 2, ',', '.'));
-
         } catch (\Exception $e) {
-            DB::rollBack();
             Log::error('Error creating POS order', [
                 'exception' => $e,
                 'user_id' => Auth::id(),

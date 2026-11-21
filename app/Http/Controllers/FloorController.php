@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Application\CashRegister\CashRegisterLockService;
+use App\Application\Orders\CancelOrDeleteOrderAction;
 use App\Application\Orders\OrderActionException;
 use App\Application\Printing\PrintQueueService;
 use App\Events\OrderCreated;
@@ -35,6 +36,7 @@ class FloorController extends Controller
         private readonly PaymentGatewayService $paymentGatewayService,
         private readonly SettleTableModule $settleTableModule,
         private readonly PrintQueueService $printQueueService,
+        private readonly CancelOrDeleteOrderAction $cancelOrDeleteOrderAction,
     ) {}
 
     public function index(): \Inertia\Response
@@ -630,5 +632,51 @@ class FloorController extends Controller
             'job_id' => $job?->id,
             'agent_online' => $agentStatus['is_online'],
         ]);
+    }
+
+    /**
+     * Cancel/delete all active orders for a table (full comanda) with mandatory supervisor PIN.
+     */
+    public function clearComanda(Request $request, Table $table): JsonResponse|\Illuminate\Http\RedirectResponse
+    {
+        $validated = $request->validate([
+            'pin' => ['required', 'string', 'regex:/^\d{4}$/'],
+            'reason' => ['nullable', 'string', 'max:255'],
+        ], [
+            'pin.required' => 'Informe o código PIN de 4 dígitos.',
+            'pin.regex' => 'O código PIN deve conter exatamente 4 dígitos.',
+        ]);
+
+        try {
+            $result = $this->cancelOrDeleteOrderAction->clearTableComanda(
+                table: $table,
+                pin: $validated['pin'],
+                actor: $request->user(),
+                reason: $validated['reason'] ?? null,
+            );
+
+            $message = "Comanda da {$table->name} apagada ({$result['deleted_count']} pedido(s)).";
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'deleted_count' => $result['deleted_count'],
+                    'message' => $message,
+                ]);
+            }
+
+            return redirect()->back()->with('success', $message);
+        } catch (OrderActionException $exception) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'valid' => false,
+                    'reason' => $exception->getReason(),
+                    'message' => $exception->getMessage(),
+                ], $exception->getStatus());
+            }
+
+            return redirect()->back()->with('error', $exception->getMessage());
+        }
     }
 }

@@ -21,9 +21,7 @@ use App\Models\Order;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return redirect('/dashboard');
-});
+Route::get('/', [CustomerMenuController::class, 'index'])->name('home');
 
 Route::redirect('/admin', '/dashboard');
 
@@ -32,7 +30,7 @@ Route::post('/login', [AuthController::class, 'login']);
 
 Route::get('/menu', [CustomerMenuController::class, 'index'])->name('customer-menu.index');
 Route::get('/menu/reset-locale', function () {
-    return redirect('/menu')
+    return redirect('/')
         ->withCookie(Cookie::forget('menu_locale_selected'))
         ->withCookie(Cookie::forget('app_locale'));
 })->name('customer-menu.reset-locale');
@@ -49,7 +47,6 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index']);
         Route::get('/pos', [PosController::class, 'index']);
         Route::post('/pos/order', [PosController::class, 'store']);
-        Route::get('/api/customers/search', [CustomerController::class, 'search']);
         Route::get('/orders', [OrderController::class, 'index']);
         Route::get('/reports', [ReportController::class, 'index']);
         Route::get('/reports/export', [ReportController::class, 'export']);
@@ -92,16 +89,44 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/settings/printers/test-agent', [SettingsController::class, 'testPrint']);
         Route::post('/settings/printers/regenerate-token', [SettingsController::class, 'regenerateAgentToken']);
 
-        Route::resource('/neighborhoods', NeighborhoodController::class)->except(['create', 'show', 'edit']);
+        Route::middleware('role:admin')->group(function () {
+            Route::post('/settings/printers/agent-config', [SettingsController::class, 'updateAgentConfig']);
+            Route::get('/settings/printers/download-agent', [SettingsController::class, 'downloadPrintAgent'])->name('settings.printers.download-agent');
+            Route::get('/settings/printers/download-config', [SettingsController::class, 'downloadPrintConfig'])->name('settings.printers.download-config');
+            Route::post('/settings/printers/clear-queue', [SettingsController::class, 'clearPrintQueue']);
+            Route::post('/settings/printers/retry-failed', [SettingsController::class, 'retryFailedPrintJobs']);
+        });
     });
 
     Route::middleware('role:admin,cashier,caixa,waiter,garcom')->group(function () {
+        Route::get('/neighborhoods', [NeighborhoodController::class, 'index'])->name('neighborhoods.index');
+        Route::post('/neighborhoods/validate-admin-pin', [NeighborhoodController::class, 'validateAdminPin'])
+            ->middleware('throttle:5,1')
+            ->name('neighborhoods.validate-admin-pin');
+        Route::post('/neighborhoods/lock-admin-pin', [NeighborhoodController::class, 'lockAdminPin'])
+            ->name('neighborhoods.lock-admin-pin');
+        Route::post('/neighborhoods/bulk-update', [NeighborhoodController::class, 'bulkUpdate'])
+            ->name('neighborhoods.bulk-update');
+        Route::resource('/neighborhoods', NeighborhoodController::class)->only(['store', 'update', 'destroy']);
+
         Route::get('/kds', [KdsController::class, 'index']);
         Route::post('/kds/{order}/status/{status}', [KdsController::class, 'updateStatus']);
         Route::post('/kds/{order}/print', [KdsController::class, 'reprint']);
         Route::get('/kds/print-agent-status', [KdsController::class, 'agentStatus']);
+        Route::get('/api/customers/search', [CustomerController::class, 'search']);
+        Route::post('/orders/{order}/delete-with-pin', [OrderController::class, 'destroyWithPin'])
+            ->middleware('throttle:10,1')
+            ->name('orders.destroy-with-pin');
+        Route::post('/orders/{order}/items/{item}/delete-with-pin', [OrderController::class, 'destroyItemWithPin'])
+            ->middleware('throttle:10,1')
+            ->name('orders.items.destroy-with-pin');
+        Route::post('/orders/{order}/pay', [OrderController::class, 'receivePayment'])
+            ->name('orders.receive-payment');
         Route::get('/floor', [FloorController::class, 'index']);
         Route::post('/floor/{table}/add-items', [FloorController::class, 'addItems']);
+        Route::post('/floor/{table}/clear-comanda', [FloorController::class, 'clearComanda'])
+            ->middleware('throttle:10,1')
+            ->name('floor.clear-comanda');
         Route::post('/floor/validate-supervisor-pin', [FloorController::class, 'validateSupervisorPin'])
             ->middleware('throttle:5,1');
         Route::post('/floor/{table}/pay', [FloorController::class, 'payAndClose']);
@@ -120,8 +145,10 @@ Route::middleware(['auth'])->group(function () {
             ->name('settings.supervisor-pin.destroy');
     });
 
-    Route::middleware('role:waiter,garcom')->group(function () {
+    Route::middleware('role:admin,cashier,caixa,waiter,garcom')->group(function () {
         Route::get('/waiter', [WaiterController::class, 'index']);
+        Route::get('/waiter/counter', [WaiterController::class, 'counter'])->name('waiter.counter');
+        Route::post('/waiter/counter/order', [WaiterController::class, 'storeCounterOrder'])->name('waiter.counter.store');
         Route::get('/waiter/orders', [WaiterController::class, 'orders']);
         Route::get('/waiter/profile', [WaiterController::class, 'profile']);
     });

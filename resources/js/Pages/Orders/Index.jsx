@@ -2,6 +2,8 @@ import { useState, useMemo } from 'react';
 import { Link, router } from '@inertiajs/react';
 import { norm } from '@/utils/normalize';
 import AppLayout from '@/Layouts/AppLayout';
+import PinDeleteConfirmModal from '@/Components/PinDeleteConfirmModal';
+import ReceiveOrderPaymentModal from '@/Components/ReceiveOrderPaymentModal';
 import useI18n from '@/hooks/useI18n';
 
 const getStatusConfig = (t) => ({
@@ -48,9 +50,11 @@ function StatCard({ icon, label, value, valueColor = 'text-white' }) {
     );
 }
 
-function OrderDetailsModal({ order, onClose, t, statusConfig, typeConfig, formatCurrency }) {
+function OrderDetailsModal({ order, onClose, onDeleteOrder, onReceivePayment, t, statusConfig, typeConfig, formatCurrency }) {
     if (!order) return null;
     const typeInfo = typeConfig[order.type] || { label: order.type, icon: 'help' };
+    const canDelete = !['cancelled', 'rejected'].includes(order.status);
+    const canReceivePayment = !order.is_paid && !order.table_name && canDelete;
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background-dark/80 backdrop-blur-sm">
@@ -61,6 +65,11 @@ function OrderDetailsModal({ order, onClose, t, statusConfig, typeConfig, format
                         <div className="flex items-center gap-3 mb-1">
                             <h2 className="text-xl font-bold text-white tracking-tight">{t('orders.modal.orderCode')} #{order.short_code || String(order.id).substring(0, 5).toUpperCase()}</h2>
                             <StatusBadge status={order.status} statusConfig={statusConfig} />
+                            {!order.is_paid && !order.table_name && canDelete && (
+                                <span className="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider bg-orange-500/15 text-orange-300 border border-orange-500/30">
+                                    Aguardando Pagamento
+                                </span>
+                            )}
                         </div>
                         <p className="text-sm text-text-muted">{order.created_at}</p>
                     </div>
@@ -149,8 +158,8 @@ function OrderDetailsModal({ order, onClose, t, statusConfig, typeConfig, format
                 </div>
 
                 {/* Footer */}
-                <div className="p-6 border-t border-border-subtle bg-black/20 flex items-center justify-between rounded-b-2xl">
-                    <div className="flex flex-col gap-1.5 max-w-[50%]">
+                <div className="p-6 border-t border-border-subtle bg-black/20 flex flex-wrap items-center justify-between gap-4 rounded-b-2xl">
+                    <div className="flex flex-col gap-1.5 max-w-[45%]">
                         {order.payments && order.payments.length > 0 ? (
                             order.payments.map((payment, idx) => (
                                 <div key={idx} className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 backdrop-blur-md shadow-sm">
@@ -163,13 +172,35 @@ function OrderDetailsModal({ order, onClose, t, statusConfig, typeConfig, format
                         ) : (
                             <div className="flex items-center gap-2">
                                 <span className="material-symbols-outlined text-text-muted text-[18px]">payments</span>
-                                <span className="text-sm text-text-muted capitalize">-</span>
+                                <span className="text-sm text-text-muted capitalize">Pagamento Pendente</span>
                             </div>
                         )}
                     </div>
-                    <div className="text-right flex-shrink-0">
-                        <span className="text-sm text-text-muted mr-3">{t('orders.modal.totalOrder')}</span>
-                        <span className="text-2xl font-bold text-emerald-400 font-mono">{formatCurrency(order.total_amount)}</span>
+                    <div className="flex items-center gap-3 flex-wrap justify-end">
+                        {canReceivePayment && (
+                            <button
+                                type="button"
+                                onClick={() => onReceivePayment?.(order)}
+                                className="px-4 py-2.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 border border-emerald-500/30 text-xs font-bold flex items-center gap-1.5 transition-colors"
+                            >
+                                <span className="material-symbols-outlined text-[18px]">payments</span>
+                                Receber Pagamento
+                            </button>
+                        )}
+                        {canDelete && (
+                            <button
+                                type="button"
+                                onClick={() => onDeleteOrder?.(order)}
+                                className="px-4 py-2.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/25 text-xs font-bold flex items-center gap-1.5 transition-colors"
+                            >
+                                <span className="material-symbols-outlined text-[18px]">delete</span>
+                                Apagar Pedido (PIN)
+                            </button>
+                        )}
+                        <div className="text-right flex-shrink-0 pl-2">
+                            <span className="text-sm text-text-muted mr-3">{t('orders.modal.totalOrder')}</span>
+                            <span className="text-2xl font-bold text-emerald-400 font-mono">{formatCurrency(order.total_amount)}</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -184,6 +215,8 @@ export default function Index({ orders = { data: [], links: [], total: 0 }, stat
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
     const [selectedOrder, setSelectedOrder] = useState(null);
+    const [orderToDelete, setOrderToDelete] = useState(null);
+    const [orderToPay, setOrderToPay] = useState(null);
 
     const filteredOrders = useMemo(() => {
         let items = orders.data || [];
@@ -200,6 +233,7 @@ export default function Index({ orders = { data: [], links: [], total: 0 }, stat
             const term = norm(searchTerm);
             items = items.filter(o =>
                 norm(o.customer_name).includes(term) ||
+                norm(o.short_code || '').includes(term) ||
                 String(o.id).includes(term)
             );
         }
@@ -345,15 +379,34 @@ export default function Index({ orders = { data: [], links: [], total: 0 }, stat
                                         {/* Status */}
                                         <StatusBadge status={order.status} statusConfig={statusConfig} />
 
-                                        {/* Date */}
-                                        <div className="flex items-center justify-between">
+                                        {/* Date & Quick Actions */}
+                                        <div className="flex items-center justify-between gap-2">
                                             <div>
                                                 <p className="text-xs text-text-muted">{order.created_at}</p>
                                                 <p className="text-xs text-text-muted/60">{order.created_at_relative}</p>
                                             </div>
-                                            <span className="material-symbols-outlined text-[18px] text-text-muted opacity-0 group-hover:opacity-100 transition-opacity">
-                                                chevron_right
-                                            </span>
+                                            <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                                                {!order.is_paid && !order.table_name && !['cancelled', 'rejected'].includes(order.status) && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setOrderToPay(order)}
+                                                        title="Receber Pagamento"
+                                                        className="size-8 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 flex items-center justify-center transition-colors"
+                                                    >
+                                                        <span className="material-symbols-outlined text-[16px]">payments</span>
+                                                    </button>
+                                                )}
+                                                {!['cancelled', 'rejected'].includes(order.status) && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setOrderToDelete(order)}
+                                                        title="Apagar Pedido (PIN)"
+                                                        className="size-8 rounded-lg text-text-muted hover:text-red-400 hover:bg-red-500/15 flex items-center justify-center transition-colors"
+                                                    >
+                                                        <span className="material-symbols-outlined text-[16px]">delete</span>
+                                                    </button>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                 );
@@ -396,7 +449,39 @@ export default function Index({ orders = { data: [], links: [], total: 0 }, stat
                 </div>
             </div>
             {/* Modal */}
-            <OrderDetailsModal order={selectedOrder} onClose={() => setSelectedOrder(null)} t={t} statusConfig={statusConfig} typeConfig={typeConfig} formatCurrency={formatCurrency} />
+            <OrderDetailsModal
+                order={selectedOrder}
+                onClose={() => setSelectedOrder(null)}
+                onDeleteOrder={(ord) => setOrderToDelete(ord)}
+                onReceivePayment={(ord) => setOrderToPay(ord)}
+                t={t}
+                statusConfig={statusConfig}
+                typeConfig={typeConfig}
+                formatCurrency={formatCurrency}
+            />
+
+            <PinDeleteConfirmModal
+                isOpen={Boolean(orderToDelete)}
+                onClose={() => setOrderToDelete(null)}
+                title={orderToDelete ? `Apagar Pedido #${orderToDelete.short_code || String(orderToDelete.id).substring(0, 5).toUpperCase()}` : 'Apagar Pedido'}
+                description="Cancela o pedido na cozinha, estorna do caixa/relatórios e libera a mesa se vazia. Código PIN obrigatório."
+                targetLabel={orderToDelete ? `${orderToDelete.customer_name || 'Cliente'} — ${formatCurrency(orderToDelete.total_amount)}` : ''}
+                endpoint={orderToDelete ? `/orders/${orderToDelete.id}/delete-with-pin` : null}
+                onSuccess={() => {
+                    setOrderToDelete(null);
+                    setSelectedOrder(null);
+                }}
+            />
+
+            <ReceiveOrderPaymentModal
+                isOpen={Boolean(orderToPay)}
+                onClose={() => setOrderToPay(null)}
+                order={orderToPay}
+                onSuccess={() => {
+                    setOrderToPay(null);
+                    setSelectedOrder(null);
+                }}
+            />
         </AppLayout>
     );
 }

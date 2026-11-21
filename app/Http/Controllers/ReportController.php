@@ -40,6 +40,8 @@ class ReportController extends Controller
             $topFlavors = DB::table('order_items')
                 ->join('products', 'order_items.product_id', '=', 'products.id')
                 ->join('orders', 'order_items.order_id', '=', 'orders.id')
+                ->whereNull('orders.deleted_at')
+                ->whereNull('order_items.deleted_at')
                 ->whereNotNull('orders.paid_at')
                 ->where('orders.created_at', '>=', $last30Days)
                 ->select('products.name', DB::raw('SUM(order_items.quantity) as sales'))

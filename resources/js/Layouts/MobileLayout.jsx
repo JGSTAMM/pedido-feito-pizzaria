@@ -1,8 +1,10 @@
+import { useEffect } from 'react';
 import { Link, usePage } from '@inertiajs/react';
 import useI18n from '@/hooks/useI18n';
 
 const navTabs = [
     { href: '/waiter', icon: 'table_restaurant', labelKey: 'nav.tables' },
+    { href: '/waiter/counter', icon: 'storefront', labelKey: 'nav.counter' },
     { href: '/waiter/orders', icon: 'receipt_long', labelKey: 'nav.tabsOrders' },
     { href: '/waiter/profile', icon: 'person', labelKey: 'nav.profile' },
 ];
@@ -10,6 +12,13 @@ const navTabs = [
 export default function MobileLayout({ children, activeTab = '/waiter', onScroll }) {
     const { url } = usePage();
     const { t } = useI18n();
+
+    useEffect(() => {
+        const manifestLink = document.querySelector('link[rel="manifest"]');
+        if (manifestLink) {
+            manifestLink.setAttribute('href', '/manifest-waiter.webmanifest?v=1');
+        }
+    }, []);
 
     const isActive = (href) => {
         if (href === '/waiter') return url === '/waiter';

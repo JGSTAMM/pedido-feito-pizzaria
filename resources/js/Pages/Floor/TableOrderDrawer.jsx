@@ -7,6 +7,7 @@ import { norm } from '@/utils/normalize';
 import PizzaBuilderModal from '@/Pages/POS/PizzaBuilderModal';
 import ProductVariationModal from '@/Pages/POS/ProductVariationModal';
 import ReceiptPrint from '@/Components/ReceiptPrint';
+import PinDeleteConfirmModal from '@/Components/PinDeleteConfirmModal';
 import useI18n from '@/hooks/useI18n';
 
 const WaiterCartItem = ({ item, updateQty, removeFromCart, formatCurrency, t }) => {
@@ -154,6 +155,7 @@ export default function TableOrderDrawer({
 
     // Dynamic PIX state and refs
     const [generatingPix, setGeneratingPix] = useState(false);
+    const [pinDeleteTarget, setPinDeleteTarget] = useState(null);
     const [pixQrCode, setPixQrCode] = useState(null);
     const [pixQrCodeBase64, setPixQrCodeBase64] = useState(null);
     const [pixGatewayPaymentId, setPixGatewayPaymentId] = useState(null);
@@ -657,51 +659,70 @@ export default function TableOrderDrawer({
                                     </div>
 
                                     <div className="space-y-4">
-                                        {activeOrders.map((order, oIdx) => (
+                                        {activeOrders.map((order, oIdx) => {
+                                            const orderCode = order.short_code || String(order.id).substring(0, 5).toUpperCase();
+
+                                            return (
                                             <div key={order.id} className="bg-surface rounded-2xl border border-border-subtle overflow-hidden">
                                                 {/* Order Header */}
-                                                <div className="bg-white/5 px-4 py-4 border-b border-border-subtle flex items-center justify-between">
+                                                <div className="bg-white/5 px-4 py-4 border-b border-border-subtle flex items-center justify-between gap-2">
                                                     <div className="flex flex-col">
                                                         <p className="text-[10px] text-primary uppercase font-black tracking-[0.2em] mb-1 leading-none">
                                                             {t('floor.drawer.orderCode')}
                                                         </p>
                                                         <span className="text-3xl font-black text-white tracking-tighter leading-none">
-                                                            #{order.short_code || String(order.id).substring(0, 5).toUpperCase()}
+                                                            #{orderCode}
                                                         </span>
                                                     </div>
-                                                    <div className="text-right flex flex-col items-end gap-2">
-                                                        {order.created_at_time && (
-                                                            <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-white/5 border border-white/5">
-                                                                <span className="material-symbols-outlined text-[14px] text-text-muted">schedule</span>
-                                                                <span className="text-[10px] font-bold text-text-muted uppercase tracking-tight">
-                                                                    {t('floor.table.orderTime', { time: order.created_at_time })}
-                                                                </span>
-                                                            </div>
-                                                        )}
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="text-right flex flex-col items-end gap-2">
+                                                            {order.created_at_time && (
+                                                                <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-white/5 border border-white/5">
+                                                                    <span className="material-symbols-outlined text-[14px] text-text-muted">schedule</span>
+                                                                    <span className="text-[10px] font-bold text-text-muted uppercase tracking-tight">
+                                                                        {t('floor.table.orderTime', { time: order.created_at_time })}
+                                                                    </span>
+                                                                </div>
+                                                            )}
 
-                                                        {order.ready_at_time ? (
-                                                            <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
-                                                                <span className="material-symbols-outlined text-[16px] text-emerald-400">check_circle</span>
-                                                                <span className="text-xs font-black uppercase text-emerald-400 tracking-tight">
-                                                                    {t('floor.table.readyAt', { time: order.ready_at_time })}
-                                                                    {order.lead_time && ` • ${order.lead_time}min`}
-                                                                </span>
-                                                            </div>
-                                                        ) : (
-                                                            <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-orange-500/10 border border-orange-500/20 shadow-[0_0_15px_rgba(249,115,22,0.1)]">
-                                                                <span className="material-symbols-outlined text-[16px] text-orange-400 animate-pulse">timer</span>
-                                                                <span className="text-xs font-black uppercase text-orange-400 tracking-tight">
-                                                                    {t('floor.table.elapsedMinutes', { count: Math.floor(order.elapsed_minutes || 0) })}
-                                                                </span>
-                                                            </div>
-                                                        )}
+                                                            {order.ready_at_time ? (
+                                                                <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+                                                                    <span className="material-symbols-outlined text-[16px] text-emerald-400">check_circle</span>
+                                                                    <span className="text-xs font-black uppercase text-emerald-400 tracking-tight">
+                                                                        {t('floor.table.readyAt', { time: order.ready_at_time })}
+                                                                        {order.lead_time && ` • ${order.lead_time}min`}
+                                                                    </span>
+                                                                </div>
+                                                            ) : (
+                                                                <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-orange-500/10 border border-orange-500/20 shadow-[0_0_15px_rgba(249,115,22,0.1)]">
+                                                                    <span className="material-symbols-outlined text-[16px] text-orange-400 animate-pulse">timer</span>
+                                                                    <span className="text-xs font-black uppercase text-orange-400 tracking-tight">
+                                                                        {t('floor.table.elapsedMinutes', { count: Math.floor(order.elapsed_minutes || 0) })}
+                                                                    </span>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setPinDeleteTarget({
+                                                                title: `Apagar Pedido #${orderCode}`,
+                                                                description: 'Cancela este pedido específico da mesa, remove do KDS e estorna do caixa. Código PIN obrigatório.',
+                                                                targetLabel: `Pedido #${orderCode} — ${formatCurrency(Number(order.total) || 0)}`,
+                                                                endpoint: `/orders/${order.id}/delete-with-pin`,
+                                                                closeOnComplete: activeOrders.length <= 1,
+                                                            })}
+                                                            title={`Apagar Pedido #${orderCode}`}
+                                                            className="size-9 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 flex items-center justify-center transition-colors shrink-0"
+                                                        >
+                                                            <span className="material-symbols-outlined text-[18px]">delete</span>
+                                                        </button>
                                                     </div>
                                                 </div>
 
                                                 {/* Order Items */}
                                                 <div className="divide-y divide-border-subtle">
                                                     {order.items?.map((item, i) => (
-                                                        <div key={i} className="p-3 flex items-start gap-3">
+                                                        <div key={item.id || i} className="p-3 flex items-start gap-3">
                                                             <span className="text-xs font-bold text-white bg-white/10 px-2 py-1 rounded-lg flex-shrink-0 border border-white/5">
                                                                 {item.quantity}x
                                                             </span>
@@ -737,9 +758,27 @@ export default function TableOrderDrawer({
                                                                     </div>
                                                                 )}
                                                             </div>
-                                                            <span className="text-sm text-text-muted font-medium whitespace-nowrap">
-                                                                {formatCurrency(Number(item.subtotal) || 0)}
-                                                            </span>
+                                                            <div className="flex items-center gap-2 shrink-0">
+                                                                <span className="text-sm text-text-muted font-medium whitespace-nowrap">
+                                                                    {formatCurrency(Number(item.subtotal) || 0)}
+                                                                </span>
+                                                                {item.id && (
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => setPinDeleteTarget({
+                                                                            title: 'Apagar Item Lançado Errado',
+                                                                            description: 'Remove este item do pedido e recalcula o total (se for o último item, o pedido será apagado). Código PIN obrigatório.',
+                                                                            targetLabel: `${item.quantity}x ${item.name} — ${formatCurrency(Number(item.subtotal) || 0)}`,
+                                                                            endpoint: `/orders/${order.id}/items/${item.id}/delete-with-pin`,
+                                                                            closeOnComplete: activeOrders.length <= 1 && (order.items?.length || 0) <= 1,
+                                                                        })}
+                                                                        title="Apagar item com PIN"
+                                                                        className="size-7 rounded-lg text-text-muted hover:text-red-400 hover:bg-red-500/10 flex items-center justify-center transition-colors"
+                                                                    >
+                                                                        <span className="material-symbols-outlined text-[16px]">close</span>
+                                                                    </button>
+                                                                )}
+                                                            </div>
                                                         </div>
                                                     ))}
                                                 </div>
@@ -751,7 +790,8 @@ export default function TableOrderDrawer({
                                                     </span>
                                                 </div>
                                             </div>
-                                        ))}
+                                            );
+                                        })}
                                     </div>
 
                                     <div className="flex flex-col sm:flex-row gap-3 pt-2">
@@ -767,12 +807,26 @@ export default function TableOrderDrawer({
                                         <button
                                             type="button"
                                             onClick={() => setShowCheckoutModal(true)}
-                                            className="flex-1 py-4 bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:text-red-300 font-bold rounded-2xl border border-red-500/20 hover:border-red-500/30 transition-all flex items-center justify-center gap-2 shadow-[0_10px_30px_rgba(239,68,68,0.15)] active:scale-[0.98]"
+                                            className="flex-1 py-4 bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25 hover:text-emerald-300 font-bold rounded-2xl border border-emerald-500/30 transition-all flex items-center justify-center gap-2 shadow-[0_10px_30px_rgba(16,185,129,0.15)] active:scale-[0.98]"
                                         >
                                             <span className="material-symbols-outlined text-[20px]">receipt_long</span>
                                             {t('floor.drawer.actions.closeAccount')}
                                         </button>
                                     </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => setPinDeleteTarget({
+                                            title: `Apagar Comanda (${table.name})`,
+                                            description: 'Cancela TODOS os pedidos ativos desta mesa, remove da cozinha/caixa e libera a mesa imediatamente. Código PIN obrigatório.',
+                                            targetLabel: `${table.name} (${activeOrders.length} ${activeOrders.length === 1 ? 'pedido' : 'pedidos'} — ${formatCurrency(tableTotal)})`,
+                                            endpoint: `/floor/${table.id}/clear-comanda`,
+                                            closeOnComplete: true,
+                                        })}
+                                        className="w-full py-3.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 font-bold rounded-2xl border border-red-500/20 transition-all flex items-center justify-center gap-2 text-sm active:scale-[0.98]"
+                                    >
+                                        <span className="material-symbols-outlined text-[18px]">delete_sweep</span>
+                                        Apagar Comanda da Mesa (PIN)
+                                    </button>
                                     {billPrintSuccess && (
                                         <p className="text-xs text-emerald-400 font-bold text-center mt-2 animate-fade-in flex items-center justify-center gap-1">
                                             <span className="material-symbols-outlined text-sm">check_circle</span>
@@ -1153,6 +1207,23 @@ export default function TableOrderDrawer({
                     </div>
                 </div>
             )}
+
+            {/* PIN Delete Modal */}
+            <PinDeleteConfirmModal
+                isOpen={Boolean(pinDeleteTarget)}
+                onClose={() => setPinDeleteTarget(null)}
+                title={pinDeleteTarget?.title}
+                description={pinDeleteTarget?.description}
+                targetLabel={pinDeleteTarget?.targetLabel}
+                endpoint={pinDeleteTarget?.endpoint}
+                onSuccess={() => {
+                    const shouldCloseDrawer = pinDeleteTarget?.closeOnComplete;
+                    setPinDeleteTarget(null);
+                    if (shouldCloseDrawer) {
+                        onClose();
+                    }
+                }}
+            />
 
             {/* Hidden Print Container for the Receipt */}
             <ReceiptPrint order={activeOrder} />
