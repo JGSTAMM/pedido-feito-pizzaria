@@ -278,6 +278,13 @@
             "accepted": "Accepted",
             "rejected": "Rejected"
         },
+        "availability": {
+            "closed_banner_title": "Online ordering is currently closed",
+            "store_closed": "The store is currently closed and not accepting online orders.",
+            "cash_register_closed": "The cash register is currently closed. Please wait until it opens to place an online order.",
+            "outside_hours": "We are currently outside our opening hours.",
+            "checkout_blocked_btn": "Ordering Unavailable Right Now"
+        },
         "identity": {
             "title_step_1": "What is your WhatsApp?",
             "subtitle_step_1": "To make and speed up your order.",
@@ -585,7 +592,28 @@
             "file_puxado_na_manteiga_alho_e_oregano": "Butter-sautéed steak, garlic and oregano",
             "siri_com_especiarias_e_manjericao": "Seasoned crab and basil",
             "camarao_com_especiarias_e_manjericao": "Seasoned shrimp and basil",
-            "provolone_gorgonzola_catupiry_camarao_com_especiarias_e_manjericao": "Provolone, gorgonzola, cream cheese, seasoned shrimp and basil"
+            "provolone_gorgonzola_catupiry_camarao_com_especiarias_e_manjericao": "Provolone, gorgonzola, cream cheese, seasoned shrimp and basil",
+            "molho_sugo": "Tomato sauce",
+            "queijo_mussarela": "Mozzarella cheese",
+            "palmito": "Hearts of palm",
+            "alho_no_azeite_de_oliva": "Garlic in olive oil",
+            "parmesao": "Parmesan",
+            "pimentoes_coloridos": "Bell peppers",
+            "salame_italiano": "Italian salami",
+            "tomate_seco": "Sun-dried tomatoes",
+            "rucula": "Arugula",
+            "calabresa_ralada": "Shredded calabresa sausage",
+            "alcaparras": "Capers",
+            "strogonoff_de_carne": "Beef stroganoff",
+            "strogonoff_de_frango": "Chicken stroganoff",
+            "camarao_com_especiarias": "Seasoned shrimp",
+            "morango": "Strawberry",
+            "pacoca": "Peanut brittle (paçoca)",
+            "confete_colorido": "Colorful chocolate candies",
+            "cereja": "Cherry",
+            "banana": "Banana",
+            "doce_de_leite": "Dulce de leche",
+            "canela": "Cinnamon"
         },
         "cart": {
             "title": "Cart",
@@ -913,7 +941,9 @@
             },
             "methods": {
                 "dinheiro": "Cash",
-                "pix": "Pix",
+                "pix": "Pix (Direct)",
+                "pix_manual": "Pix (Direct)",
+                "pix_online": "Pix (QR Code)",
                 "credito": "Credit",
                 "debito": "Debit"
             },

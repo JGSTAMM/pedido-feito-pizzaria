@@ -68,6 +68,7 @@ class FloorController extends Controller
                                 'quantity' => $item->quantity,
                                 'name' => $item->description ?? $item->product?->name ?? 'Item',
                                 'unit_price' => (float) $item->unit_price,
+                                'price' => (float) $item->unit_price,
                                 'subtotal' => (float) $item->subtotal,
                                 'type' => $item->type ?? 'product',
                                 'is_pizza' => $isPizza,
@@ -152,16 +153,7 @@ class FloorController extends Controller
         $pizzaFlavors = PizzaFlavor::where('is_active_pos', true)
             ->orderBy('name')
             ->get()
-            ->map(fn ($f) => [
-                'id' => $f->id,
-                'name' => $f->name,
-                'price' => (float) $f->base_price,
-                'ingredients' => $f->ingredients,
-                'flavor_category' => $f->flavor_category,
-                'category' => 'Pizzas',
-                'image_url' => $f->image_url,
-                'type' => 'pizza_flavor',
-            ]);
+            ->map(fn (PizzaFlavor $flavor) => $flavor->toStaffBuilderArray());
 
         $categories = Product::select('category')
             ->distinct()

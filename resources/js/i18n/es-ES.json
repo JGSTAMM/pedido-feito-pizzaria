@@ -267,6 +267,13 @@
             "accepted": "Aceptado",
             "rejected": "Rechazado"
         },
+        "availability": {
+            "closed_banner_title": "Pedidos online cerrados por el momento",
+            "store_closed": "La tienda está cerrada en este momento y no acepta pedidos online.",
+            "cash_register_closed": "La caja aún está cerrada en este momento. Espera la apertura para hacer tu pedido online.",
+            "outside_hours": "Estamos fuera del horario de atención en este momento.",
+            "checkout_blocked_btn": "Pedidos No Disponibles Ahora"
+        },
         "identity": {
             "title_step_1": "¿Cuál es tu WhatsApp?",
             "subtitle_step_1": "Para facilitar y agilizar tu pedido.",
@@ -574,7 +581,28 @@
             "file_puxado_na_manteiga_alho_e_oregano": "Bistec salteado en mantequilla, ajo y orégano",
             "siri_com_especiarias_e_manjericao": "Cangrejo sazonado y albahaca",
             "camarao_com_especiarias_e_manjericao": "Camarón sazonado y albahaca",
-            "provolone_gorgonzola_catupiry_camarao_com_especiarias_e_manjericao": "Provolone, gorgonzola, queso crema, camarón sazonado y albahaca"
+            "provolone_gorgonzola_catupiry_camarao_com_especiarias_e_manjericao": "Provolone, gorgonzola, queso crema, camarón sazonado y albahaca",
+            "molho_sugo": "Salsa de tomate",
+            "queijo_mussarela": "Queso mozzarella",
+            "palmito": "Palmito",
+            "alho_no_azeite_de_oliva": "Ajo en aceite de oliva",
+            "parmesao": "Parmesano",
+            "pimentoes_coloridos": "Pimientos de colores",
+            "salame_italiano": "Salami italiano",
+            "tomate_seco": "Tomate seco",
+            "rucula": "Rúcula",
+            "calabresa_ralada": "Longaniza calabresa rallada",
+            "alcaparras": "Alcaparras",
+            "strogonoff_de_carne": "Strogonoff de carne",
+            "strogonoff_de_frango": "Strogonoff de pollo",
+            "camarao_com_especiarias": "Camarón sazonado",
+            "morango": "Fresa",
+            "pacoca": "Paçoca de cacahuete",
+            "confete_colorido": "Confites de chocolate",
+            "cereja": "Cereza",
+            "banana": "Plátano",
+            "doce_de_leite": "Dulce de leche",
+            "canela": "Canela"
         },
         "cart": {
             "title": "Carrito",
@@ -902,7 +930,9 @@
             },
             "methods": {
                 "dinheiro": "Efectivo",
-                "pix": "Pix",
+                "pix": "Pix (Directo)",
+                "pix_manual": "Pix (Directo)",
+                "pix_online": "Pix (Código QR)",
                 "credito": "Crédito",
                 "debito": "Débito"
             },

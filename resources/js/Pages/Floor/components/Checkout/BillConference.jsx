@@ -38,15 +38,19 @@ export default function BillConference({ activeOrders, formatCurrency }) {
 
             {expanded && (
                 <div className="p-4 bg-black/20 space-y-2 max-h-60 overflow-y-auto custom-scrollbar">
-                    {allItems.map((item, idx) => (
-                        <div key={idx} className="flex justify-between items-start text-sm">
-                            <div className="flex gap-2 text-white/80">
-                                <span className="font-bold text-white/50">{item.quantity}x</span>
-                                <span>{item.name}</span>
+                    {allItems.map((item, idx) => {
+                        const unitPrice = Number(item.unit_price ?? item.price ?? 0);
+                        const itemTotal = Number(item.subtotal ?? (unitPrice * Number(item.quantity || 1)));
+                        return (
+                            <div key={idx} className="flex justify-between items-start text-sm">
+                                <div className="flex gap-2 text-white/80">
+                                    <span className="font-bold text-white/50">{item.quantity}x</span>
+                                    <span>{item.name}</span>
+                                </div>
+                                <span className="font-medium text-white">{formatCurrency(itemTotal)}</span>
                             </div>
-                            <span className="font-medium text-white">{formatCurrency(item.price * item.quantity)}</span>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             )}
         </div>

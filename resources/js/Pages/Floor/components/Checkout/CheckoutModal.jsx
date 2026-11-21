@@ -64,6 +64,15 @@ export default function CheckoutModal({
     const remaining = Math.max(0, grandTotal - totalPaid);
     const change = Math.max(0, totalPaid - grandTotal);
 
+    // Auto-prefill input with remaining balance when modal opens or when remaining changes
+    useEffect(() => {
+        if (!paymentInputValue || parseFloat(paymentInputValue) === 0) {
+            if (remaining > 0) {
+                setPaymentInputValue(remaining.toFixed(2));
+            }
+        }
+    }, [remaining]);
+
     const onFinish = () => {
         handleCheckout(payments, {
             service_fee_cents: Math.round(serviceFeeAmount * 100),
@@ -297,24 +306,25 @@ export default function CheckoutModal({
                                         <label className="text-[10px] sm:text-[11px] font-black text-text-muted uppercase tracking-[0.1em] ml-1 block">
                                             {t('floor.drawer.checkout.payment_method_label')}
                                         </label>
-                                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
                                             {[
-                                                { method: 'dinheiro', icon: 'payments', label: t('floor.drawer.methods.dinheiro') },
-                                                { method: 'pix', icon: 'qr_code_2', label: t('floor.drawer.methods.pix') },
-                                                { method: 'credito', icon: 'credit_card', label: t('floor.drawer.methods.credito') },
-                                                { method: 'debito', icon: 'credit_card', label: t('floor.drawer.methods.debito') },
+                                                { method: 'dinheiro', icon: 'payments', label: t('floor.drawer.methods.dinheiro') || 'Dinheiro' },
+                                                { method: 'pix', icon: 'currency_exchange', label: t('floor.drawer.methods.pix_manual') || 'Pix (Por Fora)' },
+                                                { method: 'pix_online', icon: 'qr_code_2', label: t('floor.drawer.methods.pix_online') || 'Pix (QR Code)' },
+                                                { method: 'credito', icon: 'credit_card', label: t('floor.drawer.methods.credito') || 'Crédito' },
+                                                { method: 'debito', icon: 'credit_card', label: t('floor.drawer.methods.debito') || 'Débito' },
                                             ].map(m => (
                                                 <button
                                                     key={m.method}
                                                     type="button"
                                                     onClick={() => {
                                                         setCheckoutPaymentMethod(m.method);
-                                                        if (!paymentInputValue) {
+                                                        if (!paymentInputValue || parseFloat(paymentInputValue) === 0) {
                                                             const rem = Math.max(0, grandTotal - payments.reduce((s, p) => s + p.amount, 0));
                                                             if (rem > 0) setPaymentInputValue(rem.toFixed(2));
                                                         }
                                                     }}
-                                                    className={`flex flex-col items-center justify-center p-3 rounded-2xl border transition-all duration-300 group ${checkoutPaymentMethod === m.method
+                                                    className={`flex flex-col items-center justify-center p-2.5 sm:p-3 rounded-2xl border transition-all duration-300 group ${checkoutPaymentMethod === m.method
                                                             ? 'bg-emerald-500/15 border-emerald-500/40 text-white shadow-lg'
                                                             : 'bg-white/5 border-white/5 text-text-muted hover:bg-white/[0.08] hover:text-white'
                                                         }`}
@@ -323,7 +333,7 @@ export default function CheckoutModal({
                                                         }`}>
                                                         <span className="material-symbols-outlined text-[18px] sm:text-[20px]">{m.icon}</span>
                                                     </div>
-                                                    <span className="text-[10px] font-bold uppercase tracking-wide truncate max-w-full">{m.label}</span>
+                                                    <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wide truncate max-w-full">{m.label}</span>
                                                 </button>
                                             ))}
                                         </div>
@@ -355,10 +365,15 @@ export default function CheckoutModal({
                                                 onClick={() => {
                                                     const val = parseFloat(paymentInputValue);
                                                     if (val > 0) {
-                                                        if (checkoutPaymentMethod === 'pix') {
+                                                        if (checkoutPaymentMethod === 'pix_online') {
                                                             generatePixPayment(val);
                                                         } else {
-                                                            setPayments(prev => [...prev, { id: Date.now(), method: checkoutPaymentMethod, amount: val, label: checkoutPaymentMethod }]);
+                                                            setPayments(prev => [...prev, {
+                                                                id: Date.now(),
+                                                                method: checkoutPaymentMethod,
+                                                                amount: val,
+                                                                label: checkoutPaymentMethod
+                                                            }]);
                                                             setPaymentInputValue('');
                                                         }
                                                     }
@@ -384,12 +399,14 @@ export default function CheckoutModal({
                                                         <div className="flex items-center gap-3">
                                                             <div className="size-8 rounded-xl bg-white/5 flex items-center justify-center">
                                                                 <span className="material-symbols-outlined text-[18px] text-white/60">
-                                                                    {p.method === 'dinheiro' ? 'payments' : p.method === 'pix' ? 'qr_code_2' : 'credit_card'}
+                                                                    {p.method === 'dinheiro' ? 'payments' : p.method === 'pix' ? 'currency_exchange' : p.method === 'pix_online' ? 'qr_code_2' : 'credit_card'}
                                                                 </span>
                                                             </div>
                                                             <div className="flex flex-col">
                                                                 <span className="text-white text-xs font-black uppercase tracking-tight">
-                                                                    {t(`floor.drawer.methods.${p.method}`)}
+                                                                    {p.method === 'pix'
+                                                                        ? (t('floor.drawer.methods.pix_manual') || 'Pix (Por Fora)')
+                                                                        : (t(`floor.drawer.methods.${p.method}`) || p.method)}
                                                                 </span>
                                                                 <span className="text-[9px] text-text-muted font-bold uppercase tracking-widest">
                                                                     {t('floor.drawer.checkout.payment_added')}

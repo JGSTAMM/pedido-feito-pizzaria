@@ -278,6 +278,13 @@
             "accepted": "Aceito",
             "rejected": "Recusado"
         },
+        "availability": {
+            "closed_banner_title": "Pedidos online fechados no momento",
+            "store_closed": "A loja está fechada manualmente no momento e não está recebendo pedidos online.",
+            "cash_register_closed": "O caixa ainda está fechado no momento. Aguarde a abertura para fazer seu pedido online.",
+            "outside_hours": "Estamos fora do horário de atendimento no momento.",
+            "checkout_blocked_btn": "Pedidos Indisponíveis no Momento"
+        },
         "identity": {
             "title_step_1": "Qual o seu WhatsApp?",
             "subtitle_step_1": "Para facilitar e agilizar o seu pedido.",
@@ -585,7 +592,28 @@
             "file_puxado_na_manteiga_alho_e_oregano": "filé puxado na manteiga, alho e orégano",
             "siri_com_especiarias_e_manjericao": "siri com especiarias e manjericão",
             "camarao_com_especiarias_e_manjericao": "camarão com especiarias e manjericão",
-            "provolone_gorgonzola_catupiry_camarao_com_especiarias_e_manjericao": "provolone, gorgonzola, catupiry, camarão com especiarias e manjericão"
+            "provolone_gorgonzola_catupiry_camarao_com_especiarias_e_manjericao": "provolone, gorgonzola, catupiry, camarão com especiarias e manjericão",
+            "molho_sugo": "Molho sugo",
+            "queijo_mussarela": "Queijo mussarela",
+            "palmito": "Palmito",
+            "alho_no_azeite_de_oliva": "Alho no azeite de oliva",
+            "parmesao": "Parmesão",
+            "pimentoes_coloridos": "Pimentões coloridos",
+            "salame_italiano": "Salame italiano",
+            "tomate_seco": "Tomate seco",
+            "rucula": "Rúcula",
+            "calabresa_ralada": "Calabresa ralada",
+            "alcaparras": "Alcaparras",
+            "strogonoff_de_carne": "Strogonoff de carne",
+            "strogonoff_de_frango": "Strogonoff de frango",
+            "camarao_com_especiarias": "Camarão com especiarias",
+            "morango": "Morango",
+            "pacoca": "Paçoca",
+            "confete_colorido": "Confete colorido",
+            "cereja": "Cereja",
+            "banana": "Banana",
+            "doce_de_leite": "Doce de leite",
+            "canela": "Canela"
         },
         "cart": {
             "title": "Carrinho",
@@ -959,7 +987,9 @@
             },
             "methods": {
                 "dinheiro": "Dinheiro",
-                "pix": "Pix",
+                "pix": "Pix (Por Fora)",
+                "pix_manual": "Pix (Por Fora)",
+                "pix_online": "Pix (QR Code)",
                 "credito": "Crédito",
                 "debito": "Débito"
             },
