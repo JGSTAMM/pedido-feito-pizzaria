@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Application\CashRegister\CashRegisterLockService;
 use App\Application\Orders\CreateCounterOrderAction;
 use App\Application\Orders\OrderActionException;
 use App\Models\CashRegister;
@@ -9,6 +10,7 @@ use App\Models\Order;
 use App\Models\PizzaFlavor;
 use App\Models\PizzaSize;
 use App\Models\Product;
+use App\Services\PaymentGatewayService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -19,6 +21,8 @@ class PosController extends Controller
 {
     public function __construct(
         private readonly CreateCounterOrderAction $createCounterOrderAction,
+        private readonly CashRegisterLockService $cashRegisterLockService,
+        private readonly PaymentGatewayService $paymentGatewayService,
     ) {}
 
     /**
@@ -156,10 +160,11 @@ class PosController extends Controller
                 'customer_phone' => 'nullable|string|max:20',
                 // Split Payment: accept array of payments
                 'payments' => 'required_without:payment_method|array|min:1',
-                'payments.*.method' => 'required_with:payments|string|in:dinheiro,pix,credito,debito',
+                'payments.*.method' => 'required_with:payments|string|in:dinheiro,pix,pix_balcao,credito,debito',
                 'payments.*.amount' => 'required_with:payments|numeric|min:0.01',
+                'payments.*.gateway_id' => 'nullable|string|max:100',
                 // Legacy single payment (backward compat)
-                'payment_method' => 'required_without:payments|nullable|string|in:dinheiro,pix,credito,debito',
+                'payment_method' => 'required_without:payments|nullable|string|in:dinheiro,pix,pix_balcao,credito,debito',
             ]);
         } catch (ValidationException $e) {
             Log::error('Validation Failed in POS Checkout:', $e->errors());
@@ -181,5 +186,73 @@ class PosController extends Controller
 
             return redirect()->back()->with('error', __('common.error.unexpected'));
         }
+    }
+
+    /**
+     * Generate a dynamic Mercado Pago PIX QR Code for counter (POS) checkout before order submission.
+     */
+    public function generatePix(Request $request)
+    {
+        $validated = $request->validate([
+            'amount' => 'required|numeric|min:0.01',
+            'customer_name' => 'nullable|string|max:120',
+        ]);
+
+        try {
+            $this->cashRegisterLockService->requireOpenRegister();
+        } catch (OrderActionException $exception) {
+            return response()->json(['error' => $exception->getMessage()], 400);
+        }
+
+        $amount = (float) $validated['amount'];
+        $customerLabel = trim((string) ($validated['customer_name'] ?? ''));
+        $description = $customerLabel !== ''
+            ? "Venda Balcão ({$customerLabel}) - Pedido Feito"
+            : 'Venda Balcão - Pedido Feito Pizzaria';
+
+        $result = $this->paymentGatewayService->createStandalonePixPayment(
+            amount: $amount,
+            description: $description,
+            payerEmail: 'pagamento@pedidofeito.com',
+        );
+
+        if (! ($result['success'] ?? false)) {
+            return response()->json([
+                'error' => $result['error'] ?? 'Erro ao gerar PIX.',
+            ], 500);
+        }
+
+        $gatewayPaymentId = (string) $result['data']['gateway_payment_id'];
+        $ownedIds = array_values(array_unique([
+            ...((array) $request->session()->get('pos_pix_payment_ids', [])),
+            $gatewayPaymentId,
+        ]));
+        $request->session()->put('pos_pix_payment_ids', array_slice($ownedIds, -20));
+
+        return response()->json([
+            'success' => true,
+            'gateway_payment_id' => $gatewayPaymentId,
+            'qr_code' => $result['data']['qr_code'],
+            'qr_code_base64' => $result['data']['qr_code_base64'],
+            'expires_at' => $result['data']['expires_at'],
+        ]);
+    }
+
+    /**
+     * Poll Mercado Pago status for a POS counter standalone PIX payment.
+     */
+    public function pixPaymentStatus(Request $request, string $gatewayPaymentId)
+    {
+        $ownedIds = (array) $request->session()->get('pos_pix_payment_ids', []);
+
+        if (! in_array($gatewayPaymentId, $ownedIds, true)) {
+            return response()->json(['error' => 'Unauthorized payment status lookup.'], 403);
+        }
+
+        $status = $this->paymentGatewayService->checkGatewayPaymentStatus($gatewayPaymentId);
+
+        return response()->json([
+            'status' => $status ?? 'pending',
+        ]);
     }
 }

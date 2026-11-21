@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Application\Printing\PrintQueueService;
+use App\Events\OrderCreated;
 use App\Events\OrderStatusUpdated;
 use App\Models\Order;
 use App\Models\Payment;
@@ -234,6 +236,129 @@ class PaymentGatewayService
     }
 
     /**
+     * Create a standalone PIX payment via Mercado Pago (used by POS counter checkout before order creation).
+     */
+    public function createStandalonePixPayment(
+        float $amount,
+        string $description = 'Venda Balcão - Pedido Feito Pizzaria',
+        string $payerEmail = 'pagamento@pedidofeito.com',
+        int $maxRetries = 3
+    ): array {
+        $reference = 'pos_'.uniqid('', true);
+
+        for ($attempt = 1; $attempt <= $maxRetries; $attempt++) {
+            try {
+                $client = new PaymentClient;
+
+                $requestBody = [
+                    'transaction_amount' => round($amount, 2),
+                    'description' => $description,
+                    'payment_method_id' => 'pix',
+                    'payer' => [
+                        'email' => $payerEmail,
+                        'first_name' => 'Cliente',
+                        'last_name' => 'Balcao',
+                    ],
+                    'external_reference' => $reference,
+                ];
+
+                $webhookUrl = config('services.mercadopago.webhook_url');
+                if ($webhookUrl && str_starts_with($webhookUrl, 'https://')) {
+                    $requestBody['notification_url'] = $webhookUrl;
+                }
+
+                $options = new RequestOptions;
+                $options->setCustomHeaders([
+                    'X-Idempotency-Key: '.$reference.'_'.$attempt,
+                ]);
+
+                Log::info("Creating standalone POS PIX payment (Attempt {$attempt})", [
+                    'amount' => $amount,
+                    'reference' => $reference,
+                ]);
+
+                $payment = $client->create($requestBody, $options);
+                $pixData = $payment->point_of_interaction?->transaction_data ?? null;
+
+                return [
+                    'success' => true,
+                    'data' => [
+                        'gateway_payment_id' => (string) $payment->id,
+                        'status' => $payment->status,
+                        'qr_code' => $pixData?->qr_code ?? null,
+                        'qr_code_base64' => $pixData?->qr_code_base64 ?? null,
+                        'ticket_url' => $pixData?->ticket_url ?? null,
+                        'expires_at' => $payment->date_of_expiration ?? null,
+                    ],
+                ];
+            } catch (MPApiException $e) {
+                $response = $e->getApiResponse();
+                $statusCode = $response->getStatusCode();
+                $content = $response->getContent();
+                $errorMessage = $content['message'] ?? '';
+
+                Log::error('Mercado Pago API error creating standalone POS PIX', [
+                    'status' => $statusCode,
+                    'content' => $content,
+                    'attempt' => $attempt,
+                ]);
+
+                $isCircuitBreaker = str_contains(json_encode($content), 'circuit breaker');
+                $isCommunicationError = str_contains($errorMessage, 'communication_error');
+                $isInternalError = ($statusCode === 500) || str_contains($errorMessage, 'internal');
+
+                if (($isCommunicationError || $isCircuitBreaker || $isInternalError) && $attempt < $maxRetries) {
+                    sleep($attempt * 2);
+
+                    continue;
+                }
+
+                return [
+                    'success' => false,
+                    'error' => 'Erro ao gerar pagamento PIX: '.($errorMessage ?: 'Erro desconhecido (status '.$statusCode.')'),
+                    'details' => $content,
+                ];
+            } catch (\Exception $e) {
+                Log::error('Error creating standalone POS PIX payment: '.$e->getMessage(), [
+                    'attempt' => $attempt,
+                ]);
+
+                if ($attempt < $maxRetries) {
+                    sleep($attempt * 2);
+
+                    continue;
+                }
+
+                return [
+                    'success' => false,
+                    'error' => 'Erro interno ao processar pagamento: '.$e->getMessage(),
+                ];
+            }
+        }
+
+        return [
+            'success' => false,
+            'error' => 'Erro interno ao processar pagamento.',
+        ];
+    }
+
+    /**
+     * Check payment status directly from gateway by gateway payment ID.
+     */
+    public function checkGatewayPaymentStatus(string|int $gatewayPaymentId): ?string
+    {
+        try {
+            $payment = $this->fetchPaymentFromGateway($gatewayPaymentId);
+
+            return $payment->status ?? null;
+        } catch (\Exception $e) {
+            Log::error("Error checking gateway payment status #{$gatewayPaymentId}: ".$e->getMessage());
+
+            return null;
+        }
+    }
+
+    /**
      * Create a card payment via Mercado Pago.
      *
      * @param  string  $token  Card token from MercadoPago.js
@@ -415,24 +540,53 @@ class PaymentGatewayService
             $order->update([
                 'online_payment_status' => Order::ONLINE_PAYMENT_APPROVED,
             ]);
+
             return;
         }
+
+        $wasAwaitingPayment = $order->status === Order::STATUS_AWAITING_PAYMENT;
+        $alreadyApproved = $order->online_payment_status === Order::ONLINE_PAYMENT_APPROVED && $order->paid_at !== null;
 
         $order->update([
             'status' => Order::STATUS_PENDING,
             'online_payment_status' => Order::ONLINE_PAYMENT_APPROVED,
-            'paid_at' => now(),
+            'paid_at' => $order->paid_at ?? now(),
         ]);
 
-        // Create local payment record
-        Payment::create([
-            'order_id' => $order->id,
-            'method' => $order->payment_method_online ?? 'pix_online',
-            'amount' => $order->total_amount,
-            'gateway_id' => $gatewayPaymentId,
-            'gateway_status' => 'approved',
-            'paid_at' => now(),
-        ]);
+        // Create local payment record idempotently
+        $paymentAlreadyRecorded = $gatewayPaymentId !== null
+            && Payment::where('gateway_id', (string) $gatewayPaymentId)->exists();
+
+        if (! $paymentAlreadyRecorded) {
+            Payment::create([
+                'order_id' => $order->id,
+                'method' => $order->payment_method_online ?? 'pix_online',
+                'amount' => $order->total_amount,
+                'gateway_id' => $gatewayPaymentId !== null ? (string) $gatewayPaymentId : null,
+                'gateway_status' => 'approved',
+                'paid_at' => now(),
+            ]);
+        }
+
+        if ($wasAwaitingPayment && ! $alreadyApproved) {
+            try {
+                app(PrintQueueService::class)->enqueueKitchenTicket($order);
+            } catch (\Throwable $queueEx) {
+                Log::warning('Failed to enqueue kitchen print job after online payment approval: '.$queueEx->getMessage());
+            }
+
+            try {
+                event(new OrderCreated(
+                    orderId: $order->id,
+                    status: Order::STATUS_PENDING,
+                    type: $order->type,
+                    shortCode: $order->short_code ?? '',
+                    tableId: $order->table_id,
+                ));
+            } catch (\Throwable $broadcastEx) {
+                Log::warning('Broadcast failed after online payment approval: '.$broadcastEx->getMessage());
+            }
+        }
     }
 
     /**

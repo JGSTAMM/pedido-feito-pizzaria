@@ -45,8 +45,19 @@ export default function Index({ register = null, summary = null, blockingOrders 
         debito: t('cashRegister.methods.debito'),
         dinheiro: t('cashRegister.methods.dinheiro'),
         pix: t('cashRegister.methods.pix'),
+        pix_balcao: t('cashRegister.methods.pix_balcao'),
+        pix_online: t('cashRegister.methods.pix_online'),
+        credito_online: t('cashRegister.methods.credito_online'),
     };
-    const methodIcons = { credito: 'credit_card', debito: 'credit_card', dinheiro: 'payments', pix: 'qr_code_2' };
+    const methodIcons = {
+        credito: 'credit_card',
+        debito: 'credit_card',
+        dinheiro: 'payments',
+        pix: 'qr_code_2',
+        pix_balcao: 'qr_code_scanner',
+        pix_online: 'qr_code_2',
+        credito_online: 'credit_card',
+    };
 
     return (
         <AppLayout>

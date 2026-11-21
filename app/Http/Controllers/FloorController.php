@@ -407,7 +407,7 @@ class FloorController extends Controller
     {
         $validated = $request->validate([
             'payments' => 'required|array',
-            'payments.*.method' => 'required|string',
+            'payments.*.method' => 'required|string|in:dinheiro,pix,pix_balcao,credito,debito',
             'payments.*.amount' => 'required|integer|min:0',
             'service_fee_cents' => 'nullable|integer|min:0',
             'discount_cents' => 'nullable|integer|min:0',

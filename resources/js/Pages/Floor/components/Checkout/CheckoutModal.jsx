@@ -306,7 +306,7 @@ export default function CheckoutModal({
                                         <label className="text-[10px] sm:text-[11px] font-black text-text-muted uppercase tracking-[0.1em] ml-1 block">
                                             {t('floor.drawer.checkout.payment_method_label')}
                                         </label>
-                                        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
                                             {[
                                                 { method: 'dinheiro', icon: 'payments', label: t('floor.drawer.methods.dinheiro') || 'Dinheiro' },
                                                 { method: 'pix', icon: 'currency_exchange', label: t('floor.drawer.methods.pix_manual') || 'Pix (Por Fora)' },
@@ -399,7 +399,13 @@ export default function CheckoutModal({
                                                         <div className="flex items-center gap-3">
                                                             <div className="size-8 rounded-xl bg-white/5 flex items-center justify-center">
                                                                 <span className="material-symbols-outlined text-[18px] text-white/60">
-                                                                    {p.method === 'dinheiro' ? 'payments' : p.method === 'pix' ? 'currency_exchange' : p.method === 'pix_online' ? 'qr_code_2' : 'credit_card'}
+                                                                    {p.method === 'dinheiro'
+                                                                        ? 'payments'
+                                                                        : (p.method === 'pix' || p.method === 'pix_balcao')
+                                                                            ? 'currency_exchange'
+                                                                            : p.method === 'pix_online'
+                                                                                ? 'qr_code_2'
+                                                                                : 'credit_card'}
                                                                 </span>
                                                             </div>
                                                             <div className="flex flex-col">

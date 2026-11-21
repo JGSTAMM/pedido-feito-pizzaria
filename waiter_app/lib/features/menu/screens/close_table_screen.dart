@@ -152,7 +152,8 @@ class _CloseTableScreenState extends State<CloseTableScreen> {
   String _getPaymentLabel(String method) {
     switch (method) {
       case 'dinheiro': return 'Dinheiro';
-      case 'pix': return 'PIX';
+      case 'pix': return 'PIX Online';
+      case 'pix_balcao': return 'PIX Balcão';
       case 'credito': return 'Crédito';
       case 'debito': return 'Débito';
       default: return method;
@@ -163,6 +164,7 @@ class _CloseTableScreenState extends State<CloseTableScreen> {
      switch (method) {
       case 'dinheiro': return Icons.attach_money;
       case 'pix': return Icons.qr_code;
+      case 'pix_balcao': return Icons.qr_code_2;
       case 'credito': return Icons.credit_card;
       case 'debito': return Icons.credit_card_outlined;
       default: return Icons.payment;
@@ -315,7 +317,8 @@ class _CloseTableScreenState extends State<CloseTableScreen> {
                           child: Row(
                             children: [
                               _paymentOption('Dinheiro', 'dinheiro', Icons.attach_money),
-                              _paymentOption('PIX', 'pix', Icons.qr_code),
+                              _paymentOption('PIX Online', 'pix', Icons.qr_code),
+                              _paymentOption('PIX Balcão', 'pix_balcao', Icons.qr_code_2),
                               _paymentOption('Crédito', 'credito', Icons.credit_card),
                               _paymentOption('Débito', 'debito', Icons.credit_card_outlined),
                             ],
