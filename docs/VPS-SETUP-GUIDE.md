@@ -35,13 +35,22 @@ FLUSH PRIVILEGES;
 EXIT;
 ```
 
-## Step 3: Install PHP 8.3
-Add the `ondrej/php` PPA repository to install the latest PHP version, along with the required extensions for Laravel and SQLite/MySQL.
+## Step 3: Install PHP 8.5
+On Ubuntu 26.10, PHP 8.5 is natively available in the official repositories. Install PHP 8.5-FPM along with the required extensions for Laravel and SQLite/MySQL.
 
 ```bash
-sudo add-apt-repository ppa:ondrej/php -y
 sudo apt update
-sudo apt install -y php8.3-fpm php8.3-mysql php8.3-xml php8.3-mbstring php8.3-curl php8.3-zip php8.3-bcmath php8.3-sqlite3 php8.3-intl php8.3-redis
+sudo apt install -y php8.5-fpm php8.5-cli php8.5-mysql php8.5-xml php8.5-mbstring php8.5-curl php8.5-zip php8.5-bcmath php8.5-sqlite3 php8.5-intl php8.5-redis php8.5-gd
+```
+
+Configure PHP-FPM upload limits for branding images and story videos:
+```bash
+sudo tee /etc/php/8.5/fpm/conf.d/99-pedido-feito-uploads.ini >/dev/null <<'EOF'
+upload_max_filesize = 25M
+post_max_size = 80M
+max_execution_time = 120
+EOF
+sudo systemctl restart php8.5-fpm
 ```
 
 Verify your PHP version:

@@ -110,7 +110,11 @@ function StoryMedia({ url, type, isAmbient, onMediaLoad, onTimeUpdate, onVideoEn
     );
 }
 
-export default function MenuHeader({ storeSetting, t, todayHours, dynamicHoursSummary, scrolled }) {
+export default function MenuHeader({ storeSetting, storeAvailability, t, todayHours, dynamicHoursSummary, scrolled }) {
+    const isEffectivelyOpen = storeAvailability
+        ? Boolean(storeAvailability.is_accepting_orders)
+        : Boolean(storeSetting?.is_open);
+
     // Extract stories from store settings
     const stories = useMemo(() => {
         if (!storeSetting?.story_media || !Array.isArray(storeSetting.story_media)) return [];
@@ -237,7 +241,7 @@ export default function MenuHeader({ storeSetting, t, todayHours, dynamicHoursSu
                         </h1>
                         <div className="flex items-center justify-center text-slate-400 text-sm">
                             <div className="flex items-center gap-2">
-                                {storeSetting?.is_open ? (
+                                {isEffectivelyOpen ? (
                                     <div className="flex items-center gap-2 rounded-full font-black uppercase tracking-widest bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-3 py-1 text-[10px]">
                                         <span className="rounded-full bg-emerald-400 animate-pulse h-1.5 w-1.5"></span>
                                         {t('digital_menu.status.open')}
@@ -290,11 +294,11 @@ export default function MenuHeader({ storeSetting, t, todayHours, dynamicHoursSu
                         )}
                     </div>
                     <div className="ml-4 flex-1 min-w-0">
-                        <h1 className="font-black text-white uppercase tracking-tight italic text-sm truncate">
+                        <p className="font-black text-white uppercase tracking-tight italic text-sm truncate">
                             {storeSetting?.store_name}
-                        </h1>
+                        </p>
                         <div className="flex items-center gap-2 text-[8px] font-black uppercase">
-                            {storeSetting?.is_open ? (
+                            {isEffectivelyOpen ? (
                                 <div className="flex items-center gap-1 text-emerald-400">
                                     <span className="h-1 w-1 rounded-full bg-emerald-400 animate-pulse"></span>
                                     {t('digital_menu.status.open')}

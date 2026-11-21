@@ -1,7 +1,7 @@
 /**
- * Pedido Feito 2.0 - Local Print Agent Daemon
+ * Pedido Feito 2.0 - Cross-Platform Local Print Agent Daemon (Windows & Linux)
  * Communicates with Laravel backend (localhost or Cloud VPS)
- * Dispatches RAW ESC/POS jobs directly to Windows Thermal Printers
+ * Dispatches RAW ESC/POS jobs directly to Windows Spooler, Linux CUPS/USB, or Network TCP (9100)
  */
 
 import fs from 'node:fs';
@@ -19,13 +19,30 @@ const CONFIG_PATH = path.join(__dirname, 'config.json');
 const LOG_PATH = path.join(__dirname, 'agent.log');
 const TEMP_BIN_PATH = path.join(__dirname, 'temp_ticket.bin');
 const PS_SCRIPT_PATH = path.join(__dirname, 'raw-printer.ps1');
+const MAX_LOG_BYTES = 1_048_576; // 1 MB
+const PRINTER_REFRESH_INTERVAL_MS = 30_000;
+
+function rotateLogIfNeeded() {
+    try {
+        if (fs.existsSync(LOG_PATH) && fs.statSync(LOG_PATH).size >= MAX_LOG_BYTES) {
+            const backupPath = `${LOG_PATH}.old`;
+            if (fs.existsSync(backupPath)) {
+                fs.unlinkSync(backupPath);
+            }
+            fs.renameSync(LOG_PATH, backupPath);
+        }
+    } catch {
+        // Ignore rotation errors
+    }
+}
 
 function log(msg, type = 'INFO') {
     const time = new Date().toLocaleTimeString('pt-BR');
     const line = `[${time}] [${type}] ${msg}`;
     console.log(line);
     try {
-        fs.appendFileSync(LOG_PATH, line + '\n');
+        rotateLogIfNeeded();
+        fs.appendFileSync(LOG_PATH, `${line}\n`);
     } catch {
         // Ignore log file write errors
     }
@@ -36,35 +53,86 @@ function loadConfig() {
         log(`Arquivo de configuração não encontrado: ${CONFIG_PATH}`, 'ERROR');
         process.exit(1);
     }
+
     try {
-        return JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
+        const parsed = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
+        if (!parsed.server_url || String(parsed.server_url).includes('suapizzaria.com.br')) {
+            log('AVISO: Configure server_url com a URL real da sua VPS em config.json.', 'WARN');
+        }
+        if (!parsed.token || String(parsed.token).includes('COLE_O_TOKEN')) {
+            log('AVISO: Token padrão detectado em config.json. Baixe o config.json nas Configurações do painel.', 'WARN');
+        }
+        return parsed;
     } catch (err) {
         log(`Erro ao ler config.json: ${err.message}`, 'ERROR');
         process.exit(1);
     }
 }
 
-// Discover Windows installed printers using powershell
-async function getWindowsPrinters() {
+async function discoverWindowsPrinters() {
     try {
         const { stdout } = await execFileAsync('powershell', [
             '-NoProfile',
             '-ExecutionPolicy', 'Bypass',
-            '-Command', 'Get-CimInstance Win32_Printer | Select-Object -ExpandProperty Name'
+            '-Command', 'Get-CimInstance Win32_Printer | Select-Object -ExpandProperty Name',
         ]);
         return stdout.split(/\r?\n/).map(p => p.trim()).filter(Boolean);
     } catch (err) {
-        log(`Aviso: Não foi possível listar impressoras via WMI: ${err.message}`, 'WARN');
+        log(`Aviso: Não foi possível listar impressoras no Windows: ${err.message}`, 'WARN');
         return [];
     }
 }
 
-// Send buffer to Windows Spooler via raw-printer.ps1
+async function discoverLinuxPrinters() {
+    const printers = new Set();
+
+    try {
+        const { stdout } = await execFileAsync('lpstat', ['-a']);
+        for (const rawLine of stdout.split(/\r?\n/)) {
+            const line = rawLine.trim();
+            if (!line) continue;
+            const queueName = line.split(/\s+/)[0];
+            if (queueName) {
+                printers.add(queueName);
+            }
+        }
+    } catch {
+        // CUPS may not be installed when using /dev/usb/lp* or TCP mode
+    }
+
+    try {
+        const usbDir = '/dev/usb';
+        if (fs.existsSync(usbDir)) {
+            for (const entry of fs.readdirSync(usbDir)) {
+                if (/^lp\d+$/.test(entry)) {
+                    printers.add(`/dev/usb/${entry}`);
+                }
+            }
+        }
+    } catch {
+        // Ignore device scan failure
+    }
+
+    return Array.from(printers);
+}
+
+async function discoverSystemPrinters() {
+    if (process.platform === 'win32') {
+        return discoverWindowsPrinters();
+    }
+
+    if (process.platform === 'linux') {
+        return discoverLinuxPrinters();
+    }
+
+    return [];
+}
+
 async function printViaWindowsSpooler(printerName, buffer) {
     fs.writeFileSync(TEMP_BIN_PATH, buffer);
 
     try {
-        const { stdout, stderr } = await execFileAsync('powershell', [
+        const { stderr } = await execFileAsync('powershell', [
             '-NoProfile',
             '-ExecutionPolicy', 'Bypass',
             '-File', PS_SCRIPT_PATH,
@@ -80,12 +148,51 @@ async function printViaWindowsSpooler(printerName, buffer) {
         try {
             if (fs.existsSync(TEMP_BIN_PATH)) fs.unlinkSync(TEMP_BIN_PATH);
         } catch {
-            // Ignore
+            // Ignore cleanup failure
         }
     }
 }
 
-// Send buffer via Direct TCP Socket (port 9100)
+async function printViaLinuxRaw(printerName, buffer) {
+    if (printerName.startsWith('/dev/')) {
+        fs.writeFileSync(printerName, buffer);
+        return true;
+    }
+
+    fs.writeFileSync(TEMP_BIN_PATH, buffer);
+
+    try {
+        try {
+            await execFileAsync('lp', ['-d', printerName, '-o', 'raw', TEMP_BIN_PATH]);
+            return true;
+        } catch (lpErr) {
+            if (lpErr?.code !== 'ENOENT') {
+                throw lpErr;
+            }
+            await execFileAsync('lpr', ['-P', printerName, '-l', TEMP_BIN_PATH]);
+            return true;
+        }
+    } finally {
+        try {
+            if (fs.existsSync(TEMP_BIN_PATH)) fs.unlinkSync(TEMP_BIN_PATH);
+        } catch {
+            // Ignore cleanup failure
+        }
+    }
+}
+
+async function printViaSystemQueue(printerName, buffer) {
+    if (process.platform === 'win32') {
+        return printViaWindowsSpooler(printerName, buffer);
+    }
+
+    if (process.platform === 'linux') {
+        return printViaLinuxRaw(printerName, buffer);
+    }
+
+    throw new Error(`Sistema operacional não suportado para impressão local direta: ${process.platform}`);
+}
+
 function printViaTcp(ip, port, buffer) {
     return new Promise((resolve, reject) => {
         const client = new net.Socket();
@@ -114,7 +221,6 @@ async function dispatchPrint(job, config, installedPrinters) {
     const isKitchen = job.target === 'kitchen';
     const paperWidth = (isKitchen ? config.kitchen_paper_width : config.cashier_paper_width) || config.paper_width || '58mm';
 
-    // Format binary buffer
     let buffer;
     if (job.type === 'kitchen') {
         buffer = formatKitchenTicket(job.payload, paperWidth);
@@ -124,14 +230,13 @@ async function dispatchPrint(job, config, installedPrinters) {
         buffer = formatTestTicket(job.payload, paperWidth);
     }
 
-    // Determine target printer
     let primaryPrinter = isKitchen ? config.kitchen_printer : config.cashier_printer;
     if (!primaryPrinter) {
-        primaryPrinter = config.default_printer || (installedPrinters[0] || 'POS-58');
+        primaryPrinter = config.default_printer || installedPrinters[0] || 'POS-58';
     }
 
     const fallbackPrinter = config.fallback_printer;
-    const mode = config.mode || 'windows'; // 'windows' or 'tcp'
+    const mode = String(config.mode || 'auto').toLowerCase();
 
     let success = false;
     let usedPrinter = primaryPrinter;
@@ -139,22 +244,22 @@ async function dispatchPrint(job, config, installedPrinters) {
 
     try {
         if (mode === 'tcp' && config.tcp_ip) {
-            log(`Imprimindo Job #${job.id} via TCP (${config.tcp_ip}:${config.tcp_port || 9100})...`);
+            usedPrinter = `${config.tcp_ip}:${config.tcp_port || 9100}`;
+            log(`Imprimindo Job #${job.id} via TCP (${usedPrinter})...`);
             await printViaTcp(config.tcp_ip, config.tcp_port || 9100, buffer);
         } else {
-            log(`Imprimindo Job #${job.id} (${job.type}) em [${primaryPrinter}] (${paperWidth})...`);
-            await printViaWindowsSpooler(primaryPrinter, buffer);
+            log(`Imprimindo Job #${job.id} (${job.type}) em [${primaryPrinter}] (${paperWidth}, ${process.platform})...`);
+            await printViaSystemQueue(primaryPrinter, buffer);
         }
         success = true;
     } catch (err) {
         lastError = err.message;
-        log(`Falha na impressora principal [${primaryPrinter}]: ${err.message}`, 'WARN');
+        log(`Falha na impressora principal [${usedPrinter}]: ${err.message}`, 'WARN');
 
-        // Fallback attempt
         if (fallbackPrinter && fallbackPrinter !== primaryPrinter) {
             try {
                 log(`Tentando impressora de contingência [${fallbackPrinter}]...`, 'INFO');
-                await printViaWindowsSpooler(fallbackPrinter, buffer);
+                await printViaSystemQueue(fallbackPrinter, buffer);
                 success = true;
                 usedPrinter = fallbackPrinter;
                 lastError = null;
@@ -173,22 +278,23 @@ async function pollOnce(config, installedPrinters) {
     const pollUrl = `${serverUrl}/api/print-agent/poll`;
 
     const headers = {
-        'Authorization': `Bearer ${config.token}`,
+        Authorization: `Bearer ${config.token}`,
         'Content-Type': 'application/json',
-        'Accept': 'application/json',
+        Accept: 'application/json',
     };
 
     const body = JSON.stringify({
-        version: '2.0.0',
+        version: '2.1.0',
+        platform: process.platform,
         printers: installedPrinters,
-        active_printer: config.kitchen_printer || config.default_printer || 'POS-58',
+        active_printer: config.kitchen_printer || config.default_printer || installedPrinters[0] || 'POS-58',
     });
 
     const response = await fetch(pollUrl, {
         method: 'POST',
         headers,
         body,
-    }).catch(err => {
+    }).catch((err) => {
         throw new Error(`Falha de conexão com servidor (${pollUrl}): ${err.message}`);
     });
 
@@ -209,7 +315,6 @@ async function pollOnce(config, installedPrinters) {
         log(`Processando Job #${job.id} [${job.type}]...`);
         const result = await dispatchPrint(job, config, installedPrinters);
 
-        // Send ACK
         const ackUrl = `${serverUrl}/api/print-agent/jobs/${job.id}/ack`;
         try {
             await fetch(ackUrl, {
@@ -229,18 +334,22 @@ async function pollOnce(config, installedPrinters) {
 }
 
 async function main() {
-    console.log('====================================================');
-    console.log('   PEDIDO FEITO 2.0 - AGENTE DE IMPRESSÃO LOCAL     ');
-    console.log('====================================================');
+    console.log('==========================================================');
+    console.log('  PEDIDO FEITO 2.0 - AGENTE DE IMPRESSÃO (WINDOWS/LINUX)  ');
+    console.log('==========================================================');
 
     const config = loadConfig();
+    log(`Sistema operacional: ${process.platform}`);
     log(`Servidor configurado: ${config.server_url}`);
-    log(`Modo de envio: ${config.mode || 'windows'}`);
+    log(`Modo de envio: ${config.mode || 'auto'}`);
 
-    const installedPrinters = await getWindowsPrinters();
-    log(`Impressoras Windows detectadas: ${installedPrinters.join(', ') || 'Nenhuma detectada'}`);
-
+    let installedPrinters = await discoverSystemPrinters();
+    log(`Impressoras detectadas: ${installedPrinters.join(', ') || 'Nenhuma detectada'}`);
     log('Agente de Impressão iniciado. Aguardando novos pedidos na fila...');
+
+    setInterval(async () => {
+        installedPrinters = await discoverSystemPrinters();
+    }, PRINTER_REFRESH_INTERVAL_MS);
 
     let isPolling = false;
     const intervalMs = config.poll_interval_ms || 1500;
@@ -258,7 +367,7 @@ async function main() {
     }, intervalMs);
 }
 
-main().catch(err => {
+main().catch((err) => {
     log(`Erro fatal no agente: ${err.message}`, 'FATAL');
     process.exit(1);
 });

@@ -21,11 +21,12 @@ composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
 
 # 4. Install NPM dependencies & Build Assets
 echo "Building frontend assets..."
-npm install
+npm install --legacy-peer-deps --no-audit --no-fund
 npm run build
 
-# 5. Run Database Migrations
+# 5. Ensure storage symlink & Run Database Migrations
 echo "Running database migrations..."
+php artisan storage:link || true
 php artisan migrate --force
 
 # 6. Clear and Cache Configurations
@@ -39,7 +40,7 @@ php artisan event:cache
 # 7. Restart services (Supervisor and PHP-FPM)
 echo "Restarting background workers and PHP-FPM..."
 sudo supervisorctl restart all
-sudo systemctl reload php8.4-fpm
+sudo systemctl reload php8.5-fpm
 
 # 8. Exit maintenance mode
 echo "Exiting maintenance mode..."

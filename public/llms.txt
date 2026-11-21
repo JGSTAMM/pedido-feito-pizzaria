@@ -1,0 +1,32 @@
+# Sr. & Sra. Lucchese Pizzaria — Cardápio Digital Oficial
+
+> Cardápio digital oficial da Sr. & Sra. Lucchese Pizzaria em Torres, Rio Grande do Sul (RS), operado pela plataforma Pedido Feito 2.0 e desenvolvido por Pixirica Tecnologias.
+
+## Proposta de Valor
+- Montagem personalizada de pizzas artesanais com seleção de tamanho (Broto 6 fatias ou Grande 12 fatias com até 3 sabores), bordas recheadas e personalização de ingredientes por metade/fração.
+- Cardápio digital trilíngue (Português, Inglês e Espanhol) com atualização de disponibilidade em tempo real.
+- Pagamento online via PIX Dinâmico, Cartão de Crédito e opções na entrega/balcão.
+- Modalidades de atendimento: Delivery em Torres-RS e região (48 bairros cadastrados com taxa transparente), Retirada no Balcão e Consumo na Mesa via QR Code.
+
+## Localização e Contato
+- Endereço: Rua Edmundo Ferreira Porto, 2004, Itapeva, Torres - RS, Brasil
+- Telefone / WhatsApp: +55 51 99700-4459
+- Links Canônicos:
+  - Cardápio Principal: https://sresralucchesepizzaria.pedidofeito.tech/
+  - Perfil da Loja e Horários: https://sresralucchesepizzaria.pedidofeito.tech/menu/store-profile
+
+## Modalidades e Tamanhos
+| Modalidade / Tamanho | Detalhes |
+| --- | --- |
+| Pizza Broto (6 fatias) | 1 sabor, regra especial proporcional |
+| Pizza Grande (12 fatias) | Até 3 sabores, borda recheada opcional |
+| Delivery | Entrega nos bairros de Torres-RS e região |
+| Retirada / Mesa | Pedido online com acompanhamento de status ao vivo |
+
+## Perguntas Frequentes (FAQ)
+1. **Como montar uma pizza com mais de um sabor?** Escolha o tamanho Grande (até 3 sabores), selecione seus sabores favoritos e personalize ingredientes por fração diretamente no montador.
+2. **Quais formas de pagamento são aceitas?** PIX online instantâneo, cartão de crédito e pagamentos presenciais conforme disponibilidade na finalização do pedido.
+3. **Como acompanho o preparo do meu pedido?** Após finalizar, a página de status mostra em tempo real cada etapa (Recebido, Em Preparo e Pronto/Saiu para Entrega).
+
+---
+Desenvolvido por Pixirica Tecnologias.

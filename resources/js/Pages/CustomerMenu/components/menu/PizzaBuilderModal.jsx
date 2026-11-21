@@ -4,14 +4,9 @@ import AppImage from '@/Components/AppImage';
 import { luccheseMenuTheme } from '../../theme/luccheseMenuTheme';
 import { useCart } from '../../hooks/useCart';
 import { norm } from '@/utils/normalize';
+import { extractFlavorIngredients } from '@/utils/pizzaIngredients';
 
 const BROTO_FIXED_FEE = 5;
-
-function parseIngredients(rawIngredients) {
-    if (Array.isArray(rawIngredients)) return rawIngredients.map(v => String(v).trim()).filter(Boolean);
-    if (typeof rawIngredients !== 'string') return [];
-    return rawIngredients.split(/,\s*|\s+e\s+|\s+and\s+/i).map(i => i.trim()).filter(Boolean);
-}
 
 export default function PizzaBuilderModal({
     isOpen,
@@ -366,19 +361,7 @@ export default function PizzaBuilderModal({
                                 {selectedFlavorInstances.map((inst, idx) => {
                                     const p = flavorProductsMap.get(String(inst.flavorId));
                                     const isActive = activeInstanceIndex === idx;
-                                    const rawIngredientsJson = p?.ingredients_json;
-                                    let instIngredients = [];
-                                    try {
-                                        const parsed = typeof rawIngredientsJson === 'string'
-                                            ? JSON.parse(rawIngredientsJson)
-                                            : (Array.isArray(rawIngredientsJson) ? rawIngredientsJson : []);
-                                        instIngredients = (parsed || [])
-                                            .filter(i => [true, '1', 1].includes(i?.is_available ?? true))
-                                            .map(i => i?.name)
-                                            .filter(Boolean);
-                                    } catch {
-                                        instIngredients = [];
-                                    }
+                                    const instIngredients = extractFlavorIngredients(p);
 
                                     return (
                                         <div key={`inst-${idx}`} className={`flex flex-col p-3 rounded-xl border-2 transition-all ${isActive ? 'bg-primary/10 border-primary/40 shadow-lg shadow-primary/5' : 'bg-white/5 border-transparent'}`}>

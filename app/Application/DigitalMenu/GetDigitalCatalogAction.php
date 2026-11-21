@@ -12,11 +12,19 @@ use App\Models\PizzaSize;
 use App\Models\Product;
 use App\Models\StoreSetting;
 use App\Models\Table;
+use App\Services\StoreAvailabilityService;
 
 class GetDigitalCatalogAction
 {
+    public function __construct(
+        private readonly StoreAvailabilityService $storeAvailabilityService,
+    ) {}
+
     public function execute(): array
     {
+        $storeSetting = StoreSetting::first();
+        $availability = $this->storeAvailabilityService->evaluate($storeSetting);
+
         $flavors = PizzaFlavor::query()
             ->where('is_active_delivery', true)
             ->where('show_on_digital_menu', true)
@@ -46,7 +54,8 @@ class GetDigitalCatalogAction
             });
 
         return [
-            'storeSetting' => StoreSetting::first(),
+            'storeSetting' => $storeSetting,
+            'store_availability' => $availability,
             'pizza_sizes' => PizzaSizeResource::collection(PizzaSize::all()),
             'pizza_flavors' => PizzaFlavorResource::collection($flavors),
             'products' => ProductResource::collection($products),

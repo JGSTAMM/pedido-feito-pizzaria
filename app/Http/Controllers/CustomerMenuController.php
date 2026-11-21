@@ -11,7 +11,9 @@ class CustomerMenuController extends Controller
 {
     public function index(Request $request): Response
     {
-        $hasLocaleSelection = $request->has('lang') || $request->cookie('menu_locale_selected') === '1';
+        $hasLocaleSelection = $request->has('lang')
+            || $request->has('locale')
+            || $request->cookie('menu_locale_selected') === '1';
 
         if (! $hasLocaleSelection) {
             return Inertia::render('CustomerMenu/WelcomeLanguage', [
@@ -20,7 +22,7 @@ class CustomerMenuController extends Controller
                     ['code' => 'es-ES'],
                     ['code' => 'en-US'],
                 ],
-                'menuUrl' => '/menu',
+                'menuUrl' => $request->is('/') ? '/' : '/menu',
             ]);
         }
 

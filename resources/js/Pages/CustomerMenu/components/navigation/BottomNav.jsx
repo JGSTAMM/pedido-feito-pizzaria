@@ -8,10 +8,12 @@ export default function BottomNav({ onOpenProfile }) {
     const { url } = usePage();
     const { cartItemCount } = useCart();
 
+    const cleanUrl = url.split('?')[0];
     const isActive = (path) => {
-        if (path === '/menu' && url === '/menu') return true;
-        if (path !== '/menu' && url.startsWith(path)) return true;
-        return false;
+        if (path === '/') {
+            return cleanUrl === '/' || cleanUrl === '/menu';
+        }
+        return cleanUrl.startsWith(path);
     };
 
     useEffect(() => {
@@ -40,8 +42,8 @@ export default function BottomNav({ onOpenProfile }) {
         <div className="fixed bottom-0 left-0 right-0 z-40 pb-safe w-full border-t border-white/5 bg-[#131118]/90 backdrop-blur-xl supports-[backdrop-filter]:bg-[#131118]/70">
             <nav className="mx-auto flex h-16 max-w-lg items-center justify-around px-4">
                 <Link
-                    href="/menu"
-                    className={`flex flex-col items-center justify-center w-full h-full gap-1 transition-colors ${isActive('/menu') ? 'text-primary' : 'text-text-muted hover:text-white'
+                    href="/"
+                    className={`flex flex-col items-center justify-center w-full h-full gap-1 transition-colors ${isActive('/') ? 'text-primary' : 'text-text-muted hover:text-white'
                         }`}
                 >
                     <span className="material-symbols-outlined text-[22px] font-light leading-none block">home</span>

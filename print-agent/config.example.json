@@ -1,12 +1,14 @@
 {
-  "server_url": "https://suapizzaria.com.br",
+  "server_url": "https://sresralucchesepizzaria.pedidofeito.tech",
   "token": "COLE_O_TOKEN_GERADO_NO_SISTEMA_AQUI",
   "poll_interval_ms": 1500,
-  "mode": "windows",
+  "mode": "auto",
   "default_printer": "POS-58",
-  "kitchen_printer": "POS-80 CORRETA",
-  "kitchen_paper_width": "80mm",
+  "kitchen_printer": "POS-58",
+  "kitchen_paper_width": "58mm",
   "cashier_printer": "POS-58",
   "cashier_paper_width": "58mm",
-  "fallback_printer": "POS-58"
+  "fallback_printer": "POS-58",
+  "tcp_ip": "",
+  "tcp_port": 9100
 }

@@ -4,11 +4,15 @@ namespace App\Http\Middleware;
 
 use App\Models\Order;
 use App\Models\StoreSetting;
+use App\Services\StoreAvailabilityService;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
 {
+    public function __construct(
+        private readonly StoreAvailabilityService $storeAvailabilityService,
+    ) {}
     /**
      * The root template that's loaded on the first page visit.
      *
@@ -38,6 +42,7 @@ class HandleInertiaRequests extends Middleware
     public function share(Request $request): array
     {
         $storeSetting = StoreSetting::first();
+        $storeAvailability = $this->storeAvailabilityService->evaluate($storeSetting);
 
         $phone = $request->cookie('customer_phone') ?? session('customer_phone', '');
         $activeOrdersCount = 0;
@@ -50,6 +55,9 @@ class HandleInertiaRequests extends Middleware
 
         return [
             ...parent::share($request),
+            'auth' => [
+                'user' => $request->user()?->only(['id', 'name', 'email', 'role']),
+            ],
             'appName' => $storeSetting?->store_name ?? config('app.name', 'Pedido Feito'),
             'locale' => app()->getLocale(),
             'fallbackLocale' => config('app.fallback_locale'),
@@ -74,6 +82,7 @@ class HandleInertiaRequests extends Middleware
                 'receipt_show_cnpj' => $storeSetting->receipt_show_cnpj,
                 'whatsapp_phone_number' => $storeSetting->whatsapp_phone_number,
             ] : null,
+            'storeAvailability' => $storeAvailability,
             'activeOrdersCount' => $activeOrdersCount,
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),

@@ -37,6 +37,14 @@ class FlavorController extends Controller
             $validated['image'] = $path;
         }
 
+        if (array_key_exists('ingredients_json', $validated)) {
+            $summary = PizzaFlavor::formatIngredientsSummary($validated['ingredients_json']);
+            if ($summary !== null) {
+                $validated['ingredients'] = $summary;
+                $validated['description'] = $summary;
+            }
+        }
+
         PizzaFlavor::create($validated);
 
         return redirect()->back()->with('success', 'Sabor criado com sucesso.');
@@ -68,6 +76,14 @@ class FlavorController extends Controller
             $validated['image'] = null;
         } else {
             unset($validated['image']);
+        }
+
+        if (array_key_exists('ingredients_json', $validated)) {
+            $summary = PizzaFlavor::formatIngredientsSummary($validated['ingredients_json']);
+            if ($summary !== null) {
+                $validated['ingredients'] = $summary;
+                $validated['description'] = $summary;
+            }
         }
 
         $flavor->update($validated);

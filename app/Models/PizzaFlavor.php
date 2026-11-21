@@ -33,7 +33,47 @@ class PizzaFlavor extends Model
 
     protected function imageUrl(): Attribute
     {
-        return Attribute::get(fn () => $this->image ? asset('storage/'.$this->image) : null
-        );
+        return Attribute::get(fn () => $this->image ? asset('storage/'.$this->image) : null);
+    }
+
+    /**
+     * Format flavor payload consistently for POS, Floor, and Waiter builders.
+     *
+     * @return array<string, mixed>
+     */
+    public function toStaffBuilderArray(): array
+    {
+        return [
+            'id' => $this->id,
+            'name' => $this->name,
+            'price' => (float) $this->base_price,
+            'ingredients' => $this->ingredients,
+            'ingredients_json' => $this->ingredients_json,
+            'description' => $this->description,
+            'flavor_category' => $this->flavor_category,
+            'category' => 'Pizzas',
+            'image_url' => $this->image_url,
+            'type' => 'pizza_flavor',
+        ];
+    }
+
+    /**
+     * Build a human-readable summary string from structured ingredients_json.
+     *
+     * @param  array<int, array<string, mixed>>|null  $ingredientsJson
+     */
+    public static function formatIngredientsSummary(?array $ingredientsJson): ?string
+    {
+        if (empty($ingredientsJson)) {
+            return null;
+        }
+
+        $names = collect($ingredientsJson)
+            ->filter(fn ($item) => (bool) ($item['is_available'] ?? true))
+            ->map(fn ($item) => trim((string) ($item['name'] ?? '')))
+            ->filter()
+            ->values();
+
+        return $names->isNotEmpty() ? $names->implode(', ') : null;
     }
 }

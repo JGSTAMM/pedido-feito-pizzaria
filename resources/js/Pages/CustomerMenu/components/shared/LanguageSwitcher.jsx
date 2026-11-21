@@ -3,10 +3,11 @@ import { useState } from 'react';
 import { luccheseMenuTheme } from '../../theme/luccheseMenuTheme';
 
 export default function LanguageSwitcher({ scrolled }) {
-    const { props } = usePage();
+    const { props, url } = usePage();
     const rawLocale = props.locale || 'pt-BR';
     const currentLocale = rawLocale.replace('_', '-');
     const [isOpen, setIsOpen] = useState(false);
+    const basePath = (url || '/').split('?')[0] === '/menu' ? '/menu' : '/';
 
     const languages = [
         { code: 'pt-BR', label: 'PT', flag: 'https://flagcdn.com/w40/br.png' },
@@ -35,7 +36,7 @@ export default function LanguageSwitcher({ scrolled }) {
                         {languages.map((lang) => (
                             <Link
                                 key={lang.code}
-                                href={`/menu?locale=${lang.code}`}
+                                href={`${basePath}?locale=${lang.code}`}
                                 preserveScroll
                                 onClick={() => {
                                     localStorage.setItem('menu_locale', lang.code);

@@ -4,15 +4,18 @@ import { useCart } from './hooks/useCart';
 import { useCheckout } from './hooks/useCheckout';
 import { useDigitalMenuQuery } from './hooks/useDigitalMenuQuery';
 import CheckoutFormPremium from './components/checkout/CheckoutFormPremium';
+import StoreClosedBanner from './components/shared/StoreClosedBanner';
 import { luccheseMenuTheme } from './theme/luccheseMenuTheme';
 import { useEffect, useState } from 'react';
 
 export default function Checkout() {
     const { t, formatCurrency } = useI18n();
-    const { checkoutEndpoint } = usePage().props;
+    const { checkoutEndpoint, storeAvailability } = usePage().props;
     const { items, clearCart, cartTotal, cartItemCount } = useCart();
 
     const { data: catalogData, isLoading: isCatalogLoading, error: catalogLoadFailed, refetch: retryLoadCatalog } = useDigitalMenuQuery();
+    const effectiveAvailability = catalogData?.store_availability ?? storeAvailability ?? null;
+    const isStoreClosed = Boolean(effectiveAvailability && !effectiveAvailability.is_accepting_orders);
 
     const {
         formValues,
@@ -57,6 +60,8 @@ export default function Checkout() {
             </header>
 
             <div className="mx-auto max-w-lg px-4 py-8 space-y-6">
+                <StoreClosedBanner storeAvailability={effectiveAvailability} />
+
                 <div className={`${luccheseMenuTheme.glass} rounded-3xl p-6 relative animate-in fade-in zoom-in-95 duration-500`}>
                     <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
                         <span className="material-symbols-outlined text-8xl">shopping_cart_checkout</span>
@@ -79,7 +84,10 @@ export default function Checkout() {
                         tables={catalogData?.tables || []}
                         storeSetting={catalogData?.storeSetting}
                         handleSubmit={(e) => {
-                            // Ensure the submit handles the event properly
+                            if (isStoreClosed) {
+                                e?.preventDefault?.();
+                                return;
+                            }
                             handleSubmit(e);
                         }}
                         handleCreditCardToken={handleCreditCardToken}
@@ -148,12 +156,14 @@ export default function Checkout() {
                 <div className="pt-4 animate-in slide-in-from-bottom-4 duration-500 delay-200 fill-mode-both">
                     <button
                         onClick={handleSubmit}
-                        disabled={isSubmitting || isCartEmpty}
-                        className="w-full rounded-full bg-primary py-5 font-black uppercase tracking-[0.15em] text-[#0D0D12] text-xs hover:bg-primary-dark hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_0_24px_rgba(90,90,246,0.35)] disabled:opacity-50 disabled:hover:scale-100 disabled:shadow-none"
+                        disabled={isSubmitting || isCartEmpty || isStoreClosed}
+                        className="w-full rounded-full bg-primary py-5 font-black uppercase tracking-[0.15em] text-[#0D0D12] text-xs hover:bg-primary-dark hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_0_24px_rgba(90,90,246,0.35)] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:shadow-none"
                     >
-                        {isSubmitting
-                            ? t('digital_menu.checkout.submitting_order')
-                            : t('digital_menu.checkout.submit_order')}
+                        {isStoreClosed
+                            ? t('digital_menu.availability.checkout_blocked_btn')
+                            : (isSubmitting
+                                ? t('digital_menu.checkout.submitting_order')
+                                : t('digital_menu.checkout.submit_order'))}
                     </button>
 
                     <Link

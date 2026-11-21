@@ -17,7 +17,7 @@ class NeighborhoodSeeder extends Seeder
                 'Centro' => 12,
                 'Beira mar' => 12,
                 'Predial' => 12,
-                'Centenário' => 15,
+                'Centenário' => 18,
                 'Curtume' => 12,
                 'Campo bonito' => 40,
                 'Dunas' => 12,
@@ -51,12 +51,12 @@ class NeighborhoodSeeder extends Seeder
                 'Centro' => 15,
                 'Progresso' => 15,
                 'Estaleiro' => 15,
-                'Silveira' => 15,
-                'Novo passo' => 20,
+                'Silveira' => 18,
+                'Novo passo' => 25,
                 'Bosque' => 25,
-                'Alto feliz' => 18,
+                'Alto feliz' => 20,
                 'Passárgada' => 18,
-                'Barra Velha' => 20,
+                'Barra Velha' => 25,
                 'Praia Azul' => 25,
                 'Caravelle' => 25,
                 'Mirratorres' => 25,
@@ -73,7 +73,7 @@ class NeighborhoodSeeder extends Seeder
                 $deliveryFee = is_array($info) ? $info['preco'] : $info;
                 $observation = is_array($info) && isset($info['observacao']) ? $info['observacao'] : null;
 
-                Neighborhood::firstOrCreate(
+                Neighborhood::updateOrCreate(
                     [
                         'name' => $name,
                         'city' => $city,

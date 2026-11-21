@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useI18n } from '@/hooks/useI18n';
 import { norm } from '@/utils/normalize';
+import { extractFlavorIngredients } from '@/utils/pizzaIngredients';
 
 const BORDER_PRICE = 20.00;
 
@@ -45,6 +46,7 @@ export default function PizzaBuilderModal({ isOpen, onClose, onConfirm, pizzaFla
     
     // Sub-modals states
     const [customizingFlavor, setCustomizingFlavor] = useState(null);
+    const [editingFlavorIndex, setEditingFlavorIndex] = useState(null);
     const [tempExcluded, setTempExcluded] = useState(new Set());
     const [viewingInfoFlavor, setViewingInfoFlavor] = useState(null);
     
@@ -73,49 +75,10 @@ export default function PizzaBuilderModal({ isOpen, onClose, onConfirm, pizzaFla
         return pizzaFlavors.filter(f => norm(f.name).includes(t));
     }, [pizzaFlavors, searchTerm]);
 
-    const flavorIngredientsToToggle = useMemo(() => {
-        if (!customizingFlavor) return [];
-        
-        const rawIngredientsJson = customizingFlavor.ingredients_json;
-        let parsedIngredients = [];
-        
-        try {
-            parsedIngredients = typeof rawIngredientsJson === 'string'
-                ? JSON.parse(rawIngredientsJson)
-                : (Array.isArray(rawIngredientsJson) ? rawIngredientsJson : []);
-        } catch (e) {
-            parsedIngredients = [];
-        }
-
-        // --- LAYER 2: Fallback for bundled strings in JSON ---
-        if (parsedIngredients.length === 1 && typeof parsedIngredients[0] === 'string' && (parsedIngredients[0].includes(',') || parsedIngredients[0].toLowerCase().includes(' e '))) {
-            const splitNames = parsedIngredients[0]
-                .split(/(?:,|\s+e\s+)+/i)
-                .map(s => s.trim())
-                .filter(Boolean);
-            parsedIngredients = splitNames.map(name => ({ name, is_available: true }));
-        }
-
-        if (parsedIngredients && parsedIngredients.length > 0) {
-            // Ensure we handle both object {name, is_available} and raw string array
-            return parsedIngredients
-                .map(i => typeof i === 'string' ? i : (i?.name || ''))
-                .filter(Boolean);
-        }
-
-        // Legacy fallback for the 'ingredients' text field
-        const parsed = (customizingFlavor.ingredients || '')
-            .replace(/\([^)]*\)/g, '')
-            .split(/(?:,|\s+e\s+|\|)+/i)
-            .map(s => s.trim())
-            .filter(Boolean);
-        const unique = [...new Set(parsed)];
-        if (customizingFlavor.flavor_category === 'salgada') {
-            const base = ['Molho Artesanal', 'Queijo Mussarela'];
-            return [...base, ...unique.filter(i => !base.includes(i))];
-        }
-        return unique;
-    }, [customizingFlavor]);
+    const flavorIngredientsToToggle = useMemo(
+        () => extractFlavorIngredients(customizingFlavor),
+        [customizingFlavor]
+    );
 
     // Handlers
     const reset = () => {
@@ -126,6 +89,7 @@ export default function PizzaBuilderModal({ isOpen, onClose, onConfirm, pizzaFla
         setSearchTerm('');
         setObservation('');
         setCustomizingFlavor(null);
+        setEditingFlavorIndex(null);
         setTempExcluded(new Set());
         setViewingInfoFlavor(null);
     };
@@ -158,12 +122,28 @@ export default function PizzaBuilderModal({ isOpen, onClose, onConfirm, pizzaFla
         // Otherwise, if not full, open customization sub-modal
         if (selectedFlavors.length >= maxFlavors) return;
         
+        setEditingFlavorIndex(null);
         setCustomizingFlavor(flavor);
         setTempExcluded(new Set());
     };
 
+    const editSelectedFlavorIngredients = (flavor, index) => {
+        setEditingFlavorIndex(index);
+        setCustomizingFlavor(flavor);
+        setTempExcluded(new Set(flavor.excludedIngredients || []));
+    };
+
     const confirmFlavorCustomization = () => {
-        setSelectedFlavors(prev => [...prev, { ...customizingFlavor, excludedIngredients: new Set(tempExcluded) }]);
+        if (editingFlavorIndex !== null) {
+            setSelectedFlavors(prev => prev.map((item, idx) => (
+                idx === editingFlavorIndex
+                    ? { ...item, excludedIngredients: new Set(tempExcluded) }
+                    : item
+            )));
+        } else {
+            setSelectedFlavors(prev => [...prev, { ...customizingFlavor, excludedIngredients: new Set(tempExcluded) }]);
+        }
+        setEditingFlavorIndex(null);
         setCustomizingFlavor(null);
     };
 
@@ -318,15 +298,25 @@ export default function PizzaBuilderModal({ isOpen, onClose, onConfirm, pizzaFla
                             {/* Selected Flavors Chips */}
                             {selectedFlavors.length > 0 && (
                                 <div className="flex flex-wrap gap-2 mb-5">
-                                    {selectedFlavors.map(f => (
-                                        <span key={f.id} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary/15 text-primary border border-primary/20 text-sm font-bold shadow-sm">
+                                    {selectedFlavors.map((f, idx) => (
+                                        <span key={`${f.id}-${idx}`} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary/15 text-primary border border-primary/20 text-sm font-bold shadow-sm">
                                             <span className="text-primary/70">{selectedFlavors.length > 1 ? `1/${selectedFlavors.length}` : 'Inteira'}</span> {f.name}
                                             {f.excludedIngredients && f.excludedIngredients.size > 0 && (
-                                                <span className="text-xs text-red-400 bg-red-400/10 px-1.5 py-0.5 rounded ml-1" title="Restrições aplicadas">
-                                                    !
+                                                <span className="text-xs text-red-400 bg-red-400/10 px-1.5 py-0.5 rounded ml-0.5" title="Restrições aplicadas">
+                                                    -{f.excludedIngredients.size}
                                                 </span>
                                             )}
-                                            <button onClick={() => toggleFlavor(f)} className="text-primary/60 hover:text-primary ml-1"><span className="material-symbols-outlined text-[16px]">close</span></button>
+                                            <button
+                                                type="button"
+                                                onClick={() => editSelectedFlavorIngredients(f, idx)}
+                                                title="Personalizar ingredientes"
+                                                className="text-primary/80 hover:text-white ml-1 flex items-center"
+                                            >
+                                                <span className="material-symbols-outlined text-[15px]">edit</span>
+                                            </button>
+                                            <button type="button" onClick={() => toggleFlavor(f)} className="text-primary/60 hover:text-red-400 flex items-center">
+                                                <span className="material-symbols-outlined text-[16px]">close</span>
+                                            </button>
                                         </span>
                                     ))}
                                 </div>

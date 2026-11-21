@@ -249,8 +249,41 @@ class PrintQueueService
             'is_online' => $isOnline,
             'last_seen' => $meta['last_seen'] ?? null,
             'version' => $meta['version'] ?? null,
+            'platform' => $meta['platform'] ?? null,
             'printers' => $meta['printers'] ?? [],
             'active_printer' => $meta['active_printer'] ?? null,
         ];
+    }
+
+    /**
+     * Summarize print job queue counts for admin observability.
+     *
+     * @return array<string, int>
+     */
+    public function getQueueStats(): array
+    {
+        return [
+            'pending' => PrintJob::where('status', 'pending')->count(),
+            'processing' => PrintJob::where('status', 'processing')->count(),
+            'failed' => PrintJob::where('status', 'failed')->count(),
+            'printed_today' => PrintJob::where('status', 'printed')
+                ->whereDate('printed_at', today())
+                ->count(),
+        ];
+    }
+
+    public function clearPendingJobs(): int
+    {
+        return PrintJob::whereIn('status', ['pending', 'processing'])->delete();
+    }
+
+    public function retryFailedJobs(): int
+    {
+        return PrintJob::where('status', 'failed')->update([
+            'status' => 'pending',
+            'attempts' => 0,
+            'claimed_at' => null,
+            'error_message' => null,
+        ]);
     }
 }

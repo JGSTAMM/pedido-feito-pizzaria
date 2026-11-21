@@ -2,32 +2,14 @@ import React, { useEffect, useRef, useState, useMemo } from 'react';
 import useI18n from '@/hooks/useI18n';
 import { luccheseMenuTheme } from '../../theme/luccheseMenuTheme';
 import AppImage from '@/Components/AppImage';
-function parseIngredients(rawIngredients) {
-    if (Array.isArray(rawIngredients)) return rawIngredients.map(v => String(v).trim()).filter(Boolean);
-    if (typeof rawIngredients !== 'string') return [];
-    return rawIngredients.split(/,\s*|\s+e\s+|\s+and\s+/i).map(i => i.trim()).filter(Boolean);
-}
+import { extractFlavorIngredients } from '@/utils/pizzaIngredients';
 
 export default function FlavorDetailModal({ isOpen, onClose, product, onAddFlavor }) {
     const { t, formatCurrency, translateDynamic } = useI18n();
     const previouslyFocusedElementRef = useRef(null);
     const [removedIngredients, setRemovedIngredients] = useState([]);
 
-    const ingredientsList = useMemo(() => {
-        if (!product) return [];
-        const rawIngredientsJson = product.ingredients_json;
-        try {
-            const parsed = typeof rawIngredientsJson === 'string'
-                ? JSON.parse(rawIngredientsJson)
-                : (Array.isArray(rawIngredientsJson) ? rawIngredientsJson : []);
-            return (parsed || [])
-                .filter(i => [true, '1', 1].includes(i?.is_available ?? true))
-                .map(i => i?.name)
-                .filter(Boolean);
-        } catch {
-            return [];
-        }
-    }, [product]);
+    const ingredientsList = useMemo(() => extractFlavorIngredients(product), [product]);
 
     // Handle Escape key with capture
     useEffect(() => {

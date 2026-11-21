@@ -10,6 +10,7 @@ import { buildCatalogCategories, buildFeaturedProducts } from './utils/menuHelpe
 // Layout Components
 import MenuHeader from './components/layout/MenuHeader';
 import BottomNav from './components/navigation/BottomNav';
+import StoreClosedBanner from './components/shared/StoreClosedBanner';
 
 // Identity Components
 import IdentityModal from './components/identity/IdentityModal';
@@ -24,8 +25,9 @@ import FlavorDetailModal from './components/menu/FlavorDetailModal';
 
 export default function CustomerMenu() {
     const { t, formatCurrency, translateDynamic } = useI18n();
-    const { storeSetting, lastOrder } = usePage().props;
+    const { storeSetting, storeAvailability, lastOrder } = usePage().props;
     const { data, isLoading } = useDigitalMenuQuery();
+    const effectiveAvailability = data?.store_availability ?? storeAvailability ?? null;
 
     // UI State
     const [isIdentityModalOpen, setIsIdentityModalOpen] = useState(false);
@@ -112,11 +114,16 @@ export default function CustomerMenu() {
 
             <MenuHeader
                 storeSetting={storeSetting}
+                storeAvailability={effectiveAvailability}
                 t={t}
                 todayHours={todayHours}
                 dynamicHoursSummary={dynamicHoursSummary}
                 scrolled={scrolled}
             />
+
+            <div className="px-4 mt-4">
+                <StoreClosedBanner storeAvailability={effectiveAvailability} />
+            </div>
 
             <CategoryTabs
                 catalogCategories={catalogCategories}
@@ -167,6 +174,12 @@ export default function CustomerMenu() {
                     onOpenPizzaBuilder={() => setIsPizzaBuilderOpen(true)}
                 />
             </div>
+
+            <footer className="mx-auto max-w-lg px-6 pt-10 pb-6 text-center space-y-3 text-xs text-white/40">
+                <p className="font-semibold text-white/50">
+                    Desenvolvido com excelência por <span className="text-white/75 font-bold">Pixirica Tecnologias</span>
+                </p>
+            </footer>
 
             {/* Float Cart Button Mobile */}
             {cartItemCount > 0 && (

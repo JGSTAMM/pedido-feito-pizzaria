@@ -37,6 +37,7 @@ class PrintAgentController extends Controller
         // Record heartbeat
         $this->printQueueService->recordHeartbeat([
             'version' => (string) $request->input('version', '1.0.0'),
+            'platform' => (string) $request->input('platform', ''),
             'printers' => (array) $request->input('printers', []),
             'active_printer' => (string) $request->input('active_printer', ''),
             'ip' => $request->ip(),

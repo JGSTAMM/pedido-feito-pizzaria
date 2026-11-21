@@ -129,6 +129,8 @@ class DatabaseSeeder extends Seeder
             ]));
         }
 
+        $this->call(PizzaFlavorIngredientsSeeder::class);
+
         // =============================================
         // EXTRAS (Bordas + Pizza do Dia)
         // =============================================

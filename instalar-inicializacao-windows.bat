@@ -12,14 +12,14 @@ echo sLinkFile = "%STARTUP_DIR%\PedidoFeito-PrintAgent.lnk" >> "%SHORTCUT_VBS%"
 echo Set oLink = oWS.CreateShortcut(sLinkFile) >> "%SHORTCUT_VBS%"
 echo oLink.TargetPath = "%~dp0iniciar-agente-impressao.bat" >> "%SHORTCUT_VBS%"
 echo oLink.WorkingDirectory = "%~dp0" >> "%SHORTCUT_VBS%"
-echo oLink.Description = "Agente de Impressão Pedido Feito 2.0" >> "%SHORTCUT_VBS%"
+echo oLink.Description = "Agente de Impressao Pedido Feito 2.0" >> "%SHORTCUT_VBS%"
 echo oLink.Save >> "%SHORTCUT_VBS%"
 
 cscript /nologo "%SHORTCUT_VBS%"
 del "%SHORTCUT_VBS%"
 
 echo.
-echo [SUCESSO] O Agente de Impressão foi adicionado à inicialização do Windows!
-echo Ele iniciará automaticamente toda vez que este computador for ligado.
+echo [SUCESSO] O Agente de Impressao foi adicionado a inicializacao do Windows!
+echo Ele iniciara automaticamente toda vez que este computador for ligado.
 echo.
 pause

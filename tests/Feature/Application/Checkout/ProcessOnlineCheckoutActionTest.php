@@ -3,9 +3,11 @@
 namespace Tests\Feature\Application\Checkout;
 
 use App\Application\Checkout\ProcessOnlineCheckoutAction;
+use App\Models\CashRegister;
 use App\Models\Neighborhood;
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\User;
 use App\Services\PaymentGatewayService;
 use Exception;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -16,10 +18,23 @@ class ProcessOnlineCheckoutActionTest extends TestCase
 {
     use RefreshDatabase;
 
+    private function openCashRegister(): CashRegister
+    {
+        $user = User::factory()->create(['role' => 'admin']);
+
+        return CashRegister::create([
+            'user_id' => $user->id,
+            'opening_balance' => 100.00,
+            'status' => 'open',
+            'opened_at' => now(),
+        ]);
+    }
+
     public function test_it_creates_order_and_payment_successfully()
     {
         Order::unguard();
         // 1. Arrange
+        $this->openCashRegister();
         $product = Product::factory()->create(['price' => 20.00]);
         $neighborhood = Neighborhood::forceCreate([
             'name' => 'Teste',
@@ -86,6 +101,7 @@ class ProcessOnlineCheckoutActionTest extends TestCase
     public function test_it_rolls_back_transaction_on_payment_failure()
     {
         // 1. Arrange
+        $this->openCashRegister();
         $product = Product::factory()->create(['price' => 20.00]);
 
         $validatedData = [

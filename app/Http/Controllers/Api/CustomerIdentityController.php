@@ -33,6 +33,10 @@ class CustomerIdentityController extends Controller
         $customer = Customer::where('phone', $phone)->first();
 
         if ($customer) {
+            if ($request->hasSession()) {
+                $request->session()->put('customer_phone', $customer->phone);
+            }
+
             $response = response()->json([
                 'success' => true,
                 'found' => true,
@@ -52,6 +56,10 @@ class CustomerIdentityController extends Controller
                 'name' => $name,
                 'phone' => $phone,
             ]);
+
+            if ($request->hasSession()) {
+                $request->session()->put('customer_phone', $customer->phone);
+            }
 
             $response = response()->json([
                 'success' => true,

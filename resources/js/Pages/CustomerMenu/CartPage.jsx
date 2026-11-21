@@ -1,14 +1,20 @@
-import { Link, router } from '@inertiajs/react';
+import { Link, router, usePage } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 import useI18n from '@/hooks/useI18n';
 import { useCart } from './hooks/useCart';
+import { useDigitalMenuQuery } from './hooks/useDigitalMenuQuery';
 import IdentityModal from './components/identity/IdentityModal';
 import ProfileModal from './components/identity/ProfileModal';
 import BottomNav from './components/navigation/BottomNav';
+import StoreClosedBanner from './components/shared/StoreClosedBanner';
 import { luccheseMenuTheme } from './theme/luccheseMenuTheme';
 
 export default function CartPage() {
     const { t, formatCurrency } = useI18n();
+    const { storeAvailability } = usePage().props;
+    const { data: catalogData } = useDigitalMenuQuery();
+    const effectiveAvailability = catalogData?.store_availability ?? storeAvailability ?? null;
+    const isStoreClosed = Boolean(effectiveAvailability && !effectiveAvailability.is_accepting_orders);
     const { items, updateQuantity, removeItem, cartTotal, cartItemCount } = useCart();
 
     const [isIdentityModalOpen, setIsIdentityModalOpen] = useState(false);
@@ -27,6 +33,9 @@ export default function CartPage() {
     }, []);
 
     const handleCheckoutClick = () => {
+        if (isStoreClosed) {
+            return;
+        }
         if (!identity) {
             setIsIdentityModalOpen(true);
         } else {
@@ -162,11 +171,16 @@ export default function CartPage() {
                             </div>
                         </div>
 
+                        <StoreClosedBanner storeAvailability={effectiveAvailability} />
+
                         <button
                             onClick={handleCheckoutClick}
-                            className="w-full rounded-full bg-primary py-5 font-black uppercase tracking-[0.15em] text-[#0D0D12] text-xs hover:bg-primary-dark hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_0_24px_rgba(90,90,246,0.35)]"
+                            disabled={isStoreClosed}
+                            className="w-full rounded-full bg-primary py-5 font-black uppercase tracking-[0.15em] text-[#0D0D12] text-xs hover:bg-primary-dark hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_0_24px_rgba(90,90,246,0.35)] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:shadow-none"
                         >
-                            {t('digital_menu.checkout.submit_order') || 'Finalizar Pedido'}
+                            {isStoreClosed
+                                ? t('digital_menu.availability.checkout_blocked_btn')
+                                : (t('digital_menu.checkout.submit_order') || 'Finalizar Pedido')}
                         </button>
 
                         <Link
