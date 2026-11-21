@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Application\CashRegister\BuildCashRegisterHistoryAction;
 use App\Application\CashRegister\BuildCashRegisterSummaryAction;
 use App\Application\CashRegister\CashRegisterLockService;
+use App\Application\CashRegister\EnsureNoPendingOrdersForCloseAction;
 use App\Application\Orders\OrderActionException;
 use App\Models\CashRegister;
 use Illuminate\Http\Request;
@@ -17,6 +18,7 @@ class CashRegisterController extends Controller
         private readonly BuildCashRegisterSummaryAction $buildCashRegisterSummaryAction,
         private readonly BuildCashRegisterHistoryAction $buildCashRegisterHistoryAction,
         private readonly CashRegisterLockService $cashRegisterLockService,
+        private readonly EnsureNoPendingOrdersForCloseAction $ensureNoPendingOrdersForCloseAction,
     ) {}
 
     public function index(Request $request)
@@ -26,6 +28,7 @@ class CashRegisterController extends Controller
             ->first();
 
         $summary = $register ? $this->buildCashRegisterSummaryAction->execute($register) : null;
+        $blockingOrders = $register ? $this->ensureNoPendingOrdersForCloseAction->getBlockingOrders($register) : [];
 
         return Inertia::render('CashRegister/Index', [
             'register' => $register ? [
@@ -35,6 +38,7 @@ class CashRegisterController extends Controller
                 'opening_balance' => (float) $register->opening_balance,
             ] : null,
             'summary' => $summary,
+            'blockingOrders' => $blockingOrders,
             'history' => $this->buildCashRegisterHistoryAction->execute($request),
             'filters' => [
                 'start_date' => $request->start_date ?? null,

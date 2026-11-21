@@ -4,7 +4,7 @@ import AppLayout from '@/Layouts/AppLayout';
 import useI18n from '@/hooks/useI18n';
 import CustomNumberInput from '@/Components/CustomNumberInput';
 
-export default function Index({ register = null, summary = null, history = null, filters = {} }) {
+export default function Index({ register = null, summary = null, blockingOrders = [], history = null, filters = {} }) {
     const { t, formatCurrency } = useI18n();
     const { flash, errors } = usePage().props;
     const [openingBalance, setOpeningBalance] = useState('');
@@ -129,6 +129,35 @@ export default function Index({ register = null, summary = null, history = null,
                                     {t('cashRegister.management.openBadge')}
                                 </div>
                             </div>
+
+                            {/* Blocking Orders Alert */}
+                            {blockingOrders && blockingOrders.length > 0 && (
+                                <div className="rounded-2xl p-5 bg-amber-500/10 border border-amber-500/30 text-amber-200">
+                                    <div className="flex items-center gap-3 mb-3">
+                                        <span className="material-symbols-outlined text-amber-400">warning</span>
+                                        <h5 className="font-bold text-sm text-white">
+                                            {blockingOrders.length} pedido(s) em aberto ou sem pagamento impedem o fechamento do caixa:
+                                        </h5>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+                                        {blockingOrders.map(order => (
+                                            <div key={order.id} className="flex items-center justify-between p-3 rounded-xl bg-background-dark/60 border border-amber-500/20">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="font-mono font-bold text-amber-400">#{order.short_code}</span>
+                                                    <span className="text-white font-medium">{order.customer_name || order.table_name || 'Balcão'}</span>
+                                                </div>
+                                                <div className="flex items-center gap-3">
+                                                    <span className="text-text-muted capitalize">{order.status}</span>
+                                                    <span className={order.is_paid ? 'text-emerald-400 font-bold' : 'text-red-400 font-bold'}>
+                                                        {order.is_paid ? 'Pago' : 'Não Pago'}
+                                                    </span>
+                                                    <span className="text-white font-mono font-bold">{formatCurrency(order.total_amount)}</span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Summary Cards */}
                             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
