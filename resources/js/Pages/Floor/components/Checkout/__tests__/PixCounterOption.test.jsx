@@ -77,8 +77,8 @@ describe('PIX Counter (Fixed QR) vs PIX Online (Mercado Pago)', () => {
         const { rerender } = render(<CheckoutModal {...baseProps} />);
 
         // Both PIX methods are rendered
-        expect(screen.getByRole('button', { name: /floor\.drawer\.methods\.pix_balcao/i })).toBeInTheDocument();
-        expect(screen.getByRole('button', { name: /floor\.drawer\.methods\.pix$/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /floor\.drawer\.methods\.pix_manual/i })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /floor\.drawer\.methods\.pix_online/i })).toBeInTheDocument();
 
         // Adding pix_balcao records payment locally without calling Mercado Pago API
         const addBtn = screen.getByRole('button', { name: 'add' });
@@ -88,7 +88,7 @@ describe('PIX Counter (Fixed QR) vs PIX Online (Mercado Pago)', () => {
         expect(setPayments).toHaveBeenCalledTimes(1);
 
         // Switching to online pix triggers generatePixPayment instead of adding immediately
-        rerender(<CheckoutModal {...baseProps} checkoutPaymentMethod="pix" />);
+        rerender(<CheckoutModal {...baseProps} checkoutPaymentMethod="pix_online" />);
         fireEvent.click(screen.getByRole('button', { name: 'add' }));
 
         expect(generatePixPayment).toHaveBeenCalledWith(80);

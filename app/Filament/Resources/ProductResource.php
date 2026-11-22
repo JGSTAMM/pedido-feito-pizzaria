@@ -4,9 +4,16 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\ProductResource\Pages;
 use App\Models\Product;
+use BackedEnum;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
 
@@ -14,7 +21,7 @@ class ProductResource extends Resource
 {
     protected static ?string $model = Product::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-shopping-bag';
+    protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-shopping-bag';
 
     protected static ?string $navigationLabel = 'Produtos';
 
@@ -26,10 +33,10 @@ class ProductResource extends Resource
     //  FORM
     // ------------------------------------------------------------------
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form->schema([
-            Forms\Components\Section::make('Informações do Produto')->schema([
+        return $schema->components([
+            Section::make('Informações do Produto')->columnSpanFull()->schema([
                 Forms\Components\TextInput::make('name')
                     ->label('Nome')
                     ->required()
@@ -66,10 +73,11 @@ class ProductResource extends Resource
             // ----------------------------------------------------------
             //  CHANNEL VISIBILITY (Phase 1)
             // ----------------------------------------------------------
-            Forms\Components\Section::make('Disponibilidade por Canal')
+            Section::make('Disponibilidade por Canal')
+                ->columnSpanFull()
                 ->description('Controle se o produto aparece no Delivery e/ou no Salão (PDV) independentemente.')
                 ->schema([
-                    Forms\Components\Grid::make(2)->schema([
+                    Grid::make(2)->columnSpanFull()->schema([
                         Forms\Components\Toggle::make('is_active_delivery')
                             ->label('Ativo no Delivery')
                             ->helperText('Desative para esconder do app de delivery.')
@@ -85,7 +93,8 @@ class ProductResource extends Resource
             // ----------------------------------------------------------
             //  PRODUCT VARIATIONS (Phase 1)
             // ----------------------------------------------------------
-            Forms\Components\Section::make('Variações do Produto')
+            Section::make('Variações do Produto')
+                ->columnSpanFull()
                 ->description('Adicione variações (ex: Coca-Cola Zero, Coca-Cola Original) para evitar cadastrar produtos duplicados.')
                 ->collapsed()
                 ->schema([
@@ -151,13 +160,13 @@ class ProductResource extends Resource
                     ->boolean(),
             ])
             ->filters([])
-            ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+            ->recordActions([
+                EditAction::make(),
+                DeleteAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }

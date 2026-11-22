@@ -4,9 +4,15 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\PizzaFlavorResource\Pages;
 use App\Models\PizzaFlavor;
+use BackedEnum;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
 
@@ -14,7 +20,7 @@ class PizzaFlavorResource extends Resource
 {
     protected static ?string $model = PizzaFlavor::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-fire';
+    protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-fire';
 
     protected static ?string $navigationLabel = 'Sabores de Pizza';
 
@@ -26,10 +32,10 @@ class PizzaFlavorResource extends Resource
     //  FORM
     // ------------------------------------------------------------------
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form->schema([
-            Forms\Components\Section::make('Informações do Sabor')->schema([
+        return $schema->components([
+            Section::make('Informações do Sabor')->columnSpanFull()->schema([
                 Forms\Components\TextInput::make('name')
                     ->label('Nome do Sabor')
                     ->required()
@@ -73,7 +79,8 @@ class PizzaFlavorResource extends Resource
             // ------------------------------------------------------------------
             //  INGREDIENT STOCK MANAGER (Phase 1)
             // ------------------------------------------------------------------
-            Forms\Components\Section::make('Ingredientes')
+            Section::make('Ingredientes')
+                ->columnSpanFull()
                 ->description('Gerencie os ingredientes deste sabor. Desative um ingrediente em falta sem apagá-lo da receita.')
                 ->schema([
                     // Legacy plain-text field (read-only reference during Phase 1 transition)
@@ -152,13 +159,13 @@ class PizzaFlavorResource extends Resource
                     }),
             ])
             ->filters([])
-            ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+            ->recordActions([
+                EditAction::make(),
+                DeleteAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }

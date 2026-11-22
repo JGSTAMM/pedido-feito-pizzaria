@@ -21,7 +21,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
 
-    <title inertia>{{ $seoTitle }}</title>
+    <title data-inertia>{{ $seoTitle }}</title>
     <meta name="description" content="{{ $seoDescription }}" />
     <meta name="author" content="Pixirica Tecnologias" />
     <meta name="creator" content="Pixirica Tecnologias" />

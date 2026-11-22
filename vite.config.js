@@ -24,38 +24,40 @@ const localIp = getLocalIp();
 export default defineConfig({
     resolve: {
         alias: {
-            '@': path.resolve(__dirname, 'resources/js'),
+            '@': path.resolve(import.meta.dirname, 'resources/js'),
         },
     },
     build: {
-        rollupOptions: {
+        rolldownOptions: {
             output: {
-                manualChunks(id) {
-                    if (!id.includes('node_modules')) {
-                        if (id.includes('/resources/js/Pages/CustomerMenu/')) {
-                            return 'customer-menu';
-                        }
-
-                        return undefined;
-                    }
-
-                    if (
-                        id.includes('/node_modules/react/')
-                        || id.includes('/node_modules/react-dom/')
-                        || id.includes('/node_modules/scheduler/')
-                    ) {
-                        return 'vendor-react-core';
-                    }
-
-                    if (id.includes('/node_modules/@inertiajs/')) {
-                        return 'vendor-inertia';
-                    }
-
-                    if (id.includes('/node_modules/three/') || id.includes('/node_modules/@react-three/')) {
-                        return 'vendor-three';
-                    }
-
-                    return 'vendor-misc';
+                codeSplitting: {
+                    groups: [
+                        {
+                            name: 'vendor-react-core',
+                            test: /[\\/]node_modules[\\/](react|react-dom|scheduler)[\\/]/,
+                            priority: 40,
+                        },
+                        {
+                            name: 'vendor-inertia',
+                            test: /[\\/]node_modules[\\/]@inertiajs[\\/]/,
+                            priority: 30,
+                        },
+                        {
+                            name: 'vendor-three',
+                            test: /[\\/]node_modules[\\/](three|@react-three)[\\/]/,
+                            priority: 20,
+                        },
+                        {
+                            name: 'vendor-misc',
+                            test: /[\\/]node_modules[\\/]/,
+                            priority: 10,
+                        },
+                        {
+                            name: 'customer-menu',
+                            test: /[\\/]resources[\\/]js[\\/]Pages[\\/]CustomerMenu[\\/]/,
+                            priority: 5,
+                        },
+                    ],
                 },
             },
         },
