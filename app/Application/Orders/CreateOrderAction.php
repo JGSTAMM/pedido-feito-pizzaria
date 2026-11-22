@@ -53,6 +53,18 @@ class CreateOrderAction
 
                     $price = $this->priceService->calculateItemPrice($sizeId, $flavorIds);
 
+                    if (! empty($item['border_id'])) {
+                        $borderProd = Product::where('id', $item['border_id'])
+                            ->where('category', 'Extras')
+                            ->where('is_active_pos', true)
+                            ->first();
+                        if ($borderProd) {
+                            $price += (float) $borderProd->price;
+                        }
+                    } elseif (! empty($item['border']) && in_array((string) $item['border'], ['cheddar', 'catupiry', 'chocolate'], true)) {
+                        $price += 20.00;
+                    }
+
                     $orderItem = OrderItem::create([
                         'order_id' => $order->id,
                         'pizza_size_id' => $sizeId,

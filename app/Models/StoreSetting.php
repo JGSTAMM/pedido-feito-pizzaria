@@ -2,9 +2,11 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Crypt;
 
 class StoreSetting extends Model
 {
@@ -26,6 +28,7 @@ class StoreSetting extends Model
         'phone',
         'full_address',
         'google_maps_embed_url',
+        'google_maps_place_url',
         'payment_methods',
         'custom_info',
         'mercadopago_access_token',
@@ -49,6 +52,45 @@ class StoreSetting extends Model
     ];
 
     protected $appends = ['logo_url', 'cover_url'];
+
+    protected function mercadopagoAccessToken(): Attribute
+    {
+        return $this->encryptedSecretAttribute();
+    }
+
+    protected function googleMapsApiKey(): Attribute
+    {
+        return $this->encryptedSecretAttribute();
+    }
+
+    protected function ifoodMerchantId(): Attribute
+    {
+        return $this->encryptedSecretAttribute();
+    }
+
+    private function encryptedSecretAttribute(): Attribute
+    {
+        return Attribute::make(
+            get: function ($value) {
+                if ($value === null || $value === '') {
+                    return $value;
+                }
+                try {
+                    return Crypt::decryptString((string) $value);
+                } catch (\Throwable) {
+                    // Legacy plaintext fallback for existing production records until re-saved
+                    return (string) $value;
+                }
+            },
+            set: function ($value) {
+                if ($value === null || $value === '') {
+                    return $value;
+                }
+
+                return Crypt::encryptString((string) $value);
+            },
+        );
+    }
 
     public function getLogoUrlAttribute()
     {

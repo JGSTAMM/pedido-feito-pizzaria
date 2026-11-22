@@ -35,8 +35,11 @@ function cleanAscii(str) {
         .replace(/\u2013/g, '-')
         .replace(/\u2022/g, '*')
         .replace(/[\u26A0\uFE0F\u274C\u2705]/g, '')
-        .replace(/[^\x20-\x7E\n]/g, ' ')
-        .trim();
+        .replace(/[\r\n\t]+/g, ' ')
+        .replace(/[^\x20-\x7E]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, 280);
 }
 
 function cleanAsciiPreserveLead(str) {

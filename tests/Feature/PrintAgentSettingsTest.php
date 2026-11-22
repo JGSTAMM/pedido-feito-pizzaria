@@ -116,6 +116,8 @@ class PrintAgentSettingsTest extends TestCase
             ])
             ->assertRedirect();
 
+        config(['app.url' => 'https://sresralucchesepizzaria.pedidofeito.tech']);
+
         $response = $this->actingAs($admin)
             ->get('https://sresralucchesepizzaria.pedidofeito.tech/settings/printers/download-agent');
 

@@ -26,7 +26,7 @@ Route::get('/', [CustomerMenuController::class, 'index'])->name('home');
 Route::redirect('/admin', '/dashboard');
 
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
-Route::post('/login', [AuthController::class, 'login']);
+Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
 
 Route::get('/menu', [CustomerMenuController::class, 'index'])->name('customer-menu.index');
 Route::get('/menu/reset-locale', function () {
@@ -49,7 +49,8 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/pos/order', [PosController::class, 'store']);
         Route::post('/pos/generate-pix', [PosController::class, 'generatePix'])
             ->middleware('throttle:20,1');
-        Route::get('/pos/pix-status/{gatewayPaymentId}', [PosController::class, 'pixPaymentStatus']);
+        Route::get('/pos/pix-status/{gatewayPaymentId}', [PosController::class, 'pixPaymentStatus'])
+            ->middleware('throttle:30,1');
         Route::get('/api/customers/search', [CustomerController::class, 'search']);
         Route::get('/orders', [OrderController::class, 'index']);
         Route::get('/reports', [ReportController::class, 'index']);
@@ -60,7 +61,6 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/cash-register/close', [CashRegisterController::class, 'close'])
             ->middleware('can:closeCashRegister,'.Order::class);
 
-        Route::resource('/users', UserController::class)->except(['create', 'show', 'edit']);
         Route::resource('/expenses', App\Http\Controllers\ExpenseController::class)->except(['create', 'show', 'edit']);
 
         Route::get('/products', [ProductController::class, 'index'])->name('products');
@@ -83,17 +83,18 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/settings', [SettingsController::class, 'index'])->name('settings');
         Route::post('/settings/status', [SettingsController::class, 'updateStoreStatus']);
         Route::post('/settings/hours', [SettingsController::class, 'updateOpeningHours']);
-        Route::post('/settings/profile', [SettingsController::class, 'updateProfile']);
-        Route::post('/settings/branding', [SettingsController::class, 'updateBranding']);
         Route::post('/settings/receipt', [SettingsController::class, 'updateReceipt']);
-        Route::post('/settings/integrations', [SettingsController::class, 'updateIntegrations']);
-        Route::post('/settings/printers', [SettingsController::class, 'storePrinter']);
-        Route::put('/settings/printers/{printer}', [SettingsController::class, 'updatePrinter']);
-        Route::delete('/settings/printers/{printer}', [SettingsController::class, 'destroyPrinter']);
         Route::post('/settings/printers/test-agent', [SettingsController::class, 'testPrint']);
-        Route::post('/settings/printers/regenerate-token', [SettingsController::class, 'regenerateAgentToken']);
 
         Route::middleware('role:admin')->group(function () {
+            Route::resource('/users', UserController::class)->except(['create', 'show', 'edit']);
+            Route::post('/settings/profile', [SettingsController::class, 'updateProfile']);
+            Route::post('/settings/branding', [SettingsController::class, 'updateBranding']);
+            Route::post('/settings/integrations', [SettingsController::class, 'updateIntegrations']);
+            Route::post('/settings/printers', [SettingsController::class, 'storePrinter']);
+            Route::put('/settings/printers/{printer}', [SettingsController::class, 'updatePrinter']);
+            Route::delete('/settings/printers/{printer}', [SettingsController::class, 'destroyPrinter']);
+            Route::post('/settings/printers/regenerate-token', [SettingsController::class, 'regenerateAgentToken']);
             Route::post('/settings/printers/agent-config', [SettingsController::class, 'updateAgentConfig']);
             Route::get('/settings/printers/download-agent', [SettingsController::class, 'downloadPrintAgent'])->name('settings.printers.download-agent');
             Route::get('/settings/printers/download-config', [SettingsController::class, 'downloadPrintConfig'])->name('settings.printers.download-config');
@@ -110,8 +111,17 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/neighborhoods/lock-admin-pin', [NeighborhoodController::class, 'lockAdminPin'])
             ->name('neighborhoods.lock-admin-pin');
         Route::post('/neighborhoods/bulk-update', [NeighborhoodController::class, 'bulkUpdate'])
+            ->middleware('throttle:15,1')
             ->name('neighborhoods.bulk-update');
-        Route::resource('/neighborhoods', NeighborhoodController::class)->only(['store', 'update', 'destroy']);
+        Route::post('/neighborhoods', [NeighborhoodController::class, 'store'])
+            ->middleware('throttle:15,1')
+            ->name('neighborhoods.store');
+        Route::put('/neighborhoods/{neighborhood}', [NeighborhoodController::class, 'update'])
+            ->middleware('throttle:15,1')
+            ->name('neighborhoods.update');
+        Route::delete('/neighborhoods/{neighborhood}', [NeighborhoodController::class, 'destroy'])
+            ->middleware('throttle:15,1')
+            ->name('neighborhoods.destroy');
 
         Route::get('/kds', [KdsController::class, 'index']);
         Route::post('/kds/{order}/status/{status}', [KdsController::class, 'updateStatus']);
@@ -133,10 +143,13 @@ Route::middleware(['auth'])->group(function () {
             ->name('floor.clear-comanda');
         Route::post('/floor/validate-supervisor-pin', [FloorController::class, 'validateSupervisorPin'])
             ->middleware('throttle:5,1');
-        Route::post('/floor/{table}/pay', [FloorController::class, 'payAndClose']);
+        Route::post('/floor/{table}/pay', [FloorController::class, 'payAndClose'])
+            ->middleware('throttle:15,1');
         Route::post('/floor/{table}/print-bill', [FloorController::class, 'printBill']);
-        Route::post('/floor/{table}/generate-pix', [FloorController::class, 'generatePix']);
-        Route::get('/floor/pix-status/{order}', [FloorController::class, 'pixPaymentStatus']);
+        Route::post('/floor/{table}/generate-pix', [FloorController::class, 'generatePix'])
+            ->middleware('throttle:20,1');
+        Route::get('/floor/pix-status/{order}', [FloorController::class, 'pixPaymentStatus'])
+            ->middleware('throttle:30,1');
     });
 
     Route::middleware('role:admin')->group(function () {

@@ -176,16 +176,23 @@ class OrderController extends Controller
         try {
             $activeRegister = $this->cashRegisterLockService->requireOpenRegister();
 
-            DB::transaction(function () use ($order, $validated, $activeRegister): void {
+            $actor = $request->user();
+            $isWaiter = $actor && in_array(strtolower(trim((string) $actor->role)), ['waiter', 'garcom'], true);
+
+            DB::transaction(function () use ($order, $validated, $activeRegister, $isWaiter): void {
                 /** @var Order $lockedOrder */
                 $lockedOrder = Order::where('id', $order->id)->lockForUpdate()->firstOrFail();
+
+                if ($isWaiter && (string) $lockedOrder->type === 'delivery') {
+                    throw new OrderActionException('Apenas o caixa ou administrador pode dar baixa financeira em pedidos de delivery.', 403);
+                }
 
                 if ($lockedOrder->paid_at !== null) {
                     throw new OrderActionException('Este pedido já está pago.', 422);
                 }
 
-                if (in_array($lockedOrder->status, ['cancelled', 'rejected'], true)) {
-                    throw new OrderActionException('Não é possível receber pagamento de pedido cancelado.', 422);
+                if (in_array($lockedOrder->status, ['cancelled', 'rejected', Order::STATUS_AWAITING_PAYMENT], true)) {
+                    throw new OrderActionException('Não é possível receber pagamento manual para pedido cancelado, rejeitado ou aguardando confirmação de gateway online.', 422);
                 }
 
                 $totalAmount = (float) $lockedOrder->total_amount;

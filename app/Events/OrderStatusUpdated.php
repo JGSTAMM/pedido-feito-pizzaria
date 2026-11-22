@@ -31,7 +31,7 @@ class OrderStatusUpdated implements ShouldBroadcastNow
     public function broadcastOn(): array
     {
         $channels = [
-            new Channel('orders'),
+            new PrivateChannel('orders'),
             new Channel("order.{$this->orderId}"),
         ];
 

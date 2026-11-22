@@ -19,6 +19,18 @@ class ReceiptFormatter
         $this->paperWidth = $width;
     }
 
+    protected function sanitizeSingleLine(?string $text, int $maxLength = 200): string
+    {
+        if ($text === null) {
+            return '';
+        }
+
+        $cleaned = preg_replace('/[\r\n\t\x00-\x1F\x7F]+/u', ' ', $text) ?? '';
+        $cleaned = trim(preg_replace('/\s+/u', ' ', $cleaned) ?? '');
+
+        return mb_substr($cleaned, 0, $maxLength);
+    }
+
     public function formatKitchenTicket(Printer $printer, Order $order): void
     {
         // Header
@@ -47,20 +59,20 @@ class ReceiptFormatter
             $printer->setJustification(Printer::JUSTIFY_LEFT);
 
             if ($order->customer_name) {
-                $printer->text("Cliente: {$order->customer_name}\n");
+                $printer->text('Cliente: '.$this->sanitizeSingleLine($order->customer_name, 80)."\n");
             }
             if ($order->customer_phone) {
-                $printer->text("Fone: {$order->customer_phone}\n");
+                $printer->text('Fone: '.$this->sanitizeSingleLine($order->customer_phone, 40)."\n");
             }
             if ($order->delivery_address) {
-                $printer->text("End: {$order->delivery_address}\n");
+                $printer->text('End: '.$this->sanitizeSingleLine($order->delivery_address, 140)."\n");
             }
             if ($order->delivery_complement) {
-                $printer->text("Compl: {$order->delivery_complement}\n");
+                $printer->text('Compl: '.$this->sanitizeSingleLine($order->delivery_complement, 100)."\n");
             }
             $order->load('neighborhood');
             if ($order->neighborhood) {
-                $printer->text("Bairro: {$order->neighborhood->name}\n");
+                $printer->text('Bairro: '.$this->sanitizeSingleLine($order->neighborhood->name, 80)."\n");
             }
 
             $printer->feed(1);
@@ -115,7 +127,7 @@ class ReceiptFormatter
 
             if (! empty($item->notes)) {
                 $printer->setEmphasis(true);
-                $printer->text("   OBS: {$item->notes}\n");
+                $printer->text('   OBS: '.$this->sanitizeSingleLine($item->notes, 200)."\n");
                 $printer->setEmphasis(false);
             }
         }
@@ -145,7 +157,7 @@ class ReceiptFormatter
         $printer->text('Data: '.$order->created_at->format('d/m/Y H:i')."\n");
 
         if ($order->customer_name) {
-            $printer->text("Cliente: {$order->customer_name}\n");
+            $printer->text('Cliente: '.$this->sanitizeSingleLine($order->customer_name, 80)."\n");
         }
 
         $tableName = $order->table?->name ?? 'Balcão';
@@ -154,17 +166,17 @@ class ReceiptFormatter
         if ($order->type === 'delivery') {
             $printer->text("Tipo: DELIVERY\n");
             if ($order->customer_phone) {
-                $printer->text("Fone: {$order->customer_phone}\n");
+                $printer->text('Fone: '.$this->sanitizeSingleLine($order->customer_phone, 40)."\n");
             }
             if ($order->delivery_address) {
-                $printer->text("End: {$order->delivery_address}\n");
+                $printer->text('End: '.$this->sanitizeSingleLine($order->delivery_address, 140)."\n");
             }
             if ($order->delivery_complement) {
-                $printer->text("Compl: {$order->delivery_complement}\n");
+                $printer->text('Compl: '.$this->sanitizeSingleLine($order->delivery_complement, 100)."\n");
             }
             $order->load('neighborhood');
             if ($order->neighborhood) {
-                $printer->text("Bairro: {$order->neighborhood->name}\n");
+                $printer->text('Bairro: '.$this->sanitizeSingleLine($order->neighborhood->name, 80)."\n");
             }
         }
 
@@ -198,7 +210,7 @@ class ReceiptFormatter
 
             if (! empty($item->notes)) {
                 $printer->setEmphasis(true);
-                $printer->text("   OBS: {$item->notes}\n");
+                $printer->text('   OBS: '.$this->sanitizeSingleLine($item->notes, 200)."\n");
                 $printer->setEmphasis(false);
             }
         }

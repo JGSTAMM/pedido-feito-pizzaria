@@ -34,12 +34,18 @@ class PrintAgentController extends Controller
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
+        $rawPrinters = is_array($request->input('printers')) ? array_slice($request->input('printers'), 0, 25) : [];
+        $sanitizedPrinters = array_values(array_filter(array_map(
+            fn ($p) => is_scalar($p) ? mb_substr(trim((string) $p), 0, 120) : '',
+            $rawPrinters
+        )));
+
         // Record heartbeat
         $this->printQueueService->recordHeartbeat([
-            'version' => (string) $request->input('version', '1.0.0'),
-            'platform' => (string) $request->input('platform', ''),
-            'printers' => (array) $request->input('printers', []),
-            'active_printer' => (string) $request->input('active_printer', ''),
+            'version' => mb_substr(trim((string) $request->input('version', '1.0.0')), 0, 32),
+            'platform' => mb_substr(trim((string) $request->input('platform', '')), 0, 32),
+            'printers' => $sanitizedPrinters,
+            'active_printer' => mb_substr(trim((string) $request->input('active_printer', '')), 0, 120),
             'ip' => $request->ip(),
         ]);
 
@@ -73,29 +79,47 @@ class PrintAgentController extends Controller
         }
 
         $success = $request->boolean('success', true);
-        $printerName = (string) $request->input('printer_name', '');
-        $error = $request->input('error');
+        $printerName = mb_substr(trim((string) $request->input('printer_name', '')), 0, 120);
+        $error = $request->input('error') !== null
+            ? mb_substr(trim((string) $request->input('error')), 0, 500)
+            : null;
 
-        if ($success) {
-            $printJob->status = 'printed';
-            $printJob->printed_at = now();
-            $printJob->printer_name = $printerName ?: $printJob->printer_name;
-            $printJob->error_message = null;
-        } else {
-            if ($printJob->attempts >= 3) {
-                $printJob->status = 'failed';
-                $printJob->error_message = (string) ($error ?: 'Excedeu o número máximo de tentativas de impressão.');
-            } else {
-                $printJob->status = 'pending'; // Retry on next poll
-                $printJob->error_message = (string) $error;
+        return DB::transaction(function () use ($printJob, $success, $printerName, $error): JsonResponse {
+            /** @var PrintJob|null $lockedJob */
+            $lockedJob = PrintJob::where('id', $printJob->id)->lockForUpdate()->first();
+            if (! $lockedJob) {
+                return response()->json(['error' => 'Print job not found'], 404);
             }
-        }
 
-        $printJob->save();
+            if ($lockedJob->status !== 'processing') {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Print job must be claimed (processing) before acknowledgment.',
+                    'status' => $lockedJob->status,
+                ], 409);
+            }
 
-        return response()->json([
-            'success' => true,
-            'status' => $printJob->status,
-        ]);
+            if ($success) {
+                $lockedJob->status = 'printed';
+                $lockedJob->printed_at = now();
+                $lockedJob->printer_name = $printerName !== '' ? $printerName : $lockedJob->printer_name;
+                $lockedJob->error_message = null;
+            } else {
+                if ($lockedJob->attempts >= 3) {
+                    $lockedJob->status = 'failed';
+                    $lockedJob->error_message = (string) ($error ?: 'Excedeu o número máximo de tentativas de impressão.');
+                } else {
+                    $lockedJob->status = 'pending'; // Retry on next poll
+                    $lockedJob->error_message = (string) $error;
+                }
+            }
+
+            $lockedJob->save();
+
+            return response()->json([
+                'success' => true,
+                'status' => $lockedJob->status,
+            ]);
+        });
     }
 }

@@ -61,7 +61,9 @@ class SettingsController extends Controller
             : [];
 
         return Inertia::render('Settings/Index', [
-            'settings' => $settings->makeVisible(['mercadopago_access_token', 'google_maps_api_key', 'ifood_merchant_id']),
+            'settings' => $isAdmin
+                ? $settings->makeVisible(['mercadopago_access_token', 'google_maps_api_key', 'ifood_merchant_id'])
+                : $settings,
             'printers' => Printer::orderBy('name')->get(),
             'neighborhoods' => Neighborhood::select('id', 'name', 'city', 'delivery_fee', 'observation')
                 ->orderBy('city')
@@ -74,7 +76,7 @@ class SettingsController extends Controller
                 'status' => $this->printQueueService->getAgentStatus(),
                 'config' => $this->printAgentPackageBuilder->getConfig(),
                 'queueStats' => $this->printQueueService->getQueueStats(),
-                'serverUrl' => rtrim((string) ($request->getSchemeAndHttpHost() ?: config('app.url')), '/'),
+                'serverUrl' => rtrim((string) (config('app.url') ?: $request->getSchemeAndHttpHost()), '/'),
             ],
             'supervisorSecurity' => [
                 'can_manage' => $isAdmin,
@@ -96,8 +98,24 @@ class SettingsController extends Controller
     // ── Opening Hours ──
     public function updateOpeningHours(Request $request)
     {
-        $request->validate(['opening_hours' => 'required|array']);
-        StoreSetting::first()->update(['opening_hours' => $request->opening_hours]);
+        $validated = $request->validate([
+            'opening_hours' => ['required', 'array'],
+            'opening_hours.*' => ['required', 'array'],
+            'opening_hours.*.open' => ['required', 'string', 'regex:/^([01]\d|2[0-3]):[0-5]\d$/'],
+            'opening_hours.*.close' => ['required', 'string', 'regex:/^([01]\d|2[0-3]):[0-5]\d$/'],
+            'opening_hours.*.closed' => ['required', 'boolean'],
+        ], [
+            'opening_hours.*.open.regex' => 'O horário de abertura deve estar no formato HH:MM (ex.: 18:00).',
+            'opening_hours.*.close.regex' => 'O horário de fechamento deve estar no formato HH:MM (ex.: 23:30).',
+        ]);
+
+        $allowedDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+        $cleanHours = array_intersect_key($validated['opening_hours'], array_flip($allowedDays));
+        if (empty($cleanHours)) {
+            return redirect()->back()->withErrors(['opening_hours' => 'Informe os horários de funcionamento válidos para os dias da semana.']);
+        }
+
+        StoreSetting::first()->update(['opening_hours' => $cleanHours]);
 
         return redirect()->back()->with('success', 'Horários atualizados.');
     }
@@ -105,13 +123,15 @@ class SettingsController extends Controller
     // ── Profile ──
     public function updateProfile(Request $request)
     {
+        abort_unless($this->adminPinService->isAdmin($request->user()), 403);
+
         $request->validate([
             'store_name' => 'required|string|max:255',
             'cnpj' => 'required|string|max:30',
             'phone' => 'nullable|string|max:30',
             'full_address' => 'nullable|string|max:500',
-            'google_maps_embed_url' => 'nullable|string',
-            'google_maps_place_url' => 'nullable|string',
+            'google_maps_embed_url' => 'nullable|string|max:2000',
+            'google_maps_place_url' => 'nullable|string|max:1000',
             'payment_methods' => 'nullable|array',
             'custom_info' => 'nullable|string',
         ]);
@@ -127,9 +147,29 @@ class SettingsController extends Controller
         );
 
         if (! empty($data['google_maps_embed_url'])) {
-            if (preg_match('/src=["\']([^"\']+)["\']/i', (string) $data['google_maps_embed_url'], $matches)) {
-                $data['google_maps_embed_url'] = $matches[1];
+            $embedUrl = trim((string) $data['google_maps_embed_url']);
+            if (preg_match('/src=["\']([^"\']+)["\']/i', $embedUrl, $matches)) {
+                $embedUrl = trim($matches[1]);
             }
+
+            if (! preg_match('#^https://(www\.)?google\.(com|com\.br)/maps/embed\b#i', $embedUrl)
+                && ! preg_match('#^https://maps\.google\.(com|com\.br)/maps\b#i', $embedUrl)) {
+                return redirect()->back()->withErrors([
+                    'google_maps_embed_url' => 'O link de incorporação do mapa deve ser uma URL HTTPS oficial do Google Maps Embed (https://www.google.com/maps/embed...).',
+                ]);
+            }
+
+            $data['google_maps_embed_url'] = $embedUrl;
+        }
+
+        if (! empty($data['google_maps_place_url'])) {
+            $placeUrl = trim((string) $data['google_maps_place_url']);
+            if (! preg_match('#^https://#i', $placeUrl)) {
+                return redirect()->back()->withErrors([
+                    'google_maps_place_url' => 'O link direto do mapa deve ser uma URL HTTPS válida.',
+                ]);
+            }
+            $data['google_maps_place_url'] = $placeUrl;
         }
 
         StoreSetting::first()->update($data);
@@ -140,9 +180,11 @@ class SettingsController extends Controller
     // -- Branding (Cover, Logo, Description) --
     public function updateBranding(Request $request)
     {
+        abort_unless($this->adminPinService->isAdmin($request->user()), 403);
+
         $request->validate([
-            'cover_image' => 'nullable|file|mimes:jpeg,png,jpg,gif,svg,webp|max:5120',
-            'logo_image' => 'nullable|file|mimes:jpeg,png,jpg,gif,svg,webp|max:5120',
+            'cover_image' => 'nullable|file|mimes:jpeg,png,jpg,gif,webp|max:5120',
+            'logo_image' => 'nullable|file|mimes:jpeg,png,jpg,gif,webp|max:5120',
             'story_media' => 'nullable|array|max:5',
             'update_stories' => 'nullable|boolean',
             'description' => 'nullable|string|max:500',
@@ -190,20 +232,27 @@ class SettingsController extends Controller
                 foreach ($request->story_media as $item) {
                     if ($item instanceof \Illuminate\Http\UploadedFile) {
                         $path = $item->store('branding', 'public');
-                        $mime = $item->getMimeType();
+                        $mime = (string) $item->getMimeType();
                         $newStoryMedia[] = [
                             'url' => $path,
                             'type' => str_starts_with($mime, 'video') ? 'video' : 'image',
                         ];
-                    } else if (is_array($item) && isset($item['url'])) {
-                        // Strip absolute domain and 'storage/' prefix if present to save only the relative path
-                        $url = $item['url'];
+                    } elseif (is_array($item) && isset($item['url'])) {
+                        $url = trim((string) $item['url']);
                         if (str_contains($url, '/storage/')) {
-                            $url = explode('/storage/', $url)[1];
+                            $parts = explode('/storage/', $url);
+                            $url = end($parts);
                         }
+                        $url = ltrim($url, '/');
+                        if (! preg_match('#^branding/[A-Za-z0-9._-]+$#', $url)) {
+                            return redirect()->back()->withErrors([
+                                'story_media' => 'Caminho de mídia do story inválido.',
+                            ]);
+                        }
+                        $type = in_array($item['type'] ?? 'image', ['image', 'video'], true) ? $item['type'] : 'image';
                         $newStoryMedia[] = [
                             'url' => $url,
-                            'type' => $item['type'] ?? 'image',
+                            'type' => $type,
                         ];
                     }
                 }
@@ -240,6 +289,8 @@ class SettingsController extends Controller
     // ── Integrations ──
     public function updateIntegrations(Request $request)
     {
+        abort_unless($this->adminPinService->isAdmin($request->user()), 403);
+
         $request->validate([
             'mercadopago_access_token' => 'nullable|string|max:500',
             'whatsapp_phone_number' => 'nullable|string|max:500',
@@ -254,20 +305,28 @@ class SettingsController extends Controller
             'ifood_merchant_id'
         ));
 
-        // Token is stored exclusively in the database (store_settings table).
-        // PaymentGatewayService reads it from there at runtime.
-
         return redirect()->back()->with('success', 'Integrações atualizadas.');
     }
 
     // ── Printers CRUD ──
     public function storePrinter(Request $request)
     {
+        abort_unless($this->adminPinService->isAdmin($request->user()), 403);
+
         $request->validate([
             'name' => 'required|string|max:255',
             'type' => 'required|in:receipt,production',
             'target' => 'required|in:cash_register,kitchen',
-            'ip_address' => 'nullable|string|max:50',
+            'ip_address' => [
+                'nullable',
+                'ip',
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    $ip = trim((string) $value);
+                    if ($ip !== '' && ! \App\Services\PrintService::isAllowedPrinterIp($ip)) {
+                        $fail('Apenas endereços IPv4 de rede local (RFC1918) são permitidos para impressoras de rede.');
+                    }
+                },
+            ],
         ]);
 
         Printer::create($request->only('name', 'type', 'target', 'ip_address'));
@@ -277,11 +336,22 @@ class SettingsController extends Controller
 
     public function updatePrinter(Request $request, Printer $printer)
     {
+        abort_unless($this->adminPinService->isAdmin($request->user()), 403);
+
         $request->validate([
             'name' => 'required|string|max:255',
             'type' => 'required|in:receipt,production',
             'target' => 'required|in:cash_register,kitchen',
-            'ip_address' => 'nullable|string|max:50',
+            'ip_address' => [
+                'nullable',
+                'ip',
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    $ip = trim((string) $value);
+                    if ($ip !== '' && ! \App\Services\PrintService::isAllowedPrinterIp($ip)) {
+                        $fail('Apenas endereços IPv4 de rede local (RFC1918) são permitidos para impressoras de rede.');
+                    }
+                },
+            ],
         ]);
 
         $printer->update($request->only('name', 'type', 'target', 'ip_address'));
@@ -289,8 +359,10 @@ class SettingsController extends Controller
         return redirect()->back()->with('success', 'Impressora atualizada.');
     }
 
-    public function destroyPrinter(Printer $printer)
+    public function destroyPrinter(Request $request, Printer $printer)
     {
+        abort_unless($this->adminPinService->isAdmin($request->user()), 403);
+
         $printer->delete();
 
         return redirect()->back()->with('success', 'Impressora excluída.');
@@ -304,8 +376,10 @@ class SettingsController extends Controller
         return redirect()->back()->with('success', 'Teste de impressão enviado para a fila do agente!');
     }
 
-    public function regenerateAgentToken()
+    public function regenerateAgentToken(Request $request)
     {
+        abort_unless($this->adminPinService->isAdmin($request->user()), 403);
+
         $this->printQueueService->regenerateAgentToken();
 
         return redirect()->back()->with('success', 'Novo token de conexão gerado com sucesso!');
@@ -321,7 +395,18 @@ class SettingsController extends Controller
             'cashier_paper_width' => 'required|in:58mm,80mm',
             'default_printer' => 'required|string|max:255',
             'fallback_printer' => 'nullable|string|max:255',
-            'tcp_ip' => 'nullable|required_if:mode,tcp|string|max:100',
+            'tcp_ip' => [
+                'nullable',
+                'required_if:mode,tcp',
+                'ip',
+                'max:100',
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    $ip = trim((string) $value);
+                    if ($ip !== '' && ! \App\Services\PrintService::isAllowedPrinterIp($ip)) {
+                        $fail('Informe um endereço IPv4 válido da rede local (RFC1918) para a impressora TCP.');
+                    }
+                },
+            ],
             'tcp_port' => 'nullable|integer|min:1|max:65535',
             'poll_interval_ms' => 'nullable|integer|min:500|max:10000',
         ], [
@@ -335,7 +420,7 @@ class SettingsController extends Controller
 
     public function downloadPrintAgent(Request $request)
     {
-        $serverUrl = rtrim((string) ($request->getSchemeAndHttpHost() ?: config('app.url')), '/');
+        $serverUrl = rtrim((string) (config('app.url') ?: $request->getSchemeAndHttpHost()), '/');
         $zipPath = $this->printAgentPackageBuilder->createZipArchive($serverUrl);
 
         return response()
@@ -345,7 +430,7 @@ class SettingsController extends Controller
 
     public function downloadPrintConfig(Request $request)
     {
-        $serverUrl = rtrim((string) ($request->getSchemeAndHttpHost() ?: config('app.url')), '/');
+        $serverUrl = rtrim((string) (config('app.url') ?: $request->getSchemeAndHttpHost()), '/');
         $json = json_encode(
             $this->printAgentPackageBuilder->buildClientConfigPayload($serverUrl),
             JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE

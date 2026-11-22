@@ -5,6 +5,7 @@ namespace App\Application\Security;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
 
 class AdminPinAuthorizationService
 {
@@ -13,6 +14,10 @@ class AdminPinAuthorizationService
     private const UNLOCK_BY_ID_KEY = 'admin_delivery_fee_unlocked_by';
 
     private const UNLOCK_BY_NAME_KEY = 'admin_delivery_fee_unlocked_name';
+
+    private const UNLOCK_PIN_DIGEST_KEY = 'admin_delivery_fee_unlocked_pin_digest';
+
+    private const MAX_PIN_ATTEMPTS_PER_MINUTE = 5;
 
     public function isAdmin(?User $user): bool
     {
@@ -26,9 +31,20 @@ class AdminPinAuthorizationService
     /**
      * @return array{valid: bool, reason: string|null, admin: User|null}
      */
-    public function verifyAdminPin(string $pin): array
+    public function verifyAdminPin(string $pin, ?Request $request = null): array
     {
+        $rateKey = $this->resolveRateLimitKey($request);
+        if (RateLimiter::tooManyAttempts($rateKey, self::MAX_PIN_ATTEMPTS_PER_MINUTE)) {
+            return [
+                'valid' => false,
+                'reason' => 'too_many_attempts',
+                'admin' => null,
+            ];
+        }
+
         if (! preg_match('/^\d{4}$/', $pin)) {
+            RateLimiter::hit($rateKey, 60);
+
             return [
                 'valid' => false,
                 'reason' => 'invalid_pin',
@@ -42,6 +58,8 @@ class AdminPinAuthorizationService
             ->get();
 
         if ($admins->isEmpty()) {
+            RateLimiter::hit($rateKey, 60);
+
             return [
                 'valid' => false,
                 'reason' => 'not_configured',
@@ -51,6 +69,8 @@ class AdminPinAuthorizationService
 
         foreach ($admins as $admin) {
             if (Hash::check($pin, $admin->pin_hash)) {
+                RateLimiter::clear($rateKey);
+
                 return [
                     'valid' => true,
                     'reason' => null,
@@ -58,6 +78,8 @@ class AdminPinAuthorizationService
                 ];
             }
         }
+
+        RateLimiter::hit($rateKey, 60);
 
         return [
             'valid' => false,
@@ -68,19 +90,12 @@ class AdminPinAuthorizationService
 
     public function isSessionUnlocked(Request $request): bool
     {
-        if (! $request->hasSession()) {
-            return false;
-        }
-
-        $until = (int) $request->session()->get(self::UNLOCK_UNTIL_KEY, 0);
-        $adminId = $request->session()->get(self::UNLOCK_BY_ID_KEY);
-
-        return $until >= now()->timestamp && ! empty($adminId);
+        return $this->resolveUnlockedAdmin($request) instanceof User;
     }
 
     public function grantSessionUnlock(Request $request, User $admin, int $minutes = 15): void
     {
-        if (! $request->hasSession()) {
+        if (! $request->hasSession() || empty($admin->pin_hash)) {
             return;
         }
 
@@ -88,6 +103,7 @@ class AdminPinAuthorizationService
             self::UNLOCK_UNTIL_KEY => now()->addMinutes($minutes)->timestamp,
             self::UNLOCK_BY_ID_KEY => $admin->id,
             self::UNLOCK_BY_NAME_KEY => $admin->name,
+            self::UNLOCK_PIN_DIGEST_KEY => hash('sha256', (string) $admin->pin_hash),
         ]);
     }
 
@@ -101,6 +117,7 @@ class AdminPinAuthorizationService
             self::UNLOCK_UNTIL_KEY,
             self::UNLOCK_BY_ID_KEY,
             self::UNLOCK_BY_NAME_KEY,
+            self::UNLOCK_PIN_DIGEST_KEY,
         ]);
     }
 
@@ -110,13 +127,14 @@ class AdminPinAuthorizationService
     public function getDeliveryFeeSecurityState(Request $request): array
     {
         $isAdmin = $this->isAdmin($request->user());
-        $sessionUnlocked = $this->isSessionUnlocked($request);
+        $unlockedAdmin = $this->resolveUnlockedAdmin($request);
+        $sessionUnlocked = $unlockedAdmin instanceof User;
 
         return [
             'can_edit_directly' => $isAdmin,
             'is_unlocked' => $isAdmin || $sessionUnlocked,
             'unlocked_by_name' => $sessionUnlocked
-                ? $request->session()->get(self::UNLOCK_BY_NAME_KEY)
+                ? $unlockedAdmin->name
                 : null,
             'requires_admin_pin' => ! $isAdmin,
         ];
@@ -133,18 +151,17 @@ class AdminPinAuthorizationService
             return $user;
         }
 
-        if ($this->isSessionUnlocked($request)) {
-            $adminId = $request->session()->get(self::UNLOCK_BY_ID_KEY);
-            $admin = User::find($adminId);
-            if ($admin && $this->isAdmin($admin)) {
-                return $admin;
-            }
-            $this->revokeSessionUnlock($request);
+        $unlockedAdmin = $this->resolveUnlockedAdmin($request);
+        if ($unlockedAdmin instanceof User) {
+            return $unlockedAdmin;
         }
 
         $providedPin = (string) $request->input('admin_pin', '');
         if ($providedPin !== '') {
-            $check = $this->verifyAdminPin($providedPin);
+            $check = $this->verifyAdminPin($providedPin, $request);
+            if ($check['reason'] === 'too_many_attempts') {
+                abort(429, 'Muitas tentativas de PIN incorretas. Aguarde um minuto.');
+            }
             if ($check['valid'] && $check['admin'] instanceof User) {
                 $this->grantSessionUnlock($request, $check['admin']);
 
@@ -155,5 +172,47 @@ class AdminPinAuthorizationService
         }
 
         abort(403, 'Somente o administrador pode alterar taxas de entrega. Solicite o PIN de autorização do administrador.');
+    }
+
+    private function resolveUnlockedAdmin(Request $request): ?User
+    {
+        if (! $request->hasSession()) {
+            return null;
+        }
+
+        $until = (int) $request->session()->get(self::UNLOCK_UNTIL_KEY, 0);
+        $adminId = $request->session()->get(self::UNLOCK_BY_ID_KEY);
+        $storedDigest = (string) $request->session()->get(self::UNLOCK_PIN_DIGEST_KEY, '');
+
+        if ($until < now()->timestamp || empty($adminId) || $storedDigest === '') {
+            return null;
+        }
+
+        $admin = User::find($adminId);
+        if (
+            ! $admin
+            || ! $this->isAdmin($admin)
+            || empty($admin->pin_hash)
+            || ! hash_equals(hash('sha256', (string) $admin->pin_hash), $storedDigest)
+        ) {
+            $this->revokeSessionUnlock($request);
+
+            return null;
+        }
+
+        return $admin;
+    }
+
+    private function resolveRateLimitKey(?Request $request = null): string
+    {
+        $req = $request ?? request();
+        $userId = $req?->user()?->id;
+
+        // Key strictly by authenticated user ID (cannot be bypassed by rotating source IP)
+        if ($userId) {
+            return "admin-pin-verify:user:{$userId}";
+        }
+
+        return 'admin-pin-verify:ip:'.($req?->ip() ?? 'unknown');
     }
 }

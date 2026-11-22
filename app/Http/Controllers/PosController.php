@@ -146,14 +146,15 @@ class PosController extends Controller
     {
         try {
             $validated = $request->validate([
-                'items' => 'required|array|min:1',
+                'items' => 'required|array|min:1|max:50',
                 'items.*.id' => 'nullable|string',
                 'items.*.type' => 'required|in:product,pizza_flavor,pizza_custom',
-                'items.*.quantity' => 'required|integer|min:1',
+                'items.*.quantity' => 'required|integer|min:1|max:50',
                 'items.*.price' => 'required|numeric|min:0',
-                'items.*.size_id' => 'nullable|string',
-                'items.*.flavor_ids' => 'nullable|array',
-                'items.*.border_id' => 'nullable|string',
+                'items.*.size_id' => 'required_if:items.*.type,pizza_custom|nullable|uuid|exists:pizza_sizes,id',
+                'items.*.flavor_ids' => 'required_if:items.*.type,pizza_custom|nullable|array|min:1',
+                'items.*.flavor_ids.*' => 'uuid|exists:pizza_flavors,id',
+                'items.*.border_id' => 'nullable|uuid|exists:products,id',
                 'items.*.observation' => 'nullable|string',
                 // Customer fields
                 'customer_name' => 'required|string|max:255',

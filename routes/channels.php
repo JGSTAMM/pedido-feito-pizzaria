@@ -18,13 +18,18 @@ use Illuminate\Support\Facades\Broadcast;
 |
 */
 
-// Default Laravel user model channel
+// Default Laravel user model channel (strict string UUID comparison)
 Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
-    return (int) $user->id === (int) $id;
+    return (string) $user->id === (string) $id;
+});
+
+// Private channel for authenticated staff (KDS, Floor, Orders, Print Agent notifications)
+Broadcast::channel('orders', function ($user) {
+    return $user !== null && in_array(strtolower(trim((string) $user->role)), ['admin', 'cashier', 'caixa', 'waiter', 'garcom'], true);
 });
 
 // Private channel for Waiter App — per-table real-time updates.
 // Any authenticated staff member can subscribe to any table channel.
 Broadcast::channel('tables.{tableId}', function ($user, $tableId) {
-    return $user !== null;
+    return $user !== null && in_array(strtolower(trim((string) $user->role)), ['admin', 'cashier', 'caixa', 'waiter', 'garcom'], true);
 });

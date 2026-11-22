@@ -207,14 +207,15 @@ class FloorController extends Controller
         }
 
         $validated = $request->validate([
-            'items' => 'required|array|min:1',
+            'items' => 'required|array|min:1|max:50',
             'items.*.id' => 'nullable|string',
             'items.*.type' => 'required|in:product,pizza_flavor,pizza_custom',
-            'items.*.quantity' => 'required|integer|min:1',
+            'items.*.quantity' => 'required|integer|min:1|max:50',
             'items.*.price' => 'required|numeric|min:0',
-            'items.*.size_id' => 'nullable|string',
-            'items.*.flavor_ids' => 'nullable|array',
-            'items.*.border_id' => 'nullable|string',
+            'items.*.size_id' => 'required_if:items.*.type,pizza_custom|nullable|uuid|exists:pizza_sizes,id',
+            'items.*.flavor_ids' => 'required_if:items.*.type,pizza_custom|nullable|array|min:1',
+            'items.*.flavor_ids.*' => 'uuid|exists:pizza_flavors,id',
+            'items.*.border_id' => 'nullable|uuid|exists:products,id',
             'items.*.observation' => 'nullable|string|max:500',
         ]);
 
@@ -266,7 +267,10 @@ class FloorController extends Controller
                     $unitPrice = $priceService->calculateItemPrice($sizeId, $flavorIds);
                     $borderName = null;
                     if ($borderId) {
-                        $borderProd = Product::find($borderId);
+                        $borderProd = Product::where('id', $borderId)
+                            ->where('category', 'Extras')
+                            ->where('is_active_pos', true)
+                            ->first();
                         if ($borderProd) {
                             $unitPrice += (float) $borderProd->price;
                             $borderName = $borderProd->name;
@@ -406,13 +410,48 @@ class FloorController extends Controller
     public function payAndClose(Request $request, Table $table)
     {
         $validated = $request->validate([
-            'payments' => 'required|array',
+            'payments' => 'required|array|min:1',
             'payments.*.method' => 'required|string|in:dinheiro,pix,pix_balcao,credito,debito',
             'payments.*.amount' => 'required|integer|min:0',
             'service_fee_cents' => 'nullable|integer|min:0',
             'discount_cents' => 'nullable|integer|min:0',
             'discount_supervisor_id' => 'nullable|exists:users,id',
+            'discount_supervisor_pin' => ['nullable', 'string', 'regex:/^\d{4}$/'],
         ]);
+
+        $discountCents = (int) ($validated['discount_cents'] ?? 0);
+        $approvedSupervisorId = null;
+
+        if ($discountCents > 0) {
+            if (! empty($validated['discount_supervisor_pin'])) {
+                $pinCheck = $this->cancelOrDeleteOrderAction->verifySupervisorPin((string) $validated['discount_supervisor_pin']);
+                if (! $pinCheck['valid'] || ! $pinCheck['supervisor']) {
+                    return redirect()->back()->with('error', 'PIN de supervisor inválido ou não configurado para aplicar desconto.');
+                }
+                $approvedSupervisorId = $pinCheck['supervisor']->id;
+            } elseif ($request->hasSession()) {
+                $approval = $request->session()->get('floor_discount_approval');
+                if (is_array($approval) && ($approval['expires_at'] ?? 0) >= now()->timestamp && ! empty($approval['supervisor_id'])) {
+                    $supervisor = \App\Models\User::find($approval['supervisor_id']);
+                    $expectedDigest = (string) ($approval['pin_digest'] ?? '');
+                    if (
+                        $supervisor
+                        && in_array(strtolower(trim((string) $supervisor->role)), ['admin', 'supervisor'], true)
+                        && ! empty($supervisor->pin_hash)
+                        && hash_equals(hash('sha256', (string) $supervisor->pin_hash), $expectedDigest)
+                    ) {
+                        $approvedSupervisorId = $supervisor->id;
+                    }
+                }
+                $request->session()->forget('floor_discount_approval');
+            }
+
+            if (empty($approvedSupervisorId)) {
+                return redirect()->back()->with('error', 'Desconto exige autorização de um supervisor com PIN válido.');
+            }
+        } elseif ($request->hasSession()) {
+            $request->session()->forget('floor_discount_approval');
+        }
 
         try {
             $this->settleTableModule->execute(
@@ -422,8 +461,8 @@ class FloorController extends Controller
                 options: [
                     'amounts_in_cents' => true,
                     'service_fee_cents' => $validated['service_fee_cents'] ?? 0,
-                    'discount_cents' => $validated['discount_cents'] ?? 0,
-                    'discount_supervisor_id' => $validated['discount_supervisor_id'] ?? null,
+                    'discount_cents' => $discountCents,
+                    'discount_supervisor_id' => $approvedSupervisorId,
                 ]
             );
 
@@ -492,13 +531,33 @@ class FloorController extends Controller
         }
 
         $firstOrder = $activeOrders->first();
-        $amount = (float) $validated['amount'];
+        $amount = round((float) $validated['amount'], 2);
 
-        // Generate dynamic Mercado Pago PIX QR Code via PaymentGatewayService
-        $result = $this->paymentGatewayService->createPixPayment($firstOrder, 'pagamento@pedidofeito.com', $amount);
+        $tableTotal = round((float) $activeOrders->sum('total_amount'), 2);
+        if ($amount > ($tableTotal * 1.5 + 1.00)) {
+            return response()->json(['error' => 'Valor do PIX excede o limite esperado para esta mesa.'], 422);
+        }
 
-        if (!($result['success'] ?? false)) {
+        // Generate standalone Mercado Pago PIX QR Code without mutating an existing order's payment_gateway_id
+        $result = $this->paymentGatewayService->createStandalonePixPayment(
+            amount: $amount,
+            description: "Mesa {$table->name} - Pedido Feito Pizzaria",
+            payerEmail: 'pagamento@pedidofeito.com',
+        );
+
+        if (! ($result['success'] ?? false)) {
             return response()->json(['error' => $result['error'] ?? 'Erro ao gerar PIX'], 500);
+        }
+
+        $gatewayPaymentId = (string) $result['data']['gateway_payment_id'];
+        if ($request->hasSession()) {
+            $floorPixMap = (array) $request->session()->get('floor_pix_payments', []);
+            $floorPixMap[$firstOrder->id] = [
+                'gateway_payment_id' => $gatewayPaymentId,
+                'amount' => $amount,
+                'table_id' => $table->id,
+            ];
+            $request->session()->put('floor_pix_payments', array_slice($floorPixMap, -20, null, true));
         }
 
         // Return QR Details
@@ -506,29 +565,59 @@ class FloorController extends Controller
             'success' => true,
             'qr_code' => $result['data']['qr_code'],
             'qr_code_base64' => $result['data']['qr_code_base64'],
-            'gateway_payment_id' => $result['data']['gateway_payment_id'],
+            'gateway_payment_id' => $gatewayPaymentId,
             'expires_at' => $result['data']['expires_at'],
             'order_id' => $firstOrder->id,
         ]);
     }
 
     /**
-     * Polling endpoint to check POS PIX payment status directly.
+     * Polling endpoint to check Floor PIX payment status directly with currency & amount validation.
      */
-    public function pixPaymentStatus(Order $order)
+    public function pixPaymentStatus(Request $request, Order $order)
     {
+        if (empty($order->table_id)) {
+            return response()->json(['error' => 'Order does not belong to a floor table.'], 403);
+        }
+
+        $floorPixMap = $request->hasSession() ? (array) $request->session()->get('floor_pix_payments', []) : [];
+        $sessionPix = $floorPixMap[$order->id] ?? null;
+
+        if (is_array($sessionPix) && ! empty($sessionPix['gateway_payment_id'])) {
+            $expectedAmount = (float) ($sessionPix['amount'] ?? 0);
+            $verified = $this->paymentGatewayService->verifyApprovedGatewayPayment(
+                (string) $sessionPix['gateway_payment_id'],
+                $expectedAmount
+            );
+
+            return response()->json([
+                'status' => $verified['approved'] ? 'approved' : ($verified['status'] ?? 'pending'),
+            ]);
+        }
+
         if ($order->online_payment_status === 'approved') {
             return response()->json(['status' => 'approved']);
         }
 
-        $gatewayStatus = $this->paymentGatewayService->checkPaymentStatus($order);
+        if (empty($order->payment_gateway_id)) {
+            return response()->json(['status' => 'pending']);
+        }
 
-        if ($gatewayStatus === 'approved') {
-            $order->update(['online_payment_status' => 'approved']);
+        $verified = $this->paymentGatewayService->verifyApprovedGatewayPayment(
+            (string) $order->payment_gateway_id,
+            (float) $order->total_amount
+        );
+
+        if ($verified['approved']) {
+            $this->paymentGatewayService->handleWebhook([
+                'type' => 'payment',
+                'data' => ['id' => (string) $order->payment_gateway_id],
+            ]);
+
             return response()->json(['status' => 'approved']);
         }
 
-        return response()->json(['status' => $gatewayStatus ?? 'pending']);
+        return response()->json(['status' => $verified['status'] ?? 'pending']);
     }
 
     /**
@@ -540,31 +629,38 @@ class FloorController extends Controller
             'pin' => ['required', 'string', 'regex:/^\d{4}$/'],
         ]);
 
-        $users = \App\Models\User::whereIn('role', ['admin', 'supervisor'])
-            ->whereNotNull('pin_hash')
-            ->get();
+        $check = $this->cancelOrDeleteOrderAction->verifySupervisorPin((string) $request->pin);
 
-        if ($users->isEmpty()) {
+        if (! $check['valid'] || ! $check['supervisor']) {
+            if (($check['reason'] ?? null) === 'too_many_attempts') {
+                return response()->json([
+                    'valid' => false,
+                    'reason' => 'too_many_attempts',
+                ], 429);
+            }
+
             return response()->json([
                 'valid' => false,
-                'reason' => 'not_configured',
+                'reason' => $check['reason'] ?? 'invalid_pin',
             ], 401);
         }
 
-        foreach ($users as $user) {
-            if (\Illuminate\Support\Facades\Hash::check($request->pin, $user->pin_hash)) {
-                return response()->json([
-                    'valid' => true,
-                    'supervisor_name' => $user->name,
-                    'supervisor_id' => $user->id,
-                ]);
-            }
+        $supervisor = $check['supervisor'];
+
+        if ($request->hasSession()) {
+            $request->session()->put('floor_discount_approval', [
+                'supervisor_id' => $supervisor->id,
+                'supervisor_name' => $supervisor->name,
+                'pin_digest' => hash('sha256', (string) $supervisor->pin_hash),
+                'expires_at' => now()->addMinutes(5)->timestamp,
+            ]);
         }
 
         return response()->json([
-            'valid' => false,
-            'reason' => 'invalid_pin',
-        ], 401);
+            'valid' => true,
+            'supervisor_name' => $supervisor->name,
+            'supervisor_id' => $supervisor->id,
+        ]);
     }
 
     /**

@@ -103,7 +103,7 @@ class PaymentFlowTest extends TestCase
 
         $this->assertDatabaseHas('orders', [
             'id' => $order1->id,
-            'status' => 'completed',
+            'status' => 'cancelled',
         ]);
     }
 

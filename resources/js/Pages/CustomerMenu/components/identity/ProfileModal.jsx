@@ -86,7 +86,7 @@ export default function ProfileModal({ isOpen, onClose, onSuccess, customer }) {
                 name: name.trim()
             });
 
-            if (data.found || data.created) {
+            if (data.success && data.customer) {
                 const updatedCustomer = {
                     ...data.customer,
                     addresses: addresses
@@ -152,10 +152,19 @@ export default function ProfileModal({ isOpen, onClose, onSuccess, customer }) {
         localStorage.setItem('selectedAddressId', id);
     };
 
-    const handleLogout = () => {
+    const handleLogout = async () => {
         localStorage.removeItem('customerIdentity');
         localStorage.removeItem('customerAddresses');
         localStorage.removeItem('selectedAddressId');
+        try {
+            await fetch('/api/customers/logout', {
+                method: 'POST',
+                headers: { 'Accept': 'application/json' },
+                credentials: 'same-origin',
+            });
+        } catch {
+            // Ignore network error on client logout
+        }
         onSuccess(null);
     };
 

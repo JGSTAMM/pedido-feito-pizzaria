@@ -11,11 +11,15 @@ class ApiConstants {
       return _envBaseUrl;
     }
 
+    if (kReleaseMode) {
+      return 'https://sresralucchesepizzaria.pedidofeito.tech/api';
+    }
+
     if (kIsWeb) {
       return 'http://127.0.0.1:8000/api';
     }
 
-    // Default to local network IP for physical mobile devices, fallback to emulator if needed
+    // Default to local network IP for physical mobile devices in debug/profile mode
     return 'http://10.0.0.103:8000/api';
   }
 }

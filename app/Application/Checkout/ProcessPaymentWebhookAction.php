@@ -33,7 +33,13 @@ class ProcessPaymentWebhookAction
             ];
         }
 
-        $cacheKey = "mercadopago:webhook:{$notificationId}";
+        $requestId = trim((string) $request->header('x-request-id', ''));
+        $statusHint = trim((string) ($request->input('action') ?? $request->input('data.status') ?? ''));
+        $idempotencySuffix = $requestId !== ''
+            ? "req:{$requestId}"
+            : ($statusHint !== '' ? "act:{$statusHint}" : 'payload:'.substr(hash('sha256', (string) $request->getContent()), 0, 16));
+
+        $cacheKey = "mercadopago:webhook:{$notificationId}:{$idempotencySuffix}";
         if (! Cache::add($cacheKey, now()->toISOString(), now()->addDay())) {
             return [
                 'status' => 200,

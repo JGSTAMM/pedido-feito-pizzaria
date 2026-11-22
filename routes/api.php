@@ -20,8 +20,11 @@ use Illuminate\Cookie\Middleware\EncryptCookies;
 
 Route::middleware(['throttle:public-menu', EncryptCookies::class, AddQueuedCookiesToResponse::class, StartSession::class])->group(function () {
     Route::get('/digital-menu', [DigitalMenuController::class, 'index']);
-    Route::post('/customers/identify', [CustomerIdentityController::class, 'identify']);
+    Route::post('/customers/logout', [CustomerIdentityController::class, 'logout']);
 });
+
+Route::post('/customers/identify', [CustomerIdentityController::class, 'identify'])
+    ->middleware(['throttle:15,1', EncryptCookies::class, AddQueuedCookiesToResponse::class, StartSession::class]);
 
 // Payment status polling — relaxed throttle to prevent 429 on 5-second intervals
 Route::middleware(['throttle:payment-status', EncryptCookies::class, AddQueuedCookiesToResponse::class, StartSession::class])->group(function () {
@@ -46,6 +49,7 @@ Route::middleware('throttle:print-agent')->group(function () {
 });
 
 Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
@@ -62,6 +66,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::middleware('role:admin,cashier,caixa')->group(function () {
         Route::post('/tables/{table}/close', [OrderController::class, 'closeTable'])
-            ->middleware('can:closeWithoutPayment,table');
+            ->middleware(['throttle:10,1', 'can:closeWithoutPayment,table']);
     });
 });

@@ -174,9 +174,14 @@ class StoreAvailabilityAndStatusTest extends TestCase
         $this->getJson("/api/orders/{$order->id}/payment-status")
             ->assertStatus(403);
 
-        // Customer returning from another session with normalized matching customer_phone cookie succeeds
+        // Customer returning from another session with only raw phone cookie gets 403 (prevents phone-based IDOR impersonation)
         $this->withCredentials()
             ->withCookie('customer_phone', '51999998888')
+            ->getJson("/api/orders/{$order->id}/payment-status")
+            ->assertStatus(403);
+
+        // Customer with verified session ownership (owned_order_ids) succeeds
+        $this->withSession(['owned_order_ids' => [$order->id]])
             ->getJson("/api/orders/{$order->id}/payment-status")
             ->assertOk()
             ->assertJson([

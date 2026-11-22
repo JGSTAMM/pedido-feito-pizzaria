@@ -26,6 +26,35 @@ class PrintService
         $this->formatter->setPaperWidth($this->paperWidth);
     }
 
+    public static function isAllowedPrinterIp(string $ip): bool
+    {
+        $clean = trim($ip);
+        if (! filter_var($clean, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+            return false;
+        }
+
+        $long = ip2long($clean);
+        if ($long === false) {
+            return false;
+        }
+
+        // Only allow RFC1918 LAN printer addresses (192.168.0.0/16, 10.0.0.0/8, 172.16.0.0/12),
+        // blocking 0.0.0.0/8, 127.0.0.0/8, 169.254.0.0/16, 100.64.0.0/10, multicast, and arbitrary public IPs.
+        $allowedCidrs = [
+            ['192.168.0.0', '255.255.0.0'],
+            ['10.0.0.0', '255.0.0.0'],
+            ['172.16.0.0', '255.240.0.0'],
+        ];
+
+        foreach ($allowedCidrs as [$subnet, $mask]) {
+            if (($long & ip2long($mask)) === (ip2long($subnet) & ip2long($mask))) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     protected function getSetting($key, $default = null)
     {
         $settings = Cache::remember('printer_settings', 86400, function () {
@@ -78,13 +107,14 @@ class PrintService
             return false;
         }
 
+        $printer = null;
+
         try {
             $printer = $this->connectToPrinter('kitchen');
 
             $this->formatter->formatKitchenTicket($printer, $order);
 
             $printer->cut();
-            $printer->close();
 
             Log::info("Kitchen ticket printed for order #{$order->id}");
 
@@ -94,6 +124,13 @@ class PrintService
             throw $e;
         } catch (\Throwable $e) {
             throw $this->classifyPrintingException($e, 'kitchen');
+        } finally {
+            if ($printer instanceof Printer) {
+                try {
+                    $printer->close();
+                } catch (\Throwable) {
+                }
+            }
         }
     }
 
@@ -106,13 +143,14 @@ class PrintService
             return false;
         }
 
+        $printer = null;
+
         try {
             $printer = $this->connectToPrinter('cashier');
 
             $this->formatter->formatCustomerReceipt($printer, $order);
 
             $printer->cut();
-            $printer->close();
 
             Log::info("Customer receipt printed for order #{$order->id}");
 
@@ -122,6 +160,13 @@ class PrintService
             throw $e;
         } catch (\Throwable $e) {
             throw $this->classifyPrintingException($e, 'cashier');
+        } finally {
+            if ($printer instanceof Printer) {
+                try {
+                    $printer->close();
+                } catch (\Throwable) {
+                }
+            }
         }
     }
 
@@ -141,8 +186,15 @@ class PrintService
             );
         }
 
+        if (! self::isAllowedPrinterIp((string) $ip)) {
+            throw new PrinterHardwareException(
+                "Invalid or forbidden IP configured for {$printerType} printer.",
+                'printer_misconfigured'
+            );
+        }
+
         try {
-            $connector = new NetworkPrintConnector($ip, $port);
+            $connector = new NetworkPrintConnector($ip, (int) $port, 3);
 
             return new Printer($connector);
         } catch (\Throwable $e) {

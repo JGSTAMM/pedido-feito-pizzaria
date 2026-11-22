@@ -84,8 +84,20 @@ class PixPaymentOptionsTest extends TestCase
             'amount' => 5000,
         ]);
 
-        // Split payment: PIX Online (with gateway_id) + Dinheiro
-        $splitResponse = $this->post('/pos/order', [
+        // Split payment: PIX Online (with verified gateway_id) + Dinheiro
+        $gatewayMock = Mockery::mock(PaymentGatewayService::class)->makePartial();
+        $gatewayMock->shouldReceive('verifyApprovedGatewayPayment')
+            ->once()
+            ->with('mp_pos_999', 30.00)
+            ->andReturn([
+                'approved' => true,
+                'status' => 'approved',
+                'amount' => 30.00,
+                'currency' => 'BRL',
+            ]);
+        $this->app->instance(PaymentGatewayService::class, $gatewayMock);
+
+        $splitResponse = $this->withSession(['pos_pix_payment_ids' => ['mp_pos_999']])->post('/pos/order', [
             'customer_name' => 'Cliente Misto',
             'payments' => [
                 ['method' => 'pix', 'amount' => 30.00, 'gateway_id' => 'mp_pos_999'],
@@ -241,6 +253,8 @@ class PixPaymentOptionsTest extends TestCase
 
     public function test_delivery_online_pix_defers_kitchen_print_until_webhook_approval(): void
     {
+        $this->openRegister();
+
         $neighborhood = Neighborhood::forceCreate([
             'name' => 'Centro',
             'city' => 'Cidade Teste',

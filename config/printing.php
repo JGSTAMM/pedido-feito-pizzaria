@@ -31,7 +31,7 @@ return [
     |--------------------------------------------------------------------------
     */
 
-    'auto_print_kitchen' => env('PRINTER_AUTO_KITCHEN', true),
+    'auto_print_kitchen' => env('PRINTER_AUTO_KITCHEN', false),
     'auto_print_receipt' => env('PRINTER_AUTO_RECEIPT', false),
     'paper_width' => env('PRINTER_PAPER_WIDTH', 48), // characters per line (58mm=32, 80mm=48)
 

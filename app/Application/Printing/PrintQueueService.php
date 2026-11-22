@@ -201,14 +201,21 @@ class PrintQueueService
 
     public function getOrCreateAgentToken(): string
     {
-        $envToken = env('PRINT_AGENT_TOKEN');
-        if (! empty($envToken)) {
-            return (string) $envToken;
-        }
-
         $setting = PrinterSetting::where('key', 'print_agent_token')->first();
         if ($setting && ! empty($setting->value)) {
             return (string) $setting->value;
+        }
+
+        $envToken = env('PRINT_AGENT_TOKEN');
+        if (! empty($envToken)) {
+            $seeded = (string) $envToken;
+            PrinterSetting::updateOrCreate(
+                ['key' => 'print_agent_token'],
+                ['value' => $seeded]
+            );
+            Cache::forget('printer_settings');
+
+            return $seeded;
         }
 
         $generated = 'pf_print_'.Str::random(40);

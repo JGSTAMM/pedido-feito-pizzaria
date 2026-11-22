@@ -126,6 +126,7 @@ class OrderProvider with ChangeNotifier {
             'type': 'pizza',
             'size_id': item.size!.id,
             'flavor_ids': item.flavors!.map((f) => f.id).toList(),
+            'border': item.border,
             'quantity': 1,
             'notes': item.notes,
           };

@@ -9,6 +9,7 @@ use App\Models\Order;
 use App\Models\Payment;
 use App\Models\StoreSetting;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use MercadoPago\Client\Common\RequestOptions;
 use MercadoPago\Client\Payment\PaymentClient;
@@ -35,23 +36,34 @@ class PaymentGatewayService
             ?? $request->input('id')
             ?? $request->query('id');
 
-        if ($notificationId === null) {
+        if ($notificationId === null || ! is_scalar($notificationId)) {
             return null;
         }
 
-        return (string) $notificationId;
+        $clean = trim((string) $notificationId);
+
+        return $clean !== '' ? $clean : null;
     }
 
     public function validateWebhookSignature(Request $request): bool
     {
         $secret = (string) config('services.mercadopago.webhook_secret');
         if ($secret === '') {
-            // Fallback: When webhook secret is not yet configured in .env, verify notification directly with gateway API
-            // to avoid rejecting valid customer payments while logging a warning.
-            Log::warning('Mercado Pago webhook secret is not configured in .env. Falling back to direct API verification.');
+            if (app()->isProduction()) {
+                Log::error('Mercado Pago webhook rejected: MERCADOPAGO_WEBHOOK_SECRET is not configured in production.');
+
+                return false;
+            }
+
+            // Non-production local/dev fallback: require existing bound order before checking gateway
+            Log::warning('Mercado Pago webhook secret is not configured. Falling back to direct API verification (non-production only).');
 
             $notificationId = $this->extractNotificationId($request);
-            if ($notificationId === null) {
+            if ($notificationId === null || ! preg_match('/^\d{1,25}$/', $notificationId)) {
+                return false;
+            }
+
+            if (! Order::where('payment_gateway_id', $notificationId)->exists()) {
                 return false;
             }
 
@@ -207,8 +219,7 @@ class PaymentGatewayService
 
                 return [
                     'success' => false,
-                    'error' => 'Erro ao gerar pagamento PIX: '.($errorMessage ?: 'Erro desconhecido (status '.$statusCode.')'),
-                    'details' => $content,
+                    'error' => 'Não foi possível gerar o pagamento PIX no momento. Verifique os dados ou tente outro método.',
                 ];
             } catch (\Exception $e) {
                 Log::error("Error creating PIX payment for order #{$order->id} (Attempt {$attempt}): ".$e->getMessage(), [
@@ -224,7 +235,7 @@ class PaymentGatewayService
 
                 return [
                     'success' => false,
-                    'error' => 'Erro interno ao processar pagamento: '.$e->getMessage(),
+                    'error' => 'Erro interno ao processar pagamento PIX. Tente novamente.',
                 ];
             }
         }
@@ -315,8 +326,7 @@ class PaymentGatewayService
 
                 return [
                     'success' => false,
-                    'error' => 'Erro ao gerar pagamento PIX: '.($errorMessage ?: 'Erro desconhecido (status '.$statusCode.')'),
-                    'details' => $content,
+                    'error' => 'Não foi possível gerar o QR Code PIX no momento.',
                 ];
             } catch (\Exception $e) {
                 Log::error('Error creating standalone POS PIX payment: '.$e->getMessage(), [
@@ -331,7 +341,7 @@ class PaymentGatewayService
 
                 return [
                     'success' => false,
-                    'error' => 'Erro interno ao processar pagamento: '.$e->getMessage(),
+                    'error' => 'Erro interno ao processar pagamento PIX.',
                 ];
             }
         }
@@ -398,6 +408,19 @@ class PaymentGatewayService
                 'online_payment_status' => $payment->status,
             ]);
 
+            // If rejected or cancelled immediately on synchronous card submission, report failure so caller rolls back
+            if (in_array((string) $payment->status, ['rejected', 'cancelled'], true)) {
+                return [
+                    'success' => false,
+                    'error' => 'Pagamento com cartão recusado pela operadora. Verifique os dados ou utilize outro cartão.',
+                    'data' => [
+                        'gateway_payment_id' => $payment->id,
+                        'status' => $payment->status,
+                        'status_detail' => $payment->status_detail ?? null,
+                    ],
+                ];
+            }
+
             // If approved immediately
             if ($payment->status === 'approved') {
                 $this->markOrderAsPaidOnline($order, $payment->id);
@@ -425,7 +448,6 @@ class PaymentGatewayService
             return [
                 'success' => false,
                 'error' => 'Erro ao processar pagamento com cartão.',
-                'details' => $e->getApiResponse()->getContent(),
             ];
         } catch (\Exception $e) {
             Log::error("Error creating card payment for order #{$order->id}: ".$e->getMessage(), [
@@ -434,7 +456,7 @@ class PaymentGatewayService
 
             return [
                 'success' => false,
-                'error' => 'Erro interno ao processar pagamento: '.$e->getMessage(),
+                'error' => 'Erro interno ao processar pagamento com cartão.',
             ];
         }
     }
@@ -457,63 +479,131 @@ class PaymentGatewayService
 
         try {
             $payment = $this->fetchPaymentFromGateway($paymentId);
-
             $rawRef = (string) ($payment->external_reference ?? '');
             $cleanOrderId = explode('_', $rawRef)[0];
-            $order = Order::find($cleanOrderId)
-                ?? Order::where('payment_gateway_id', (string) $paymentId)->first();
 
-            if (! $order) {
-                Log::warning("Webhook: Order not found for external_reference: {$rawRef}");
+            DB::beginTransaction();
+            try {
+                /** @var Order|null $order */
+                $order = ($cleanOrderId !== '' ? Order::where('id', $cleanOrderId)->lockForUpdate()->first() : null)
+                    ?? Order::where('payment_gateway_id', (string) $paymentId)->lockForUpdate()->first();
 
-                return false;
+                if (! $order) {
+                    DB::rollBack();
+                    Log::warning("Webhook: Order not found for external_reference: {$rawRef}");
+
+                    return false;
+                }
+
+                // Prevent a stale or unrelated payment notification from overwriting a bound gateway payment ID
+                if (! empty($order->payment_gateway_id) && (string) $order->payment_gateway_id !== (string) $paymentId) {
+                    DB::commit();
+                    Log::warning("Webhook: Ignoring payment #{$paymentId} because order #{$order->id} is bound to #{$order->payment_gateway_id}");
+
+                    return true;
+                }
+
+                $isTableFloorPix = in_array((string) $order->type, ['dine_in', 'salon'], true)
+                    && $order->status !== Order::STATUS_AWAITING_PAYMENT;
+
+                if ($payment->status === 'approved') {
+                    $currency = strtoupper((string) ($payment->currency_id ?? 'BRL'));
+                    if ($currency !== 'BRL') {
+                        DB::rollBack();
+                        Log::error("Webhook: Currency mismatch on payment #{$paymentId} for order #{$order->id}: {$currency}");
+
+                        return false;
+                    }
+
+                    if (! $isTableFloorPix && isset($payment->transaction_amount)) {
+                        $expectedAmount = (float) $order->total_amount;
+                        $paidAmount = (float) $payment->transaction_amount;
+                        if ($paidAmount + 0.01 < $expectedAmount) {
+                            DB::rollBack();
+                            Log::error("Webhook: Amount mismatch on payment #{$paymentId} for order #{$order->id}", [
+                                'expected' => $expectedAmount,
+                                'received' => $paidAmount,
+                            ]);
+
+                            return false;
+                        }
+                    }
+                }
+
+                $alreadyPaidOrCompleted = $order->paid_at !== null
+                    || $order->online_payment_status === Order::ONLINE_PAYMENT_APPROVED
+                    || in_array((string) $order->status, [Order::STATUS_COMPLETED, Order::STATUS_PAID, 'delivered'], true);
+
+                // Never allow a late rejected/cancelled webhook to clobber an already paid or completed order
+                if (in_array((string) $payment->status, ['rejected', 'cancelled'], true) && $alreadyPaidOrCompleted) {
+                    DB::commit();
+                    Log::info("Webhook: Ignoring late {$payment->status} notification for already paid/completed order #{$order->id}");
+
+                    return true;
+                }
+
+                $previousStatus = (string) ($order->online_payment_status ?? $order->status ?? 'awaiting_payment');
+                $postCommitEvents = [];
+
+                Log::info("Webhook: Payment #{$paymentId} for order #{$order->id} — status: {$payment->status}");
+
+                switch ($payment->status) {
+                    case 'approved':
+                        $this->markOrderAsPaidOnline($order, $paymentId);
+                        $postCommitEvents[] = new OrderStatusUpdated(
+                            orderId: $order->id,
+                            status: (string) $order->fresh()->status,
+                            previousStatus: $previousStatus,
+                            type: $order->type,
+                            tableId: $order->table_id,
+                        );
+                        break;
+
+                    case 'rejected':
+                    case 'cancelled':
+                        $order->update([
+                            'online_payment_status' => $payment->status,
+                            'status' => Order::STATUS_REJECTED,
+                            'rejected_at' => now(),
+                            'rejection_reason' => 'Pagamento '.($payment->status === 'rejected' ? 'rejeitado' : 'cancelado'),
+                        ]);
+                        $postCommitEvents[] = new OrderStatusUpdated(
+                            orderId: $order->id,
+                            status: Order::STATUS_REJECTED,
+                            previousStatus: $previousStatus,
+                            type: $order->type,
+                            tableId: $order->table_id,
+                        );
+                        break;
+
+                    case 'pending':
+                    case 'in_process':
+                        if (! $alreadyPaidOrCompleted) {
+                            $order->update(['online_payment_status' => $payment->status]);
+                        }
+                        break;
+
+                    case 'refunded':
+                        $order->update(['online_payment_status' => Order::ONLINE_PAYMENT_REFUNDED]);
+                        break;
+                }
+
+                DB::commit();
+            } catch (\Throwable $txEx) {
+                DB::rollBack();
+                throw $txEx;
             }
 
-            $previousStatus = (string) ($order->online_payment_status ?? $order->status ?? 'awaiting_payment');
-            $order->update(['online_payment_status' => $payment->status]);
-
-            Log::info("Webhook: Payment #{$paymentId} for order #{$cleanOrderId} — status: {$payment->status}");
-
-            switch ($payment->status) {
-                case 'approved':
-                    $this->markOrderAsPaidOnline($order, $paymentId);
-                    event(new OrderStatusUpdated(
-                        orderId: $order->id,
-                        status: Order::STATUS_PENDING,
-                        previousStatus: $previousStatus,
-                        type: $order->type,
-                        tableId: $order->table_id,
-                    ));
-                    break;
-
-                case 'rejected':
-                case 'cancelled':
-                    $order->update([
-                        'status' => Order::STATUS_REJECTED,
-                        'rejected_at' => now(),
-                        'rejection_reason' => 'Pagamento '.($payment->status === 'rejected' ? 'rejeitado' : 'cancelado'),
-                    ]);
-                    event(new OrderStatusUpdated(
-                        orderId: $order->id,
-                        status: Order::STATUS_REJECTED,
-                        previousStatus: $previousStatus,
-                        type: $order->type,
-                        tableId: $order->table_id,
-                    ));
-                    break;
-
-                case 'pending':
-                case 'in_process':
-                    // Still waiting, no action needed
-                    break;
-
-                case 'refunded':
-                    $order->update(['online_payment_status' => Order::ONLINE_PAYMENT_REFUNDED]);
-                    break;
+            foreach ($postCommitEvents as $evt) {
+                try {
+                    event($evt);
+                } catch (\Throwable $broadcastEx) {
+                    Log::warning('Broadcast failed after webhook processing: '.$broadcastEx->getMessage());
+                }
             }
 
             return true;
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Log::error('Error processing webhook: '.$e->getMessage());
 
             return false;
@@ -531,12 +621,50 @@ class PaymentGatewayService
     }
 
     /**
+     * Verify that a gateway payment is approved in BRL for at least the expected amount.
+     *
+     * @return array{approved: bool, status: ?string, amount: ?float, currency: ?string}
+     */
+    public function verifyApprovedGatewayPayment(string|int $paymentId, float $expectedAmount): array
+    {
+        try {
+            $payment = $this->fetchPaymentFromGateway($paymentId);
+            $status = isset($payment->status) ? (string) $payment->status : null;
+            $currency = isset($payment->currency_id) ? strtoupper((string) $payment->currency_id) : null;
+            $amount = isset($payment->transaction_amount) ? (float) $payment->transaction_amount : null;
+
+            $approved = $status === 'approved'
+                && $currency === 'BRL'
+                && $amount !== null
+                && ($amount + 0.01) >= $expectedAmount;
+
+            return [
+                'approved' => $approved,
+                'status' => $status,
+                'amount' => $amount,
+                'currency' => $currency,
+            ];
+        } catch (\Throwable $e) {
+            Log::error("Error verifying gateway payment #{$paymentId}: ".$e->getMessage());
+
+            return [
+                'approved' => false,
+                'status' => null,
+                'amount' => null,
+                'currency' => null,
+            ];
+        }
+    }
+
+    /**
      * Mark order as paid online and create payment record.
      */
-    protected function markOrderAsPaidOnline(Order $order, string|int|null $gatewayPaymentId): void
+    public function markOrderAsPaidOnline(Order $order, string|int|null $gatewayPaymentId): void
     {
-        if ($order->type === 'dine_in' && $order->status !== Order::STATUS_AWAITING_PAYMENT) {
-            // POS table checkout PIX payment!
+        $isDineInOrSalon = in_array((string) $order->type, ['dine_in', 'salon'], true);
+
+        if ($isDineInOrSalon && $order->status !== Order::STATUS_AWAITING_PAYMENT) {
+            // Floor table checkout partial/full PIX QR payment (settled later by FloorController::payAndClose)
             $order->update([
                 'online_payment_status' => Order::ONLINE_PAYMENT_APPROVED,
             ]);
@@ -547,15 +675,19 @@ class PaymentGatewayService
         $wasAwaitingPayment = $order->status === Order::STATUS_AWAITING_PAYMENT;
         $alreadyApproved = $order->online_payment_status === Order::ONLINE_PAYMENT_APPROVED && $order->paid_at !== null;
 
+        $nextStatus = in_array((string) $order->status, ['preparing', 'ready', 'completed', 'delivered'], true)
+            ? $order->status
+            : Order::STATUS_PENDING;
+
         $order->update([
-            'status' => Order::STATUS_PENDING,
+            'status' => $nextStatus,
             'online_payment_status' => Order::ONLINE_PAYMENT_APPROVED,
             'paid_at' => $order->paid_at ?? now(),
         ]);
 
         // Create local payment record idempotently
-        $paymentAlreadyRecorded = $gatewayPaymentId !== null
-            && Payment::where('gateway_id', (string) $gatewayPaymentId)->exists();
+        $paymentAlreadyRecorded = ($gatewayPaymentId !== null && Payment::where('gateway_id', (string) $gatewayPaymentId)->exists())
+            || Payment::where('order_id', $order->id)->where('amount', $order->total_amount)->exists();
 
         if (! $paymentAlreadyRecorded) {
             Payment::create([

@@ -13,10 +13,11 @@ class ReportController extends Controller
     {
         $last30Days = now()->subDays(30);
 
-        // Revenue based on paid_at instead of status = paid
+        // Net revenue based on paid_at (including service fees and subtracting approved discounts)
         $grossRevenue = ((float) Order::whereNotNull('paid_at')
             ->where('created_at', '>=', $last30Days)
-            ->sum('total_amount')) / 100;
+            ->selectRaw('COALESCE(SUM(total_amount + COALESCE(service_fee_amount, 0) - COALESCE(discount_amount, 0)), 0) as net_total')
+            ->value('net_total')) / 100;
 
         $totalOrders = Order::whereNotNull('paid_at')
             ->where('created_at', '>=', $last30Days)
@@ -80,10 +81,11 @@ class ReportController extends Controller
     {
         $last30Days = now()->subDays(30);
 
-        // Revenue based on paid_at instead of status = paid
+        // Net revenue based on paid_at (including service fees and subtracting approved discounts)
         $grossRevenue = ((float) Order::whereNotNull('paid_at')
             ->where('created_at', '>=', $last30Days)
-            ->sum('total_amount')) / 100;
+            ->selectRaw('COALESCE(SUM(total_amount + COALESCE(service_fee_amount, 0) - COALESCE(discount_amount, 0)), 0) as net_total')
+            ->value('net_total')) / 100;
 
         $totalOrders = Order::whereNotNull('paid_at')
             ->where('created_at', '>=', $last30Days)

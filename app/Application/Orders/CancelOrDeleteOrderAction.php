@@ -3,6 +3,7 @@
 namespace App\Application\Orders;
 
 use App\Events\OrderStatusUpdated;
+use App\Models\CashRegister;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\PrintJob;
@@ -12,9 +13,12 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\RateLimiter;
 
 class CancelOrDeleteOrderAction
 {
+    private const MAX_PIN_ATTEMPTS_PER_MINUTE = 5;
+
     /**
      * Validate a 4-digit supervisor/admin PIN without any session caching or admin bypass.
      *
@@ -22,7 +26,18 @@ class CancelOrDeleteOrderAction
      */
     public function verifySupervisorPin(string $pin): array
     {
+        $rateKey = $this->resolvePinRateLimitKey();
+        if (RateLimiter::tooManyAttempts($rateKey, self::MAX_PIN_ATTEMPTS_PER_MINUTE)) {
+            return [
+                'valid' => false,
+                'reason' => 'too_many_attempts',
+                'supervisor' => null,
+            ];
+        }
+
         if (! preg_match('/^\d{4}$/', $pin)) {
+            RateLimiter::hit($rateKey, 60);
+
             return [
                 'valid' => false,
                 'reason' => 'invalid_pin',
@@ -36,6 +51,8 @@ class CancelOrDeleteOrderAction
             ->get();
 
         if ($supervisors->isEmpty()) {
+            RateLimiter::hit($rateKey, 60);
+
             return [
                 'valid' => false,
                 'reason' => 'not_configured',
@@ -45,6 +62,8 @@ class CancelOrDeleteOrderAction
 
         foreach ($supervisors as $supervisor) {
             if (Hash::check($pin, $supervisor->pin_hash)) {
+                RateLimiter::clear($rateKey);
+
                 return [
                     'valid' => true,
                     'reason' => null,
@@ -52,6 +71,8 @@ class CancelOrDeleteOrderAction
                 ];
             }
         }
+
+        RateLimiter::hit($rateKey, 60);
 
         return [
             'valid' => false,
@@ -75,6 +96,8 @@ class CancelOrDeleteOrderAction
             if (! $lockedOrder) {
                 throw new OrderActionException('Pedido não encontrado ou já excluído.', 404, [], null, 'not_found');
             }
+
+            $this->assertOrderCanBeModified($lockedOrder, false);
 
             $previousStatus = (string) $lockedOrder->status;
             $tableId = $lockedOrder->table_id;
@@ -123,6 +146,8 @@ class CancelOrDeleteOrderAction
             if (! $lockedOrder) {
                 throw new OrderActionException('Pedido não encontrado ou já excluído.', 404, [], null, 'not_found');
             }
+
+            $this->assertOrderCanBeModified($lockedOrder, true);
 
             /** @var OrderItem|null $lockedItem */
             $lockedItem = OrderItem::where('id', $item->id)
@@ -174,7 +199,9 @@ class CancelOrDeleteOrderAction
             $lockedItem->delete();
 
             // OrderItem.subtotal is persisted as integer cents in DB; Order.total_amount mutator expects Reais.
-            $newTotalCents = (int) OrderItem::where('order_id', $lockedOrder->id)->sum('subtotal');
+            $itemsTotalCents = (int) OrderItem::where('order_id', $lockedOrder->id)->sum('subtotal');
+            $deliveryFeeCents = (int) $lockedOrder->getRawOriginal('delivery_fee');
+            $newTotalCents = $itemsTotalCents + $deliveryFeeCents;
             $newTotalReais = round($newTotalCents / 100, 2);
 
             $lockedOrder->update([
@@ -244,6 +271,8 @@ class CancelOrDeleteOrderAction
             $eventsPayload = [];
 
             foreach ($orders as $order) {
+                $this->assertOrderCanBeModified($order, false);
+
                 $eventsPayload[] = [
                     'orderId' => $order->id,
                     'previousStatus' => (string) $order->status,
@@ -285,6 +314,16 @@ class CancelOrDeleteOrderAction
         $check = $this->verifySupervisorPin($pin);
 
         if (! $check['valid'] || ! $check['supervisor'] instanceof User) {
+            if ($check['reason'] === 'too_many_attempts') {
+                throw new OrderActionException(
+                    'Muitas tentativas de PIN incorretas. Aguarde um minuto antes de tentar novamente.',
+                    429,
+                    [],
+                    null,
+                    'too_many_attempts'
+                );
+            }
+
             if ($check['reason'] === 'not_configured') {
                 throw new OrderActionException(
                     'Nenhum PIN de supervisor configurado. Defina em Configurações > Segurança.',
@@ -305,6 +344,61 @@ class CancelOrDeleteOrderAction
         }
 
         return $check['supervisor'];
+    }
+
+    /**
+     * @throws OrderActionException
+     */
+    private function assertOrderCanBeModified(Order $lockedOrder, bool $isItemEdit = false): void
+    {
+        if (! empty($lockedOrder->cash_register_id)) {
+            $register = CashRegister::find($lockedOrder->cash_register_id);
+            if ($register && $register->status === 'closed') {
+                throw new OrderActionException(
+                    'Não é possível alterar ou excluir pedidos pertencentes a um caixa já fechado.',
+                    422,
+                    [],
+                    null,
+                    'register_closed'
+                );
+            }
+        }
+
+        if ($lockedOrder->isPaidOnline()) {
+            throw new OrderActionException(
+                'Pedidos pagos online via gateway não podem ser excluídos diretamente sem estorno prévio.',
+                422,
+                [],
+                null,
+                'online_payment_requires_refund'
+            );
+        }
+
+        if (
+            $isItemEdit
+            && ($lockedOrder->paid_at !== null || in_array((string) $lockedOrder->status, [Order::STATUS_COMPLETED, Order::STATUS_PAID], true))
+        ) {
+            throw new OrderActionException(
+                'Não é possível remover itens individuais de um pedido já pago ou finalizado.',
+                422,
+                [],
+                null,
+                'order_already_paid'
+            );
+        }
+    }
+
+    private function resolvePinRateLimitKey(): string
+    {
+        $req = request();
+        $userId = $req?->user()?->id;
+
+        // Key strictly by authenticated user ID (cannot be bypassed by rotating source IP)
+        if ($userId) {
+            return "supervisor-pin-verify:user:{$userId}";
+        }
+
+        return 'supervisor-pin-verify:ip:'.($req?->ip() ?? 'unknown');
     }
 
     private function cancelLockedOrder(Order $order, User $supervisor, User $actor, ?string $reason): void

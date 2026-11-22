@@ -81,8 +81,24 @@ class SettleTableModule
                     return (int) $order->getRawOriginal('total_amount');
                 });
 
+                $grossTotalCents = $totalAmountCents + $serviceFeeCents;
+                if ($discountCents > 0) {
+                    $supervisor = $discountSupervisorId ? User::find($discountSupervisorId) : null;
+                    if (
+                        ! $supervisor
+                        || ! in_array(strtolower(trim((string) $supervisor->role)), ['admin', 'supervisor'], true)
+                        || empty($supervisor->pin_hash)
+                    ) {
+                        throw new OrderActionException('Desconto exige aprovação de supervisor com PIN válido.', 403);
+                    }
+
+                    if ($discountCents > $grossTotalCents) {
+                        throw new OrderActionException('Desconto não pode exceder o valor total da conta.', 422);
+                    }
+                }
+
                 $totalPaidCents = array_sum(array_column($paymentPool, 'amount_cents'));
-                $expectedTotalCents = max(0, $totalAmountCents + $serviceFeeCents - $discountCents);
+                $expectedTotalCents = max(0, $grossTotalCents - $discountCents);
 
                 if ($totalPaidCents < $expectedTotalCents) {
                     throw new OrderActionException(__('order.payment.insufficient_amount'), 400);

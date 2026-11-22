@@ -5,6 +5,7 @@ namespace App\Application\Printing;
 use App\Models\Printer;
 use App\Models\PrinterSetting;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
 use RuntimeException;
 use ZipArchive;
 
@@ -119,18 +120,18 @@ class PrintAgentPackageBuilder
             throw new RuntimeException('Extensão PHP zip (ZipArchive) não disponível no servidor.');
         }
 
-        $tempFile = tempnam(sys_get_temp_dir(), 'pf_agent_');
-        if ($tempFile === false) {
-            throw new RuntimeException('Não foi possível criar arquivo temporário para o pacote.');
+        $privateDir = storage_path('app/private/print-agent-packages');
+        if (! File::isDirectory($privateDir)) {
+            File::makeDirectory($privateDir, 0700, true);
         }
 
-        $zipPath = $tempFile.'.zip';
-        @unlink($tempFile);
+        $zipPath = $privateDir.'/pf_agent_'.Str::uuid()->toString().'.zip';
 
         $zip = new ZipArchive;
-        if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
+        if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::EXCL) !== true) {
             throw new RuntimeException('Falha ao criar arquivo ZIP do agente de impressão.');
         }
+        @chmod($zipPath, 0600);
 
         try {
             $prefix = self::PACKAGE_DIR.'/';
@@ -292,6 +293,13 @@ SH;
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+case "$SCRIPT_DIR" in
+    *\"*|*\'*|*$'\n'*|*$'\r'*|*";"*)
+        echo "[ERRO] O caminho da pasta ($SCRIPT_DIR) contem caracteres especiais nao permitidos. Extraia em um caminho simples como ~/PedidoFeito-Impressora."
+        exit 1
+        ;;
+esac
+
 START_SCRIPT="$SCRIPT_DIR/iniciar-agente-impressao.sh"
 chmod +x "$START_SCRIPT" "$SCRIPT_DIR/listar-impressoras-linux.sh"
 
@@ -311,8 +319,8 @@ After=network-online.target
 
 [Service]
 Type=simple
-WorkingDirectory=$SCRIPT_DIR
-ExecStart=$NODE_BIN $SCRIPT_DIR/agent.mjs
+WorkingDirectory="$SCRIPT_DIR"
+ExecStart="$NODE_BIN" "$SCRIPT_DIR/agent.mjs"
 Restart=always
 RestartSec=5
 
@@ -332,7 +340,7 @@ cat > "$AUTOSTART_DIR/pedidofeito-print-agent.desktop" <<EOF
 [Desktop Entry]
 Type=Application
 Name=Pedido Feito Print Agent
-Exec=$START_SCRIPT
+Exec="$START_SCRIPT"
 Path=$SCRIPT_DIR
 Terminal=true
 X-GNOME-Autostart-enabled=true

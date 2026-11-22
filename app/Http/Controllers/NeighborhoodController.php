@@ -34,9 +34,16 @@ class NeighborhoodController extends Controller
             'pin' => ['required', 'string', 'regex:/^\d{4}$/'],
         ]);
 
-        $check = $this->adminPinService->verifyAdminPin($validated['pin']);
+        $check = $this->adminPinService->verifyAdminPin($validated['pin'], $request);
 
         if (! $check['valid'] || ! $check['admin']) {
+            if (($check['reason'] ?? null) === 'too_many_attempts') {
+                return response()->json([
+                    'valid' => false,
+                    'reason' => 'too_many_attempts',
+                ], 429);
+            }
+
             return response()->json([
                 'valid' => false,
                 'reason' => $check['reason'],

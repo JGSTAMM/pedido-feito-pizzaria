@@ -28,11 +28,10 @@ class SecurityHeaders
         $scheme = $request->getScheme();
         $wsScheme = $request->isSecure() ? 'wss' : 'ws';
 
-        $isLocal = app()->environment('local', 'testing')
-            || in_array($host, ['localhost', '127.0.0.1'], true)
-            || str_starts_with($host, '192.168.')
-            || str_starts_with($host, '10.')
-            || str_starts_with($host, '172.');
+        $isLocal = app()->environment('local', 'testing') && (
+            in_array($host, ['localhost', '127.0.0.1'], true)
+            || preg_match('/^(192\.168\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3})$/', $host) === 1
+        );
 
         $viteHttp = $isLocal ? " {$scheme}://{$host}:5173 http://localhost:5173" : '';
         $localWs = $isLocal ? " {$wsScheme}://{$host}:5173 ws://localhost:5173 {$wsScheme}://{$host}:8080 ws://localhost:8080" : '';

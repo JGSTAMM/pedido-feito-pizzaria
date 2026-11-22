@@ -26,7 +26,10 @@ class SettleTableModuleTest extends TestCase
     {
         parent::setUp();
         $this->module = app(SettleTableModule::class);
-        $this->user = User::factory()->create();
+        $this->user = User::factory()->create([
+            'role' => 'admin',
+            'pin_hash' => \Illuminate\Support\Facades\Hash::make('1234'),
+        ]);
 
         // Create an open cash register for the store
         $this->cashRegister = CashRegister::create([

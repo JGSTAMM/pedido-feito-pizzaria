@@ -33,8 +33,10 @@ class OrderController extends Controller
             'items.*.notes' => 'nullable|string|max:255',
             // Pizza validation
             'items.*.size_id' => 'required_if:items.*.type,pizza|exists:pizza_sizes,id',
-            'items.*.flavor_ids' => 'required_if:items.*.type,pizza|array',
+            'items.*.flavor_ids' => 'required_if:items.*.type,pizza|array|min:1',
             'items.*.flavor_ids.*' => 'exists:pizza_flavors,id',
+            'items.*.border' => 'nullable|string|in:cheddar,catupiry,chocolate',
+            'items.*.border_id' => 'nullable|uuid|exists:products,id',
             // Product validation
             'items.*.product_id' => 'required_if:items.*.type,product|exists:products,id',
             'items.*.quantity' => 'required_if:items.*.type,product|integer|min:1',
@@ -181,11 +183,25 @@ class OrderController extends Controller
     }
 
     /**
-     * Close a table (mark all active orders as completed, release table)
+     * Close a table without payment (requires supervisor PIN or admin privilege; cancels unpaid orders so cash register closure is not deadlocked)
      */
-    public function closeTable(Table $table)
+    public function closeTable(Request $request, Table $table)
     {
         $this->authorize('closeWithoutPayment', $table);
+
+        $user = $request->user();
+        $isAdmin = $user && strtolower(trim((string) $user->role)) === 'admin';
+
+        if (! $isAdmin) {
+            $pin = (string) $request->input('pin', '');
+            $pinCheck = app(\App\Application\Orders\CancelOrDeleteOrderAction::class)->verifySupervisorPin($pin);
+            if (! $pinCheck['valid']) {
+                return response()->json([
+                    'message' => 'Informe um PIN de supervisor válido para fechar uma mesa sem pagamento.',
+                    'reason' => $pinCheck['reason'] ?? 'invalid_pin',
+                ], ($pinCheck['reason'] ?? '') === 'too_many_attempts' ? 429 : 403);
+            }
+        }
 
         /** @var \Illuminate\Database\Eloquent\Collection<\App\Models\Order> $activeOrders */
         $activeOrders = $table->activeOrders()->get();
@@ -196,7 +212,15 @@ class OrderController extends Controller
 
         foreach ($activeOrders as $order) {
             /** @var \App\Models\Order $order */
-            $order->update(['status' => 'completed']);
+            if ($order->paid_at !== null || $order->isPaidOnline()) {
+                $order->update(['status' => 'completed']);
+            } else {
+                $order->update([
+                    'status' => 'cancelled',
+                    'rejected_at' => now(),
+                    'rejection_reason' => '[Mesa fechada sem pagamento via API por '.($user?->name ?? 'Sistema').']',
+                ]);
+            }
         }
 
         $table->update(['status' => 'available']);

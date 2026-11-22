@@ -20,8 +20,8 @@ if errorlevel 1 (
     exit /b 1
 )
 
-set AGENT_SCRIPT=%~dp0agent.mjs
-if not exist "%AGENT_SCRIPT%" set AGENT_SCRIPT=%~dp0print-agent\agent.mjs
+set "AGENT_SCRIPT=%~dp0agent.mjs"
+if not exist "%AGENT_SCRIPT%" set "AGENT_SCRIPT=%~dp0print-agent\agent.mjs"
 
 if not exist "%AGENT_SCRIPT%" (
     echo [ERRO] Arquivo agent.mjs nao encontrado nesta pasta.

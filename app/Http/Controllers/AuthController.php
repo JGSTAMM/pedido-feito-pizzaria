@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\StoreSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
 class AuthController extends Controller
@@ -42,7 +45,16 @@ class AuthController extends Controller
             'password' => ['required'],
         ]);
 
+        $throttleKey = Str::transliterate(Str::lower((string) $request->input('email')).'|'.$request->ip());
+        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+            throw ValidationException::withMessages([
+                'email' => "Muitas tentativas de login. Tente novamente em {$seconds} segundos.",
+            ]);
+        }
+
         if (Auth::attempt($credentials)) {
+            RateLimiter::clear($throttleKey);
             $request->session()->regenerate();
 
             // Role based redirect
@@ -57,6 +69,8 @@ class AuthController extends Controller
             // Fallback just in case
             return redirect()->intended('/pos');
         }
+
+        RateLimiter::hit($throttleKey, 60);
 
         return back()->withErrors([
             'email' => 'As credenciais fornecidas estão incorretas.',

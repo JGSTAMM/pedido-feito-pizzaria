@@ -527,6 +527,7 @@ function TabPerfil({ settings }) {
                                     className="w-full h-full border-0"
                                     allowFullScreen=""
                                     loading="lazy"
+                                    sandbox="allow-scripts allow-same-origin"
                                     referrerPolicy="no-referrer-when-downgrade"
                                 ></iframe>
                             </div>

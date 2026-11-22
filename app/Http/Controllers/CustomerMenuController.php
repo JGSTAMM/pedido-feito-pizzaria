@@ -26,25 +26,26 @@ class CustomerMenuController extends Controller
             ]);
         }
 
-        $phone = $request->cookie('customer_phone', '');
+        $ownedIds = (array) $request->session()->get('owned_order_ids', []);
         $lastOrder = null;
 
-        if ($phone) {
-            $order = Order::where('customer_phone', $phone)
+        if (! empty($ownedIds)) {
+            $order = Order::with(['items.product', 'items.flavors', 'items.pizzaSize'])
+                ->whereIn('id', $ownedIds)
                 ->orderByDesc('created_at')
                 ->first();
 
             if ($order) {
                 $lastOrder = [
                     'id' => $order->id,
-                    'order_code' => $order->order_code ?? $order->id,
+                    'order_code' => $order->short_code ?? $order->id,
                     'status' => $order->status,
-                    'total' => $order->total,
-                    'items' => collect($order->items ?? [])->map(fn ($item) => [
-                        'id' => $item['id'] ?? null,
-                        'name' => $item['name'] ?? 'Item',
-                        'quantity' => $item['quantity'] ?? 1,
-                        'price' => $item['price'] ?? 0,
+                    'total' => (float) $order->total_amount,
+                    'items' => $order->items->map(fn ($item) => [
+                        'id' => $item->id,
+                        'name' => $this->resolveItemName($item),
+                        'quantity' => $item->quantity ?? 1,
+                        'price' => (float) $item->unit_price,
                     ])->all(),
                     'created_at_formatted' => $order->created_at?->format('d/m/Y \à\s H:i'),
                 ];
@@ -67,12 +68,12 @@ class CustomerMenuController extends Controller
 
     public function orders(Request $request): Response
     {
-        $phone = $request->cookie('customer_phone', '');
+        $ownedIds = (array) $request->session()->get('owned_order_ids', []);
         $orders = [];
 
-        if ($phone) {
+        if (! empty($ownedIds)) {
             $orders = Order::with(['items.product', 'items.flavors', 'items.pizzaSize'])
-                ->where('customer_phone', $phone)
+                ->whereIn('id', $ownedIds)
                 ->orderByDesc('created_at')
                 ->limit(30)
                 ->get()
@@ -141,8 +142,19 @@ class CustomerMenuController extends Controller
         return Inertia::render('CustomerMenu/StoreProfile');
     }
 
-    public function status(Order $order): Response
+    public function status(Request $request, Order $order): Response
     {
+        $ownedIds = (array) $request->session()->get('owned_order_ids', []);
+        $currentOrderId = $request->session()->get('current_order_id');
+        $user = $request->user();
+        $isStaff = $user && in_array(strtolower(trim((string) $user->role)), ['admin', 'cashier', 'caixa', 'waiter', 'garcom'], true);
+
+        abort_unless(
+            $isStaff || $currentOrderId === $order->id || in_array($order->id, $ownedIds, true),
+            403,
+            __('digital_menu.errors.unauthorized_order_access')
+        );
+
         $order->load(['items.product', 'items.flavors', 'items.pizzaSize']);
 
         return Inertia::render('CustomerMenu/PaymentStatus', [

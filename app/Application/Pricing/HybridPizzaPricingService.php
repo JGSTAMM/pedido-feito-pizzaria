@@ -15,13 +15,18 @@ class HybridPizzaPricingService
         $size = PizzaSize::find($sizeId);
 
         if (! $size) {
-            return 0.0;
+            throw new InvalidArgumentException("Invalid pizza size: {$sizeId}");
         }
 
-        $flavors = PizzaFlavor::whereIn('id', $flavorIds)->get();
+        $uniqueFlavorIds = array_values(array_unique(array_filter($flavorIds, fn ($id) => is_scalar($id) && trim((string) $id) !== '')));
+        if (empty($uniqueFlavorIds)) {
+            throw new InvalidArgumentException('At least one pizza flavor must be provided.');
+        }
 
-        if ($flavors->isEmpty()) {
-            return 0.0;
+        $flavors = PizzaFlavor::whereIn('id', $uniqueFlavorIds)->get();
+
+        if ($flavors->isEmpty() || $flavors->count() !== count($uniqueFlavorIds)) {
+            throw new InvalidArgumentException('One or more selected pizza flavors do not exist.');
         }
 
         if ($size->max_flavors !== null && count($flavorIds) > (int) $size->max_flavors) {

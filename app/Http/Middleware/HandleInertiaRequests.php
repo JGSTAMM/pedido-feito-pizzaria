@@ -44,11 +44,11 @@ class HandleInertiaRequests extends Middleware
         $storeSetting = StoreSetting::first();
         $storeAvailability = $this->storeAvailabilityService->evaluate($storeSetting);
 
-        $phone = $request->cookie('customer_phone') ?? session('customer_phone', '');
+        $ownedIds = (array) $request->session()->get('owned_order_ids', []);
         $activeOrdersCount = 0;
 
-        if ($phone) {
-            $activeOrdersCount = Order::where('customer_phone', $phone)
+        if (! empty($ownedIds)) {
+            $activeOrdersCount = Order::whereIn('id', $ownedIds)
                 ->whereNotIn('status', ['delivered', 'completed', 'cancelled'])
                 ->count();
         }

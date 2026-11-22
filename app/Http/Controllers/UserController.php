@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
 
@@ -60,6 +62,8 @@ class UserController extends Controller
             'password' => 'nullable|string|min:4',
         ]);
 
+        $credentialsOrRoleChanged = ! empty($validated['password']) || $user->role !== $validated['role'] || $user->email !== $validated['email'];
+
         if (! empty($validated['password'])) {
             $validated['password'] = Hash::make($validated['password']);
         } else {
@@ -67,6 +71,14 @@ class UserController extends Controller
         }
 
         $user->update($validated);
+
+        if ($credentialsOrRoleChanged) {
+            if (! in_array(strtolower(trim((string) $user->role)), ['admin', 'supervisor'], true)) {
+                $user->forceFill(['pin_hash' => null])->save();
+            }
+            $user->tokens()->delete();
+            DB::table('sessions')->where('user_id', $user->id)->delete();
+        }
 
         return redirect()->back()->with('success', 'Dados do funcionário atualizados!');
     }
@@ -79,7 +91,21 @@ class UserController extends Controller
             return redirect()->back()->withErrors(['error' => 'Você não pode excluir a si mesmo da plataforma.']);
         }
 
-        $user->delete();
+        $user->tokens()->delete();
+        DB::table('sessions')->where('user_id', $user->id)->delete();
+
+        try {
+            $user->delete();
+        } catch (QueryException) {
+            $user->forceFill([
+                'password' => Hash::make(bin2hex(random_bytes(24))),
+                'pin_hash' => null,
+                'remember_token' => null,
+                'role' => 'revoked',
+            ])->save();
+
+            return redirect()->back()->with('success', 'Acesso, PIN e sessões do funcionário foram revogados (histórico de caixa preservado).');
+        }
 
         return redirect()->back()->with('success', 'Funcionário desligado do sistema.');
     }

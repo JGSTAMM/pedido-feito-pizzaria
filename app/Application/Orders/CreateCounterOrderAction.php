@@ -14,6 +14,7 @@ use App\Models\PizzaFlavor;
 use App\Models\PizzaSize;
 use App\Models\Product;
 use App\Models\User;
+use App\Services\PaymentGatewayService;
 use App\Services\PizzaPriceService;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -27,6 +28,7 @@ class CreateCounterOrderAction
         private readonly PizzaPriceService $pizzaPriceService,
         private readonly CashRegisterLockService $cashRegisterLockService,
         private readonly PrintQueueService $printQueueService,
+        private readonly ?PaymentGatewayService $paymentGatewayService = null,
     ) {}
 
     /**
@@ -119,12 +121,49 @@ class CreateCounterOrderAction
                 }
 
                 if ($payNow) {
+                    $verifiedGatewayId = null;
+
                     foreach ($normalizedPayments as $paymentData) {
+                        $gatewayId = $paymentData['gateway_id'] ?? null;
+                        $gatewayStatus = null;
+
+                        if (! empty($gatewayId)) {
+                            if (Payment::withTrashed()->where('gateway_id', $gatewayId)->exists()) {
+                                throw new OrderActionException('Este comprovante PIX (gateway_id) já foi utilizado em outro pedido.', 422);
+                            }
+
+                            $ownedPixIds = request()?->hasSession()
+                                ? (array) request()->session()->get('pos_pix_payment_ids', [])
+                                : [];
+
+                            if (! in_array($gatewayId, $ownedPixIds, true)) {
+                                throw new OrderActionException('Pagamento PIX do gateway não autorizado nesta sessão de PDV.', 403);
+                            }
+
+                            $gatewaySvc = $this->paymentGatewayService ?? app(PaymentGatewayService::class);
+                            $verification = $gatewaySvc->verifyApprovedGatewayPayment($gatewayId, (float) $paymentData['amount']);
+                            if (! $verification['approved']) {
+                                throw new OrderActionException('O pagamento PIX ainda não foi confirmado pelo gateway Mercado Pago.', 422);
+                            }
+
+                            $gatewayStatus = 'approved';
+                            $verifiedGatewayId = $gatewayId;
+                        }
+
                         Payment::create([
                             'order_id' => $order->id,
                             'method' => $paymentData['method'],
                             'amount' => $paymentData['amount'],
+                            'gateway_id' => $gatewayId,
+                            'gateway_status' => $gatewayStatus,
                             'paid_at' => now(),
+                        ]);
+                    }
+
+                    if ($verifiedGatewayId !== null) {
+                        $order->update([
+                            'payment_gateway_id' => $verifiedGatewayId,
+                            'online_payment_status' => Order::ONLINE_PAYMENT_APPROVED,
                         ]);
                     }
                 }
@@ -199,7 +238,10 @@ class CreateCounterOrderAction
             $borderName = null;
 
             if ($borderId) {
-                $borderProd = Product::find($borderId);
+                $borderProd = Product::where('id', $borderId)
+                    ->where('category', 'Extras')
+                    ->where('is_active_pos', true)
+                    ->first();
                 if ($borderProd) {
                     $unitPrice += (float) $borderProd->price;
                     $borderName = $borderProd->name;
@@ -249,7 +291,7 @@ class CreateCounterOrderAction
     }
 
     /**
-     * @return array<int, array{method: string, amount: float}>
+     * @return array<int, array{method: string, amount: float, gateway_id: ?string}>
      */
     private function normalizePayments(array $validated, float $totalAmount): array
     {
@@ -258,6 +300,7 @@ class CreateCounterOrderAction
                 ->map(fn (array $payment) => [
                     'method' => (string) $payment['method'],
                     'amount' => (float) $payment['amount'],
+                    'gateway_id' => ! empty($payment['gateway_id']) ? trim((string) $payment['gateway_id']) : null,
                 ])
                 ->values()
                 ->all();
@@ -267,6 +310,7 @@ class CreateCounterOrderAction
             return [[
                 'method' => (string) $validated['payment_method'],
                 'amount' => $totalAmount,
+                'gateway_id' => null,
             ]];
         }
 

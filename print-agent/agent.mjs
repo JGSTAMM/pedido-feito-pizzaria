@@ -6,6 +6,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
@@ -17,10 +18,29 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const CONFIG_PATH = path.join(__dirname, 'config.json');
 const LOG_PATH = path.join(__dirname, 'agent.log');
-const TEMP_BIN_PATH = path.join(__dirname, 'temp_ticket.bin');
 const PS_SCRIPT_PATH = path.join(__dirname, 'raw-printer.ps1');
 const MAX_LOG_BYTES = 1_048_576; // 1 MB
 const PRINTER_REFRESH_INTERVAL_MS = 30_000;
+const ALLOWED_LINUX_DEV_PRINTER_RE = /^\/dev\/(usb\/lp\d+|lp\d+|ttyUSB\d+|ttyACM\d+|rfcomm\d+)$/;
+const SAFE_PRINTER_QUEUE_NAME_RE = /^[A-Za-z0-9_.\- ()/]+$/;
+
+function createTempBinPath() {
+    return path.join(__dirname, `.temp_ticket_${process.pid}_${crypto.randomUUID()}.bin`);
+}
+
+function validateSafeQueuePrinterName(printerName) {
+    const clean = String(printerName || '').trim();
+    if (!clean || clean.length > 128) {
+        throw new Error('Nome de impressora inválido ou vazio.');
+    }
+    if (clean.startsWith('\\\\') || clean.startsWith('//') || clean.startsWith('-') || clean.includes('..') || /[\r\n\0]/.test(clean)) {
+        throw new Error(`Nome de impressora bloqueado por política de segurança: ${clean}`);
+    }
+    if (!SAFE_PRINTER_QUEUE_NAME_RE.test(clean)) {
+        throw new Error(`Caracteres não permitidos no nome da impressora: ${clean}`);
+    }
+    return clean;
+}
 
 function rotateLogIfNeeded() {
     try {
@@ -129,15 +149,17 @@ async function discoverSystemPrinters() {
 }
 
 async function printViaWindowsSpooler(printerName, buffer) {
-    fs.writeFileSync(TEMP_BIN_PATH, buffer);
+    const safePrinter = validateSafeQueuePrinterName(printerName);
+    const tempBinPath = createTempBinPath();
+    fs.writeFileSync(tempBinPath, buffer, { mode: 0o600 });
 
     try {
         const { stderr } = await execFileAsync('powershell', [
             '-NoProfile',
             '-ExecutionPolicy', 'Bypass',
             '-File', PS_SCRIPT_PATH,
-            '-PrinterName', printerName,
-            '-InputFile', TEMP_BIN_PATH,
+            '-PrinterName', safePrinter,
+            '-InputFile', tempBinPath,
         ]);
 
         if (stderr && stderr.trim()) {
@@ -146,7 +168,7 @@ async function printViaWindowsSpooler(printerName, buffer) {
         return true;
     } finally {
         try {
-            if (fs.existsSync(TEMP_BIN_PATH)) fs.unlinkSync(TEMP_BIN_PATH);
+            if (fs.existsSync(tempBinPath)) fs.unlinkSync(tempBinPath);
         } catch {
             // Ignore cleanup failure
         }
@@ -154,27 +176,38 @@ async function printViaWindowsSpooler(printerName, buffer) {
 }
 
 async function printViaLinuxRaw(printerName, buffer) {
-    if (printerName.startsWith('/dev/')) {
-        fs.writeFileSync(printerName, buffer);
+    const rawName = String(printerName || '').trim();
+    if (rawName.startsWith('/dev/')) {
+        const resolvedDev = path.posix.resolve(rawName);
+        if (resolvedDev !== rawName || !ALLOWED_LINUX_DEV_PRINTER_RE.test(resolvedDev)) {
+            throw new Error(`Dispositivo /dev/ não permitido para impressão direta: ${rawName}`);
+        }
+        const stat = fs.statSync(resolvedDev);
+        if (!stat.isCharacterDevice()) {
+            throw new Error(`Caminho ${resolvedDev} não é um dispositivo de caractere válido.`);
+        }
+        fs.writeFileSync(resolvedDev, buffer);
         return true;
     }
 
-    fs.writeFileSync(TEMP_BIN_PATH, buffer);
+    const safeQueue = validateSafeQueuePrinterName(rawName);
+    const tempBinPath = createTempBinPath();
+    fs.writeFileSync(tempBinPath, buffer, { mode: 0o600 });
 
     try {
         try {
-            await execFileAsync('lp', ['-d', printerName, '-o', 'raw', TEMP_BIN_PATH]);
+            await execFileAsync('lp', ['-d', safeQueue, '-o', 'raw', tempBinPath]);
             return true;
         } catch (lpErr) {
             if (lpErr?.code !== 'ENOENT') {
                 throw lpErr;
             }
-            await execFileAsync('lpr', ['-P', printerName, '-l', TEMP_BIN_PATH]);
+            await execFileAsync('lpr', ['-P', safeQueue, '-l', tempBinPath]);
             return true;
         }
     } finally {
         try {
-            if (fs.existsSync(TEMP_BIN_PATH)) fs.unlinkSync(TEMP_BIN_PATH);
+            if (fs.existsSync(tempBinPath)) fs.unlinkSync(tempBinPath);
         } catch {
             // Ignore cleanup failure
         }

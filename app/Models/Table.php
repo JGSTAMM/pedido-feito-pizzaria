@@ -22,6 +22,12 @@ class Table extends Model
      */
     public function activeOrders()
     {
-        return $this->orders()->whereNotIn('status', ['completed', 'paid', 'cancelled']);
+        return $this->orders()->whereNotIn('status', [
+            'completed',
+            'paid',
+            'cancelled',
+            'rejected',
+            'awaiting_payment',
+        ]);
     }
 }

@@ -6,7 +6,8 @@ chcp 65001 >nul
 net session >nul 2>&1
 if %errorlevel% neq 0 (
     echo [INFO] Solicitando permissao de Administrador para iniciar o banco de dados...
-    powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process cmd -ArgumentList '/c \"\"%~f0\"\"' -Verb RunAs"
+    set "PF_SELF_SCRIPT=%~f0"
+    powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process -FilePath cmd.exe -ArgumentList @('/c', ('\"' + $env:PF_SELF_SCRIPT + '\"')) -Verb RunAs"
     exit /b
 )
 

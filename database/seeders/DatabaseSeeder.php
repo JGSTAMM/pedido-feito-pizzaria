@@ -21,21 +21,27 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // ── Users ──
-        User::factory()->create([
-            'name' => 'Garçom Pedido Feito',
-            'email' => 'waiter@pedidofeito.com',
-            'password' => bcrypt('password'),
-            'role' => 'waiter',
-        ]);
+        // ── Users (only seed default demo credentials outside production unless explicitly configured) ──
+        if (! app()->isProduction() || env('SEED_DEFAULT_USERS', false)) {
+            $waiterPassword = (string) env('SEED_WAITER_PASSWORD', app()->isProduction() ? bin2hex(random_bytes(16)) : 'password');
+            $adminPassword = (string) env('SEED_ADMIN_PASSWORD', app()->isProduction() ? bin2hex(random_bytes(16)) : 'admin123');
+            $adminPin = (string) env('SEED_ADMIN_PIN', app()->isProduction() ? '' : '1234');
 
-        User::factory()->create([
-            'name' => 'Admin',
-            'email' => 'admin@pedidofeito.com',
-            'password' => bcrypt('admin123'),
-            'role' => 'admin',
-            'pin_hash' => Hash::make('1234'),
-        ]);
+            User::factory()->create([
+                'name' => 'Garçom Pedido Feito',
+                'email' => 'waiter@pedidofeito.com',
+                'password' => bcrypt($waiterPassword),
+                'role' => 'waiter',
+            ]);
+
+            User::factory()->create([
+                'name' => 'Admin',
+                'email' => 'admin@pedidofeito.com',
+                'password' => bcrypt($adminPassword),
+                'role' => 'admin',
+                'pin_hash' => preg_match('/^\d{4}$/', $adminPin) ? Hash::make($adminPin) : null,
+            ]);
+        }
 
         // ── Pizza Sizes ──
         PizzaSize::create([

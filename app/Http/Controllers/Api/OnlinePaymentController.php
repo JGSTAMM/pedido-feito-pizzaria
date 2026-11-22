@@ -33,12 +33,13 @@ class OnlinePaymentController extends Controller
             'payer_email' => 'nullable|email',
             'type' => 'required|in:pickup,delivery,dine_in',
             'payment_method' => 'required|in:pix,credit_card,debit_card,cash',
-            'items' => 'required|array|min:1',
+            'items' => 'required|array|min:1|max:50',
             'items.*.type' => 'required|in:product,pizza',
-            'items.*.product_id' => 'required_if:items.*.type,product|nullable|string',
-            'items.*.quantity' => 'required|integer|min:1',
-            'items.*.pizza_size_id' => 'required_if:items.*.type,pizza|nullable|string',
-            'items.*.flavor_ids' => 'required_if:items.*.type,pizza|nullable|array',
+            'items.*.product_id' => 'required_if:items.*.type,product|nullable|uuid|exists:products,id',
+            'items.*.quantity' => 'required|integer|min:1|max:50',
+            'items.*.pizza_size_id' => 'required_if:items.*.type,pizza|nullable|uuid|exists:pizza_sizes,id',
+            'items.*.flavor_ids' => 'required_if:items.*.type,pizza|nullable|array|min:1',
+            'items.*.flavor_ids.*' => 'uuid|exists:pizza_flavors,id',
             'items.*.notes' => 'nullable|string|max:500',
             'items.*.description' => 'nullable|string|max:500',
             // Delivery — either a registered neighborhood OR a custom one typed by the customer
@@ -86,12 +87,14 @@ class OnlinePaymentController extends Controller
             ]));
 
             session()->put('current_order_id', $orderId);
-            session()->put('owned_order_ids', $ownedIds);
+            session()->put('owned_order_ids', array_slice($ownedIds, -30));
             session()->put('customer_phone', $validated['customer_phone']);
+
+            return response()->json($result['payload'], $result['status'])
+                ->cookie('customer_phone', $validated['customer_phone'], 60 * 24 * 365);
         }
 
-        return response()->json($result['payload'], $result['status'])
-            ->cookie('customer_phone', $validated['customer_phone'], 60 * 24 * 365);
+        return response()->json($result['payload'], $result['status']);
     }
 
     /**
@@ -196,16 +199,11 @@ class OnlinePaymentController extends Controller
         }
 
         $user = $request->user();
-        if ($user && in_array($user->role, ['admin', 'cashier', 'caixa', 'waiter', 'garcom'], true)) {
+        if ($user && in_array(strtolower(trim((string) $user->role)), ['admin', 'cashier', 'caixa', 'waiter', 'garcom'], true)) {
             return true;
         }
 
-        $clientPhone = $this->normalizePhone(
-            $request->cookie('customer_phone') ?? session()->get('customer_phone')
-        );
-        $orderPhone = $this->normalizePhone($order->customer_phone);
-
-        return $clientPhone !== '' && $orderPhone !== '' && $clientPhone === $orderPhone;
+        return false;
     }
 
     private function normalizePhone(?string $phone): string

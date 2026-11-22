@@ -24,7 +24,7 @@ export function useOrderChannel({ only = [], onEvent } = {}) {
     useEffect(() => {
         if (!window.Echo) return;
 
-        const channel = window.Echo.channel('orders');
+        const channel = window.Echo.private('orders');
 
         channel
             .listen('.order.created', (e) => {

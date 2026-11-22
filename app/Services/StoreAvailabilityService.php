@@ -115,8 +115,22 @@ class StoreAvailabilityService
             return false;
         }
 
-        $start = $dayDate->setTimeFromTimeString((string) $config['open']);
-        $end = $dayDate->setTimeFromTimeString((string) $config['close']);
+        $openStr = trim((string) $config['open']);
+        $closeStr = trim((string) $config['close']);
+
+        if (
+            ! preg_match('/^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/', $openStr)
+            || ! preg_match('/^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/', $closeStr)
+        ) {
+            return false;
+        }
+
+        try {
+            $start = $dayDate->setTimeFromTimeString($openStr);
+            $end = $dayDate->setTimeFromTimeString($closeStr);
+        } catch (\Throwable) {
+            return false;
+        }
 
         // Overnight windows (e.g. 18:00 - 00:00 or 18:00 - 02:00) end on the next calendar day.
         if ($end->lessThanOrEqualTo($start)) {

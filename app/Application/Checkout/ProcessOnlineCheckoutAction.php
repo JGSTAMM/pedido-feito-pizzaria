@@ -63,6 +63,12 @@ class ProcessOnlineCheckoutAction
 
             $isCash = ($validated['payment_method'] ?? '') === 'cash';
 
+            $deliveryAddress = $validated['delivery_address'] ?? null;
+            $customNeighborhood = trim((string) ($validated['custom_neighborhood'] ?? ''));
+            if (($validated['type'] ?? null) === 'delivery' && empty($validated['neighborhood_id']) && $customNeighborhood !== '' && $deliveryAddress !== null) {
+                $deliveryAddress = "{$deliveryAddress} - Bairro: {$customNeighborhood}";
+            }
+
             // Use forceFill for fields intentionally excluded from $fillable (status, total_amount)
             $order = new Order;
             $order->forceFill([
@@ -73,7 +79,7 @@ class ProcessOnlineCheckoutAction
                 'customer_name' => $validated['customer_name'],
                 'customer_phone' => $validated['customer_phone'],
                 'neighborhood_id' => $validated['neighborhood_id'] ?? null,
-                'delivery_address' => $validated['delivery_address'] ?? null,
+                'delivery_address' => $deliveryAddress,
                 'delivery_complement' => $validated['delivery_complement'] ?? null,
                 'delivery_fee' => $deliveryFee,
                 'total_amount' => 0,
@@ -129,7 +135,18 @@ class ProcessOnlineCheckoutAction
                     'success' => true,
                     'message' => __('digital_menu.checkout.order_created'),
                     'order_id' => $order->id,
+                    'table_id' => $tableId,
                     'payment' => $paymentResult['data'],
+                ],
+            ];
+        } catch (\InvalidArgumentException $validationException) {
+            DB::rollBack();
+
+            return [
+                'status' => 422,
+                'payload' => [
+                    'success' => false,
+                    'error' => $validationException->getMessage(),
                 ],
             ];
         } catch (Throwable $exception) {
@@ -151,13 +168,19 @@ class ProcessOnlineCheckoutAction
 
     private function resolveDeliveryFee(array $validated): float
     {
-        if (($validated['type'] ?? null) !== 'delivery' || empty($validated['neighborhood_id'])) {
-            return 0;
+        if (($validated['type'] ?? null) !== 'delivery') {
+            return 0.0;
         }
 
-        $neighborhood = Neighborhood::find($validated['neighborhood_id']);
+        if (! empty($validated['neighborhood_id'])) {
+            $neighborhood = Neighborhood::find($validated['neighborhood_id']);
 
-        return $neighborhood ? (float) $neighborhood->delivery_fee : 0;
+            return $neighborhood ? (float) $neighborhood->delivery_fee : 15.00;
+        }
+
+        $customNeighborhood = trim((string) ($validated['custom_neighborhood'] ?? ''));
+
+        return $customNeighborhood !== '' ? 15.00 : 0.0;
     }
 
     private function createOrderItems(Order $order, array $items): float
@@ -179,6 +202,16 @@ class ProcessOnlineCheckoutAction
 
     private function createPizzaItem(Order $order, array $item): float
     {
+        $flavorIds = array_values(array_unique((array) ($item['flavor_ids'] ?? [])));
+        $activeFlavorsCount = \App\Models\PizzaFlavor::whereIn('id', $flavorIds)
+            ->where('is_active_delivery', true)
+            ->where('show_on_digital_menu', true)
+            ->count();
+
+        if (empty($flavorIds) || $activeFlavorsCount !== count($flavorIds)) {
+            throw new \InvalidArgumentException('Um ou mais sabores de pizza selecionados não estão disponíveis no cardápio digital.');
+        }
+
         $price = $this->pizzaPriceService->calculateItemPrice(
             $item['pizza_size_id'],
             $item['flavor_ids']
@@ -216,6 +249,9 @@ class ProcessOnlineCheckoutAction
     private function createProductItem(Order $order, array $item): float
     {
         $product = Product::findOrFail($item['product_id']);
+        if (! $product->is_active_delivery || ! $product->show_on_digital_menu) {
+            throw new \InvalidArgumentException("O item '{$product->name}' não está disponível para pedidos no cardápio digital.");
+        }
 
         $subtotal = (float) $product->price * $item['quantity'];
 
@@ -261,7 +297,7 @@ class ProcessOnlineCheckoutAction
             ];
         }
 
-        $onlineMethod = $validated['payment_method'] === 'debit_card' ? 'debito_online' : 'credito_online';
+        $onlineMethod = $validated['payment_method'] === 'debit_card' ? 'debito' : 'credito_online';
 
         return $this->paymentGatewayService->createCardPayment(
             $order,
@@ -278,26 +314,36 @@ class ProcessOnlineCheckoutAction
             return [null, null];
         }
 
+        $table = null;
+
         if (! empty($validated['table_id'])) {
             $table = Table::find($validated['table_id']);
+        }
 
-            if ($table) {
-                return [$table->id, null];
+        if (! $table) {
+            $tableCode = trim((string) ($validated['table_code'] ?? ''));
+
+            if ($tableCode === '') {
+                return [null, __('digital_menu.checkout.errors.table_code_required')];
             }
+
+            $table = Table::query()
+                ->whereRaw('LOWER(name) = ?', [strtolower($tableCode)])
+                ->first();
         }
-
-        $tableCode = trim((string) ($validated['table_code'] ?? ''));
-
-        if ($tableCode === '') {
-            return [null, __('digital_menu.checkout.errors.table_code_required')];
-        }
-
-        $table = Table::query()
-            ->whereRaw('LOWER(name) = ?', [strtolower($tableCode)])
-            ->first();
 
         if (! $table) {
             return [null, __('digital_menu.checkout.errors.table_not_found')];
+        }
+
+        if ($table->activeOrders()->exists()) {
+            $ownedOrderIds = (array) session()->get('owned_order_ids', []);
+            $ownsActiveOrderOnTable = ! empty($ownedOrderIds)
+                && $table->activeOrders()->whereIn('id', $ownedOrderIds)->exists();
+
+            if (! $ownsActiveOrderOnTable) {
+                return [null, 'Esta mesa já está ocupada em atendimento. Solicite ao garçom para adicionar itens à comanda da mesa.'];
+            }
         }
 
         return [$table->id, null];

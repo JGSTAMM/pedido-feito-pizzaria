@@ -10,6 +10,7 @@ use App\Application\Orders\OrderActionException;
 use App\Models\CashRegister;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class CashRegisterController extends Controller
@@ -51,12 +52,26 @@ class CashRegisterController extends Controller
     {
         $request->validate(['opening_balance' => 'required|numeric|min:0']);
 
-        CashRegister::create([
-            'user_id' => Auth::id(),
-            'opened_at' => now(),
-            'opening_balance' => $request->opening_balance,
-            'status' => 'open',
-        ]);
+        $alreadyOpen = DB::transaction(function () use ($request): bool {
+            if (CashRegister::where('status', 'open')->lockForUpdate()->exists()) {
+                return true;
+            }
+
+            CashRegister::create([
+                'user_id' => Auth::id(),
+                'opened_at' => now(),
+                'opening_balance' => $request->opening_balance,
+                'status' => 'open',
+            ]);
+
+            return false;
+        });
+
+        if ($alreadyOpen) {
+            return redirect()->back()->withErrors([
+                'error' => 'Já existe um caixa aberto no momento. Feche o caixa atual antes de abrir outro.',
+            ]);
+        }
 
         return redirect()->back()->with('success', 'Caixa aberto com sucesso!');
     }

@@ -28,7 +28,7 @@ class OrderCreated implements ShouldBroadcastNow
      */
     public function broadcastOn(): array
     {
-        $channels = [new Channel('orders')];
+        $channels = [new PrivateChannel('orders')];
 
         if ($this->tableId) {
             $channels[] = new PrivateChannel("tables.{$this->tableId}");
