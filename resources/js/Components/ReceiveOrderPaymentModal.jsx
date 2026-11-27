@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { router } from '@inertiajs/react';
 import axios from 'axios';
 import CustomNumberInput from '@/Components/CustomNumberInput';
+import DiscountSection from '@/Pages/Floor/components/Checkout/DiscountSection';
 
 const COUNTER_PAYMENT_METHODS = [
     { method: 'dinheiro', icon: 'payments', label: 'Dinheiro' },
@@ -16,33 +17,93 @@ export default function ReceiveOrderPaymentModal({ isOpen, onClose, order, onSuc
     const [inputValue, setInputValue] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [printing, setPrinting] = useState(false);
+    const [printMessage, setPrintMessage] = useState('');
+    const [discountUnlocked, setDiscountUnlocked] = useState(false);
+    const [discountMode, setDiscountMode] = useState('fixed');
+    const [discountValue, setDiscountValue] = useState('');
+    const [discountAmount, setDiscountAmount] = useState(0);
+    const [supervisorName, setSupervisorName] = useState('');
+    const [supervisorId, setSupervisorId] = useState(null);
 
-    const total = Number(order?.total ?? order?.total_amount ?? 0);
+    const baseTotal = Number(order?.total ?? order?.total_amount ?? 0);
+    const total = Math.max(0, Number((baseTotal - discountAmount).toFixed(2)));
     const totalPaid = payments.reduce((sum, item) => sum + Number(item.amount || 0), 0);
     const remaining = Math.max(0, Number((total - totalPaid).toFixed(2)));
     const change = Math.max(0, Number((totalPaid - total).toFixed(2)));
-    const canConfirm = payments.length > 0 && totalPaid >= (total - 0.01) && !loading;
+    const canConfirm = (total <= 0.01 || payments.length > 0) && totalPaid >= (total - 0.01) && !loading;
 
     useEffect(() => {
         if (isOpen && order) {
+            const initialTotal = Number(order?.total ?? order?.total_amount ?? 0);
             setPayments([]);
             setSelectedMethod('dinheiro');
-            setInputValue(total > 0 ? total.toFixed(2) : '');
+            setInputValue(initialTotal > 0 ? initialTotal.toFixed(2) : '');
             setError('');
             setLoading(false);
+            setPrinting(false);
+            setPrintMessage('');
+            setDiscountUnlocked(false);
+            setDiscountMode('fixed');
+            setDiscountValue('');
+            setDiscountAmount(0);
+            setSupervisorName('');
+            setSupervisorId(null);
         }
     }, [isOpen, order?.id]);
 
     useEffect(() => {
         if (!isOpen) return;
-        if (remaining > 0 && (!inputValue || parseFloat(inputValue) === 0)) {
+        if (remaining > 0) {
             setInputValue(remaining.toFixed(2));
+        } else if (total === 0) {
+            setInputValue('');
         }
-    }, [remaining, isOpen]);
+    }, [remaining, total, isOpen]);
 
     if (!isOpen || !order) return null;
 
     const formatBRL = (val) => `R$ ${Number(val || 0).toFixed(2).replace('.', ',')}`;
+
+    const applyDiscount = (rawVal, mode = discountMode) => {
+        setDiscountValue(rawVal);
+        setDiscountMode(mode);
+        const numeric = parseFloat(String(rawVal || '').replace(',', '.'));
+        if (isNaN(numeric) || numeric <= 0) {
+            setDiscountAmount(0);
+            return;
+        }
+        const computed = mode === 'percent'
+            ? (baseTotal * Math.min(100, numeric)) / 100
+            : Math.min(baseTotal, numeric);
+        setDiscountAmount(Number(computed.toFixed(2)));
+    };
+
+    const resetDiscount = () => {
+        setDiscountUnlocked(false);
+        setDiscountMode('fixed');
+        setDiscountValue('');
+        setDiscountAmount(0);
+        setSupervisorName('');
+        setSupervisorId(null);
+    };
+
+    const handlePrintBill = async () => {
+        if (printing) return;
+        setPrinting(true);
+        setError('');
+        setPrintMessage('');
+        try {
+            const discountCents = Math.round(discountAmount * 100);
+            const res = await axios.post(`/orders/${order.id}/print-bill`, discountCents > 0 ? { discount_cents: discountCents } : {});
+            setPrintMessage(res?.data?.message || 'Conta enviada para impressão!');
+        } catch (err) {
+            const data = err?.response?.data || {};
+            setError(data?.message || 'Não foi possível enviar a conta para impressão.');
+        } finally {
+            setPrinting(false);
+        }
+    };
 
     const handleQuickFullPayment = (method) => {
         const meta = COUNTER_PAYMENT_METHODS.find((m) => m.method === method);
@@ -81,11 +142,13 @@ export default function ReceiveOrderPaymentModal({ isOpen, onClose, order, onSuc
         setError('');
 
         try {
+            const discountCents = Math.round(discountAmount * 100);
             const res = await axios.post(`/orders/${order.id}/pay`, {
                 payments: payments.map((p) => ({
                     method: p.method,
                     amount: Number(p.amount),
                 })),
+                ...(discountCents > 0 ? { discount_cents: discountCents } : {}),
             });
 
             onSuccess?.(res.data);
@@ -244,26 +307,56 @@ export default function ReceiveOrderPaymentModal({ isOpen, onClose, order, onSuc
                         </div>
                     )}
 
+                    {printMessage && (
+                        <p className="text-xs text-sky-300 font-bold text-center bg-sky-500/10 border border-sky-500/20 rounded-xl p-2.5">
+                            {printMessage}
+                        </p>
+                    )}
+
                     {error && (
                         <p className="text-xs text-red-400 font-bold text-center bg-red-500/10 border border-red-500/20 rounded-xl p-2.5">
                             {error}
                         </p>
                     )}
+
+                    <DiscountSection
+                        discountUnlocked={discountUnlocked}
+                        discountAmount={discountAmount}
+                        discountValue={discountValue}
+                        discountMode={discountMode}
+                        supervisorName={supervisorName}
+                        supervisorId={supervisorId}
+                        setDiscountUnlocked={setDiscountUnlocked}
+                        setSupervisorName={setSupervisorName}
+                        setSupervisorId={setSupervisorId}
+                        applyDiscount={applyDiscount}
+                        resetDiscount={resetDiscount}
+                        formatCurrency={formatBRL}
+                    />
                 </div>
 
-                <div className="p-5 sm:p-6 border-t border-white/5 bg-black/25 flex gap-3">
+                <div className="p-5 sm:p-6 border-t border-white/5 bg-black/25 flex flex-wrap gap-2.5">
                     <button
                         type="button"
                         onClick={onClose}
-                        className="flex-1 py-3.5 bg-white/5 hover:bg-white/10 text-white font-bold rounded-2xl text-sm transition-colors"
+                        className="px-4 py-3.5 bg-white/5 hover:bg-white/10 text-white font-bold rounded-2xl text-sm transition-colors"
                     >
                         Cancelar
                     </button>
                     <button
                         type="button"
+                        onClick={handlePrintBill}
+                        disabled={printing}
+                        className="px-4 py-3.5 bg-sky-500/15 hover:bg-sky-500/25 border border-sky-500/30 disabled:opacity-40 text-sky-300 font-bold rounded-2xl text-sm transition-colors flex items-center justify-center gap-1.5"
+                    >
+                        <span className="material-symbols-outlined text-[18px]">print</span>
+                        {printing ? 'Imprimindo...' : 'Imprimir Conta'}
+                    </button>
+                    <button
+                        type="button"
                         onClick={handleConfirm}
                         disabled={!canConfirm}
-                        className="flex-[2] py-3.5 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 text-black font-black rounded-2xl text-sm transition-all flex items-center justify-center gap-2"
+                        className="flex-1 min-w-[170px] py-3.5 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 text-black font-black rounded-2xl text-sm transition-all flex items-center justify-center gap-2"
                     >
                         {loading ? (
                             <div className="size-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />

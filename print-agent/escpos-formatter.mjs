@@ -335,6 +335,16 @@ export function formatBillTicket(payload, paperWidth = '58mm') {
             pushLine(chunks, line);
         }
     }
+    if (payload.customer_phone) {
+        for (const line of wrapWithIndent('Tel: ', String(payload.customer_phone), cols)) {
+            pushLine(chunks, line);
+        }
+    }
+    if (payload.delivery_address) {
+        for (const line of wrapWithIndent('End: ', String(payload.delivery_address), cols)) {
+            pushLine(chunks, line);
+        }
+    }
     pushLine(chunks, dashDivider);
 
     // Columns header
@@ -383,7 +393,39 @@ export function formatBillTicket(payload, paperWidth = '58mm') {
         }
     }
 
+    if (payload.notes) {
+        const cleanOrderNotes = cleanAscii(String(payload.notes).replace(/\|/g, ', ')).replace(/\s+/g, ' ');
+        if (cleanOrderNotes) {
+            pushLine(chunks, dashDivider);
+            for (const line of wrapWithIndent('Obs Pedido: ', cleanOrderNotes, cols)) {
+                pushLine(chunks, line);
+            }
+        }
+    }
+
     pushLine(chunks, divider);
+
+    const deliveryFee = Number(payload.delivery_fee || 0);
+    const serviceFee = Number(payload.service_fee || 0);
+    const discount = Number(payload.discount || 0);
+    const subtotalVal = payload.subtotal !== undefined && payload.subtotal !== null
+        ? Number(payload.subtotal)
+        : Number(payload.total || 0);
+
+    if (deliveryFee > 0 || serviceFee > 0 || discount > 0) {
+        chunks.push(CMD.ALIGN_LEFT);
+        pushLine(chunks, padLine('SUBTOTAL', `R$ ${subtotalVal.toFixed(2).replace('.', ',')}`, cols));
+        if (deliveryFee > 0) {
+            pushLine(chunks, padLine('TAXA ENTREGA', `R$ ${deliveryFee.toFixed(2).replace('.', ',')}`, cols));
+        }
+        if (serviceFee > 0) {
+            pushLine(chunks, padLine('TAXA SERVICO', `R$ ${serviceFee.toFixed(2).replace('.', ',')}`, cols));
+        }
+        if (discount > 0) {
+            pushLine(chunks, padLine('DESCONTO', `-R$ ${discount.toFixed(2).replace('.', ',')}`, cols));
+        }
+        pushLine(chunks, dashDivider);
+    }
 
     // Grand Total (double width halves line columns)
     chunks.push(CMD.ALIGN_LEFT, CMD.MODE_DOUBLE_WH);
@@ -394,7 +436,7 @@ export function formatBillTicket(payload, paperWidth = '58mm') {
 
     // Footer
     chunks.push(CMD.ALIGN_CENTER, CMD.BOLD_ON);
-    pushLine(chunks, 'CONFERENCIA DE MESA');
+    pushLine(chunks, payload.is_order_bill ? 'CONFERENCIA DE PEDIDO' : 'CONFERENCIA DE MESA');
     pushLine(chunks, '*** NAO E DOCUMENTO FISCAL ***');
     chunks.push(CMD.BOLD_OFF);
 

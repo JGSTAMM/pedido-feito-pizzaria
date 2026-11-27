@@ -108,10 +108,97 @@ class PrintQueueService
 
         $store = StoreSetting::first();
         $first = $activeOrders->first();
-        $totalAmount = (float) $activeOrders->sum('total_amount');
+        $subtotal = (float) $activeOrders->sum('total_amount');
+        $serviceFee = round($activeOrders->sum('service_fee_amount') / 100, 2);
+        $discount = round($activeOrders->sum('discount_amount') / 100, 2);
+        $totalAmount = max(0.0, round($subtotal + $serviceFee - $discount, 2));
 
+        $tableName = trim((string) $table->name);
+        $tableLabel = preg_match('/^mesa\b/i', $tableName) ? strtoupper($tableName) : 'MESA '.strtoupper($tableName);
+
+        $payload = array_merge($this->buildStoreBillHeader($store), [
+            'type' => 'bill',
+            'table_id' => $table->id,
+            'table_name' => $tableLabel,
+            'customer_name' => $first->customer_name ?: null,
+            'short_code' => $first->short_code ?: strtoupper(substr((string) $first->id, 0, 5)),
+            'date' => now()->format('d/m/Y'),
+            'time' => now()->format('H:i:s'),
+            'items' => $this->formatBillItems($activeOrders),
+            'subtotal' => $subtotal,
+            'service_fee' => $serviceFee,
+            'discount' => $discount,
+            'total' => $totalAmount,
+        ]);
+
+        return PrintJob::create([
+            'order_id' => $first->id,
+            'table_id' => $table->id,
+            'type' => 'bill',
+            'target' => 'cash_register',
+            'status' => 'pending',
+            'payload' => $payload,
+        ]);
+    }
+
+    public function enqueueOrderBill(Order $order, ?float $overrideDiscount = null): PrintJob
+    {
+        $order->loadMissing(['items.product', 'items.pizzaSize', 'items.flavors', 'table']);
+
+        $store = StoreSetting::first();
+        $subtotal = (float) $order->total_amount;
+        $deliveryFee = (float) $order->delivery_fee;
+        $serviceFee = round(($order->service_fee_amount ?? 0) / 100, 2);
+        $discount = $overrideDiscount !== null
+            ? max(0.0, round($overrideDiscount, 2))
+            : round(($order->discount_amount ?? 0) / 100, 2);
+        $totalAmount = max(0.0, round($subtotal + $deliveryFee + $serviceFee - $discount, 2));
+
+        $tableName = $order->table?->name
+            ? (preg_match('/^mesa\b/i', trim((string) $order->table->name))
+                ? strtoupper(trim((string) $order->table->name))
+                : 'MESA '.strtoupper(trim((string) $order->table->name)))
+            : ($order->type === 'delivery' ? 'DELIVERY' : 'BALCAO / RETIRADA');
+
+        $payload = array_merge($this->buildStoreBillHeader($store), [
+            'type' => 'bill',
+            'order_id' => $order->id,
+            'table_id' => $order->table_id,
+            'table_name' => $tableName,
+            'customer_name' => $order->customer_name ?: null,
+            'customer_phone' => $order->customer_phone ?: null,
+            'delivery_address' => $order->delivery_address ?: null,
+            'short_code' => $order->short_code ?: strtoupper(substr((string) $order->id, 0, 5)),
+            'date' => now()->format('d/m/Y'),
+            'time' => now()->format('H:i:s'),
+            'items' => $this->formatBillItems([$order]),
+            'subtotal' => $subtotal,
+            'delivery_fee' => $deliveryFee,
+            'service_fee' => $serviceFee,
+            'discount' => $discount,
+            'total' => $totalAmount,
+            'is_order_bill' => true,
+            'notes' => $order->notes ? trim((string) $order->notes) : null,
+        ]);
+
+        return PrintJob::create([
+            'order_id' => $order->id,
+            'table_id' => $order->table_id,
+            'type' => 'bill',
+            'target' => 'cash_register',
+            'status' => 'pending',
+            'payload' => $payload,
+        ]);
+    }
+
+    /**
+     * @param  iterable<int, Order>  $orders
+     * @return array<int, array<string, mixed>>
+     */
+    private function formatBillItems(iterable $orders): array
+    {
         $billItems = [];
-        foreach ($activeOrders as $order) {
+        foreach ($orders as $order) {
             foreach ($order->items as $item) {
                 $isPizza = in_array($item->type, ['pizza', 'pizza_custom'], true);
                 $sizeName = $isPizza ? ($item->pizzaSize?->name ?? null) : null;
@@ -150,34 +237,21 @@ class PrintQueueService
             }
         }
 
-        $tableName = trim((string) $table->name);
-        $tableLabel = preg_match('/^mesa\b/i', $tableName) ? strtoupper($tableName) : 'MESA '.strtoupper($tableName);
+        return $billItems;
+    }
 
-        $payload = [
-            'type' => 'bill',
+    /**
+     * @return array<string, mixed>
+     */
+    private function buildStoreBillHeader(?StoreSetting $store): array
+    {
+        return [
             'store_name' => $store?->store_name ?: 'PEDIDO FEITO',
             'store_header_1' => $store?->receipt_header_1 ?: $store?->store_name ?: 'PEDIDO FEITO',
             'store_header_2' => $store?->receipt_header_2 ?: null,
             'cnpj' => ($store?->receipt_show_cnpj && $store?->cnpj) ? $store->cnpj : null,
             'footer_msg' => $store?->receipt_footer ?: null,
-            'table_id' => $table->id,
-            'table_name' => $tableLabel,
-            'customer_name' => $first->customer_name ?: null,
-            'short_code' => $first->short_code ?: strtoupper(substr((string) $first->id, 0, 5)),
-            'date' => now()->format('d/m/Y'),
-            'time' => now()->format('H:i:s'),
-            'items' => $billItems,
-            'total' => $totalAmount,
         ];
-
-        return PrintJob::create([
-            'order_id' => $first->id,
-            'table_id' => $table->id,
-            'type' => 'bill',
-            'target' => 'cash_register',
-            'status' => 'pending',
-            'payload' => $payload,
-        ]);
     }
 
     public function enqueueTestTicket(string $target = 'kitchen'): PrintJob

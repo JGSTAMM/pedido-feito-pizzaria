@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { usePage } from '@inertiajs/react';
+import axios from 'axios';
 import MobileLayout from '@/Layouts/MobileLayout';
 import PinDeleteConfirmModal from '@/Components/PinDeleteConfirmModal';
 import ReceiveOrderPaymentModal from '@/Components/ReceiveOrderPaymentModal';
@@ -15,8 +16,25 @@ export default function Orders({ orders = [], userName = 'Garçom' }) {
     const { flash } = usePage().props;
     const [orderToDelete, setOrderToDelete] = useState(null);
     const [orderToPay, setOrderToPay] = useState(null);
+    const [printingOrderId, setPrintingOrderId] = useState(null);
+    const [printToast, setPrintToast] = useState('');
 
     const formatBRL = (val) => `R$ ${Number(val || 0).toFixed(2).replace('.', ',')}`;
+
+    const handlePrintOrderBill = async (order) => {
+        if (printingOrderId) return;
+        setPrintingOrderId(order.id);
+        setPrintToast('');
+        try {
+            const res = await axios.post(`/orders/${order.id}/print-bill`);
+            setPrintToast(res?.data?.message || `Conta #${order.short_code} enviada para impressão!`);
+            setTimeout(() => setPrintToast(''), 3500);
+        } catch {
+            setPrintToast('Erro ao enviar conta para impressão.');
+        } finally {
+            setPrintingOrderId(null);
+        }
+    };
 
     return (
         <MobileLayout activeTab="/waiter/orders">
@@ -35,10 +53,10 @@ export default function Orders({ orders = [], userName = 'Garçom' }) {
                 </div>
             </div>
 
-            {flash?.success && (
+            {(flash?.success || printToast) && (
                 <div className="mx-4 mt-4 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-xs font-bold flex items-center gap-2">
                     <span className="material-symbols-outlined text-[18px]">check_circle</span>
-                    <span>{flash.success}</span>
+                    <span>{printToast || flash.success}</span>
                 </div>
             )}
 
@@ -97,7 +115,40 @@ export default function Orders({ orders = [], userName = 'Garçom' }) {
                                     </span>
                                 </div>
 
+                                {Array.isArray(order.items) && order.items.length > 0 && (
+                                    <div className="space-y-1.5 pt-2 border-t border-white/5">
+                                        {order.items.map((item) => (
+                                            <div key={item.id} className="text-xs text-white/80">
+                                                <div className="flex items-start justify-between gap-2">
+                                                    <span className="font-semibold">
+                                                        <span className="text-primary font-mono mr-1">{item.quantity}x</span>
+                                                        {item.name}
+                                                    </span>
+                                                    <span className="text-text-muted font-mono shrink-0">{formatBRL(item.total_price)}</span>
+                                                </div>
+                                                {item.notes && (
+                                                    <p className="text-[11px] text-amber-400/80 pl-5">Obs: {item.notes}</p>
+                                                )}
+                                            </div>
+                                        ))}
+                                        {order.notes && (
+                                            <p className="text-[11px] text-amber-300 bg-amber-500/10 border border-amber-500/20 rounded-lg px-2 py-1">
+                                                Obs. Pedido: {order.notes}
+                                            </p>
+                                        )}
+                                    </div>
+                                )}
+
                                 <div className="flex items-center gap-2 pt-2 border-t border-white/5">
+                                    <button
+                                        type="button"
+                                        onClick={() => handlePrintOrderBill(order)}
+                                        disabled={printingOrderId === order.id}
+                                        className="py-2.5 px-3 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 text-sky-300 border border-sky-500/25 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors active:scale-[0.98]"
+                                    >
+                                        <span className="material-symbols-outlined text-[16px]">print</span>
+                                        {printingOrderId === order.id ? '...' : 'Imprimir'}
+                                    </button>
                                     {showReceiveBtn && (
                                         <button
                                             type="button"

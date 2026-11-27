@@ -234,11 +234,11 @@ export default function Index({ products = [], pizzaFlavors = [], pizzaSizes = [
         setShowPaymentModal(true);
     };
 
-    const handleConfirmPayment = (payments, customerName, customerPhone) => {
+    const handleConfirmPayment = (payments, customerName, customerPhone, extraOptions = {}) => {
         setShowPaymentModal(false);
         setProcessing(true);
 
-        router.post('/pos/order', {
+        const payload = {
             items: cart.map(item => {
                 if (item.type === 'pizza_custom') {
                     return {
@@ -262,7 +262,16 @@ export default function Index({ products = [], pizzaFlavors = [], pizzaSizes = [
             customer_name: customerName,
             customer_phone: customerPhone,
             payments,
-        }, {
+        };
+
+        if (extraOptions?.discount_cents > 0) {
+            payload.discount_cents = extraOptions.discount_cents;
+        }
+        if (extraOptions?.print_receipt) {
+            payload.print_receipt = true;
+        }
+
+        router.post('/pos/order', payload, {
             onSuccess: () => {
                 setCart([]);
                 setProcessing(false);

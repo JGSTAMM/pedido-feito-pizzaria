@@ -169,23 +169,62 @@ class WaiterController extends Controller
                         ->whereNotIn('status', ['cancelled', 'rejected', 'completed']);
                 });
         })
-            ->with(['items.product', 'table'])
+            ->with(['items.product', 'items.pizzaSize', 'items.flavors', 'table'])
             ->orderByDesc('created_at')
             ->get()
-            ->map(fn ($o) => [
-                'id' => $o->id,
-                'short_code' => $o->short_code,
-                'status' => $o->status,
-                'type' => $o->type,
-                'is_paid' => $o->paid_at !== null,
-                'customer_name' => $o->customer_name ?? 'Cliente',
-                'total' => (float) $o->total_amount,
-                'table_id' => $o->table_id,
-                'table_name' => $o->table?->name ?? 'Balcão',
-                'created_at' => $o->created_at->format('H:i'),
-                'elapsed_minutes' => (int) $o->created_at->diffInMinutes(now()),
-                'items_count' => $o->items->sum('quantity'),
-            ]);
+            ->map(function ($o) {
+                $gross = (float) $o->total_amount;
+                $serviceFee = round(($o->service_fee_amount ?? 0) / 100, 2);
+                $discount = round(($o->discount_amount ?? 0) / 100, 2);
+
+                return [
+                    'id' => $o->id,
+                    'short_code' => $o->short_code,
+                    'status' => $o->status,
+                    'type' => $o->type,
+                    'is_paid' => $o->paid_at !== null,
+                    'customer_name' => $o->customer_name ?? 'Cliente',
+                    'total' => max(0.0, round($gross + $serviceFee - $discount, 2)),
+                    'discount_amount' => $discount,
+                    'table_id' => $o->table_id,
+                    'table_name' => $o->table?->name ?? 'Balcão',
+                    'created_at' => $o->created_at->format('H:i'),
+                    'elapsed_minutes' => (int) $o->created_at->diffInMinutes(now()),
+                    'items_count' => $o->items->sum('quantity'),
+                    'notes' => $o->notes,
+                    'items' => $o->items->map(function ($item) {
+                        $isPizza = in_array($item->type, ['pizza', 'pizza_custom'], true) || $item->pizzaSize !== null || $item->flavors->isNotEmpty();
+                        $sizeName = $item->pizzaSize?->name;
+                        $flavors = $item->flavors;
+                        $flavorCount = $flavors->count();
+                        $name = $item->product
+                            ? $item->product->name
+                            : ($sizeName
+                                ? 'Pizza '.$sizeName.($flavorCount > 0 ? ' ('.$flavors->pluck('name')->join(', ').')' : '')
+                                : ($item->description ?: 'Item Customizado'));
+
+                        return [
+                            'id' => $item->id,
+                            'quantity' => $item->quantity,
+                            'name' => $name,
+                            'total_price' => (float) $item->subtotal,
+                            'notes' => \App\Application\Printing\OrderItemClassifier::cleanNotes(
+                                rawCustom: $item->description,
+                                rawNotes: $item->notes,
+                                itemName: $item->product?->name,
+                                productName: $item->product?->name,
+                                isPizza: $isPizza,
+                                sizeName: $sizeName
+                            ),
+                            'flavors_detail' => $flavors->map(fn ($f) => [
+                                'name' => $f->name,
+                                'ingredients' => $f->ingredients,
+                                'fraction' => $flavorCount > 1 ? "1/{$flavorCount}" : '1/1',
+                            ])->values()->all(),
+                        ];
+                    })->values()->all(),
+                ];
+            });
 
         return Inertia::render('Waiter/Orders', [
             'orders' => $orders,

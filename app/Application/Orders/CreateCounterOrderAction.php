@@ -50,19 +50,23 @@ class CreateCounterOrderAction
                 }
 
                 $totalAmount = round($totalAmount, 2);
+                $discountCents = (int) ($validated['discount_cents'] ?? 0);
+                $discountValue = min($totalAmount, round($discountCents / 100, 2));
+                $effectiveDiscountCents = (int) round($discountValue * 100);
+                $payableTotal = max(0.0, round($totalAmount - $discountValue, 2));
 
                 $normalizedPayments = [];
                 $changeAmount = 0.0;
 
                 if ($payNow) {
-                    $normalizedPayments = $this->normalizePayments($validated, $totalAmount);
+                    $normalizedPayments = $this->normalizePayments($validated, $payableTotal);
                     $totalPaid = array_sum(array_column($normalizedPayments, 'amount'));
 
-                    if ($totalPaid < ($totalAmount - 0.01)) {
+                    if ($totalPaid < ($payableTotal - 0.01)) {
                         throw new OrderActionException('Valor pago insuficiente para finalizar a venda.', 422);
                     }
 
-                    $changeAmount = max(0.0, round($totalPaid - $totalAmount, 2));
+                    $changeAmount = max(0.0, round($totalPaid - $payableTotal, 2));
                 }
 
                 $customerId = null;
@@ -87,6 +91,8 @@ class CreateCounterOrderAction
                     'status' => 'pending',
                     'type' => 'pickup',
                     'total_amount' => $totalAmount,
+                    'discount_amount' => $effectiveDiscountCents,
+                    'discount_approved_by' => $effectiveDiscountCents > 0 ? ($validated['discount_approved_by'] ?? null) : null,
                     'change_amount' => $changeAmount,
                     'customer_name' => $customerName,
                     'customer_phone' => $storedPhone,
@@ -173,7 +179,7 @@ class CreateCounterOrderAction
                 return $order;
             });
 
-            $this->dispatchPostCreateSideEffects($order);
+            $this->dispatchPostCreateSideEffects($order, (bool) ($validated['print_receipt'] ?? false));
 
             return $order;
         } catch (Throwable $exception) {
@@ -314,15 +320,27 @@ class CreateCounterOrderAction
             ]];
         }
 
+        if ($totalAmount <= 0.01) {
+            return [];
+        }
+
         throw new OrderActionException('Selecione ao menos uma forma de pagamento.', 422);
     }
 
-    private function dispatchPostCreateSideEffects(Order $order): void
+    private function dispatchPostCreateSideEffects(Order $order, bool $printReceipt = false): void
     {
         try {
             $this->printQueueService->enqueueKitchenTicket($order);
         } catch (Throwable $queueEx) {
             Log::warning('Failed to enqueue kitchen print job for counter order: '.$queueEx->getMessage());
+        }
+
+        if ($printReceipt) {
+            try {
+                $this->printQueueService->enqueueOrderBill($order);
+            } catch (Throwable $billEx) {
+                Log::warning('Failed to enqueue cash_register bill print job for counter order: '.$billEx->getMessage());
+            }
         }
 
         try {

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Application\CashRegister\CashRegisterLockService;
+use App\Application\Orders\CancelOrDeleteOrderAction;
 use App\Application\Orders\CreateCounterOrderAction;
 use App\Application\Orders\OrderActionException;
 use App\Models\CashRegister;
@@ -23,6 +24,7 @@ class PosController extends Controller
         private readonly CreateCounterOrderAction $createCounterOrderAction,
         private readonly CashRegisterLockService $cashRegisterLockService,
         private readonly PaymentGatewayService $paymentGatewayService,
+        private readonly CancelOrDeleteOrderAction $cancelOrDeleteOrderAction,
     ) {}
 
     /**
@@ -159,24 +161,46 @@ class PosController extends Controller
                 // Customer fields
                 'customer_name' => 'required|string|max:255',
                 'customer_phone' => 'nullable|string|max:20',
-                // Split Payment: accept array of payments
-                'payments' => 'required_without:payment_method|array|min:1',
+                // Split Payment: accept array of payments (nullable when 100% discount covers total)
+                'payments' => 'nullable|array',
                 'payments.*.method' => 'required_with:payments|string|in:dinheiro,pix,pix_balcao,credito,debito',
                 'payments.*.amount' => 'required_with:payments|numeric|min:0.01',
                 'payments.*.gateway_id' => 'nullable|string|max:100',
                 // Legacy single payment (backward compat)
-                'payment_method' => 'required_without:payments|nullable|string|in:dinheiro,pix,pix_balcao,credito,debito',
+                'payment_method' => 'nullable|string|in:dinheiro,pix,pix_balcao,credito,debito',
+                // Discount & Receipt
+                'discount_cents' => 'nullable|integer|min:0',
+                'discount_supervisor_pin' => 'nullable|string|size:4|regex:/^\d{4}$/',
+                'print_receipt' => 'nullable|boolean',
             ]);
         } catch (ValidationException $e) {
             Log::error('Validation Failed in POS Checkout:', $e->errors());
             throw $e;
         }
 
+        $discountCents = (int) ($validated['discount_cents'] ?? 0);
+        $approvedSupervisorId = null;
+
+        if ($discountCents > 0) {
+            $approvedSupervisorId = $this->cancelOrDeleteOrderAction->resolveDiscountApprovalSupervisorId(
+                $request,
+                $validated['discount_supervisor_pin'] ?? null
+            );
+
+            if (empty($approvedSupervisorId)) {
+                return redirect()->back()->with('error', 'Desconto exige autorização de um supervisor ou administrador com PIN válido.');
+            }
+        } elseif ($request->hasSession()) {
+            $request->session()->forget('floor_discount_approval');
+        }
+
+        $validated['discount_approved_by'] = $approvedSupervisorId;
+
         try {
             $order = $this->createCounterOrderAction->execute($validated, $request->user(), true);
-            $totalAmount = (float) $order->total_amount;
+            $netTotal = max(0.0, round((float) $order->total_amount - (($order->discount_amount ?? 0) / 100), 2));
 
-            return redirect()->back()->with('success', "Pedido #{$order->short_code} finalizado com sucesso! Total: R$ ".number_format($totalAmount, 2, ',', '.'));
+            return redirect()->back()->with('success', "Pedido #{$order->short_code} finalizado com sucesso! Total: R$ ".number_format($netTotal, 2, ',', '.'));
         } catch (OrderActionException $exception) {
             return redirect()->back()->with('error', $exception->getMessage());
         } catch (\Exception $e) {

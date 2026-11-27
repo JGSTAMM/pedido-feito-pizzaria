@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Link, router } from '@inertiajs/react';
+import axios from 'axios';
 import { norm } from '@/utils/normalize';
 import AppLayout from '@/Layouts/AppLayout';
 import PinDeleteConfirmModal from '@/Components/PinDeleteConfirmModal';
@@ -50,7 +51,7 @@ function StatCard({ icon, label, value, valueColor = 'text-white' }) {
     );
 }
 
-function OrderDetailsModal({ order, onClose, onDeleteOrder, onReceivePayment, t, statusConfig, typeConfig, formatCurrency }) {
+function OrderDetailsModal({ order, onClose, onDeleteOrder, onReceivePayment, onPrintBill, printingOrderId, t, statusConfig, typeConfig, formatCurrency }) {
     if (!order) return null;
     const typeInfo = typeConfig[order.type] || { label: order.type, icon: 'help' };
     const canDelete = !['cancelled', 'rejected'].includes(order.status);
@@ -132,6 +133,19 @@ function OrderDetailsModal({ order, onClose, onDeleteOrder, onReceivePayment, t,
                                             </div>
                                             <div>
                                                 <p className="text-white font-medium leading-tight">{item.name}</p>
+                                                {Array.isArray(item.flavors_detail) && item.flavors_detail.length > 0 && (
+                                                    <div className="mt-1.5 space-y-1">
+                                                        {item.flavors_detail.map((flavor, fIdx) => (
+                                                            <div key={fIdx} className="text-xs text-slate-300 leading-snug">
+                                                                <span className="font-semibold text-primary/90 mr-1.5">{flavor.fraction}</span>
+                                                                <span className="font-medium text-white/90">{flavor.name}</span>
+                                                                {flavor.ingredients && (
+                                                                    <span className="text-text-muted"> — {flavor.ingredients}</span>
+                                                                )}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
                                                 {item.description && (
                                                     <div className="mt-2 p-2 bg-black/30 rounded-lg border border-white/5">
                                                         <p className="text-[10px] uppercase font-black text-slate-500 tracking-widest mb-1">Customização</p>
@@ -154,6 +168,15 @@ function OrderDetailsModal({ order, onClose, onDeleteOrder, onReceivePayment, t,
                                 </div>
                             ))}
                         </div>
+                        {order.notes && (
+                            <div className="mt-3 p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-start gap-2">
+                                <span className="material-symbols-outlined text-amber-400 text-[18px] mt-0.5">sticky_note_2</span>
+                                <div>
+                                    <p className="text-[10px] font-black uppercase tracking-wider text-amber-300">Observação do Pedido</p>
+                                    <p className="text-xs text-amber-100 mt-0.5">{order.notes}</p>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -177,6 +200,15 @@ function OrderDetailsModal({ order, onClose, onDeleteOrder, onReceivePayment, t,
                         )}
                     </div>
                     <div className="flex items-center gap-3 flex-wrap justify-end">
+                        <button
+                            type="button"
+                            onClick={() => onPrintBill?.(order)}
+                            disabled={printingOrderId === order.id}
+                            className="px-4 py-2.5 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 disabled:opacity-40 text-sky-300 border border-sky-500/30 text-xs font-bold flex items-center gap-1.5 transition-colors"
+                        >
+                            <span className="material-symbols-outlined text-[18px]">print</span>
+                            {printingOrderId === order.id ? 'Enviando...' : 'Imprimir Conta'}
+                        </button>
                         {canReceivePayment && (
                             <button
                                 type="button"
@@ -198,6 +230,11 @@ function OrderDetailsModal({ order, onClose, onDeleteOrder, onReceivePayment, t,
                             </button>
                         )}
                         <div className="text-right flex-shrink-0 pl-2">
+                            {Number(order.discount_amount || 0) > 0 && (
+                                <p className="text-xs text-amber-400 font-semibold">
+                                    Desconto: -{formatCurrency(order.discount_amount)}
+                                </p>
+                            )}
                             <span className="text-sm text-text-muted mr-3">{t('orders.modal.totalOrder')}</span>
                             <span className="text-2xl font-bold text-emerald-400 font-mono">{formatCurrency(order.total_amount)}</span>
                         </div>
@@ -217,6 +254,27 @@ export default function Index({ orders = { data: [], links: [], total: 0 }, stat
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [orderToDelete, setOrderToDelete] = useState(null);
     const [orderToPay, setOrderToPay] = useState(null);
+    const [printingOrderId, setPrintingOrderId] = useState(null);
+    const [printFeedback, setPrintFeedback] = useState(null);
+
+    const handlePrintOrderBill = async (order) => {
+        if (!order || printingOrderId) return;
+        setPrintingOrderId(order.id);
+        setPrintFeedback(null);
+        try {
+            const res = await axios.post(`/orders/${order.id}/print-bill`);
+            setPrintFeedback({ type: 'success', text: res?.data?.message || 'Conta enviada para impressão!' });
+            setTimeout(() => setPrintFeedback(null), 4000);
+        } catch (err) {
+            setPrintFeedback({
+                type: 'error',
+                text: err?.response?.data?.message || 'Erro ao enviar conta para impressão.',
+            });
+            setTimeout(() => setPrintFeedback(null), 4000);
+        } finally {
+            setPrintingOrderId(null);
+        }
+    };
 
     const filteredOrders = useMemo(() => {
         let items = orders.data || [];
@@ -370,8 +428,15 @@ export default function Index({ orders = { data: [], links: [], total: 0 }, stat
                                             <span className="text-sm text-text-muted">{typeInfo.label}</span>
                                         </div>
 
-                                        {/* Items Count */}
-                                        <span className="text-sm text-white font-mono">{order.items_count} {order.items_count === 1 ? t('orders.table.itemSingular') : t('orders.table.itemPlural')}</span>
+                                        {/* Items Count & Summary */}
+                                        <div className="min-w-0">
+                                            <span className="text-sm text-white font-mono">{order.items_count} {order.items_count === 1 ? t('orders.table.itemSingular') : t('orders.table.itemPlural')}</span>
+                                            {Array.isArray(order.items_summary) && order.items_summary.length > 0 && (
+                                                <p className="text-[11px] text-text-muted truncate max-w-[160px]" title={order.items_summary.join(', ')}>
+                                                    {order.items_summary.join(', ')}
+                                                </p>
+                                            )}
+                                        </div>
 
                                         {/* Total */}
                                         <span className="text-sm font-bold text-emerald-soft font-mono">{formatCurrency(order.total_amount)}</span>
@@ -386,6 +451,15 @@ export default function Index({ orders = { data: [], links: [], total: 0 }, stat
                                                 <p className="text-xs text-text-muted/60">{order.created_at_relative}</p>
                                             </div>
                                             <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handlePrintOrderBill(order)}
+                                                    disabled={printingOrderId === order.id}
+                                                    title="Imprimir Conta (58mm)"
+                                                    className="size-8 rounded-lg bg-sky-500/15 hover:bg-sky-500/25 disabled:opacity-40 text-sky-300 flex items-center justify-center transition-colors"
+                                                >
+                                                    <span className="material-symbols-outlined text-[16px]">print</span>
+                                                </button>
                                                 {!order.is_paid && !order.table_name && !['cancelled', 'rejected'].includes(order.status) && (
                                                     <button
                                                         type="button"
@@ -449,11 +523,26 @@ export default function Index({ orders = { data: [], links: [], total: 0 }, stat
                 </div>
             </div>
             {/* Modal */}
+            {printFeedback && (
+                <div className={`fixed bottom-6 right-6 z-[10060] px-4 py-3 rounded-xl border text-xs font-bold shadow-2xl flex items-center gap-2 ${
+                    printFeedback.type === 'success'
+                        ? 'bg-emerald-950/90 border-emerald-500/40 text-emerald-300'
+                        : 'bg-red-950/90 border-red-500/40 text-red-300'
+                }`}>
+                    <span className="material-symbols-outlined text-[18px]">
+                        {printFeedback.type === 'success' ? 'print' : 'error'}
+                    </span>
+                    <span>{printFeedback.text}</span>
+                </div>
+            )}
+
             <OrderDetailsModal
                 order={selectedOrder}
                 onClose={() => setSelectedOrder(null)}
                 onDeleteOrder={(ord) => setOrderToDelete(ord)}
                 onReceivePayment={(ord) => setOrderToPay(ord)}
+                onPrintBill={handlePrintOrderBill}
+                printingOrderId={printingOrderId}
                 t={t}
                 statusConfig={statusConfig}
                 typeConfig={typeConfig}

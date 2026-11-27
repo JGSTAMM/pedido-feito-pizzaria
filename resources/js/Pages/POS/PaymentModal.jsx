@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import axios from 'axios';
 import CustomNumberInput from '@/Components/CustomNumberInput';
+import DiscountSection from '@/Pages/Floor/components/Checkout/DiscountSection';
 import useI18n from '@/hooks/useI18n';
 
 const PIX_DEFAULT_TTL_SECONDS = 900;
@@ -44,6 +45,13 @@ export default function PaymentModal({ isOpen, onClose, onConfirm, total }) {
     const [payments, setPayments] = useState([]);
     const [selectedMethod, setSelectedMethod] = useState(null);
     const [inputValue, setInputValue] = useState('');
+    const [printReceipt, setPrintReceipt] = useState(false);
+    const [discountUnlocked, setDiscountUnlocked] = useState(false);
+    const [discountMode, setDiscountMode] = useState('fixed');
+    const [discountValue, setDiscountValue] = useState('');
+    const [discountAmount, setDiscountAmount] = useState(0);
+    const [supervisorName, setSupervisorName] = useState('');
+    const [supervisorId, setSupervisorId] = useState(null);
     const inputRef = useRef(null);
 
     // Online PIX (Mercado Pago) state
@@ -123,6 +131,13 @@ export default function PaymentModal({ isOpen, onClose, onConfirm, total }) {
             setInputValue('');
             setCustomerName('');
             setCustomerPhone('');
+            setPrintReceipt(false);
+            setDiscountUnlocked(false);
+            setDiscountMode('fixed');
+            setDiscountValue('');
+            setDiscountAmount(0);
+            setSupervisorName('');
+            setSupervisorId(null);
             setIsReturning(false);
             setNameLocked(false);
             setSuggestions([]);
@@ -258,11 +273,36 @@ export default function PaymentModal({ isOpen, onClose, onConfirm, total }) {
         setTimeout(() => nameInputRef.current?.focus(), 50);
     };
 
+    const baseTotal = Number(total || 0);
+    const payableTotal = Math.max(0, Number((baseTotal - discountAmount).toFixed(2)));
     const totalPaid = payments.reduce((s, p) => s + p.amount, 0);
-    const remaining = Math.max(0, total - totalPaid);
-    const change = Math.max(0, totalPaid - total);
+    const remaining = Math.max(0, Number((payableTotal - totalPaid).toFixed(2)));
+    const change = Math.max(0, Number((totalPaid - payableTotal).toFixed(2)));
     const isPixViewActive = Boolean(generatingPix || pixQrCode || pixError || pixApproved);
-    const canFinalize = !isPixViewActive && totalPaid >= total && payments.length > 0 && customerName.trim().length > 0;
+    const canFinalize = !isPixViewActive && totalPaid >= (payableTotal - 0.01) && (payableTotal <= 0.01 || payments.length > 0) && customerName.trim().length > 0;
+
+    const applyDiscount = (rawVal, mode = discountMode) => {
+        setDiscountValue(rawVal);
+        setDiscountMode(mode);
+        const numeric = parseFloat(String(rawVal || '').replace(',', '.'));
+        if (isNaN(numeric) || numeric <= 0) {
+            setDiscountAmount(0);
+            return;
+        }
+        const computed = mode === 'percent'
+            ? (baseTotal * Math.min(100, numeric)) / 100
+            : Math.min(baseTotal, numeric);
+        setDiscountAmount(Number(computed.toFixed(2)));
+    };
+
+    const resetDiscount = () => {
+        setDiscountUnlocked(false);
+        setDiscountMode('fixed');
+        setDiscountValue('');
+        setDiscountAmount(0);
+        setSupervisorName('');
+        setSupervisorId(null);
+    };
 
     const getMethodMeta = (method) => paymentMethods.find(m => m.method === method);
 
@@ -394,13 +434,13 @@ export default function PaymentModal({ isOpen, onClose, onConfirm, total }) {
 
     const quickFullPayment = (method) => {
         if (method === 'pix') {
-            const amountToCharge = remaining > 0 ? remaining : total;
+            const amountToCharge = remaining > 0 ? remaining : payableTotal;
             startPosPixPayment(amountToCharge);
             return;
         }
 
         const label = getMethodMeta(method)?.label || method;
-        setPayments([{ id: Date.now(), method, label, amount: total }]);
+        setPayments([{ id: Date.now(), method, label, amount: payableTotal }]);
         setSelectedMethod(null);
         setInputValue('');
     };
@@ -413,15 +453,23 @@ export default function PaymentModal({ isOpen, onClose, onConfirm, total }) {
     const handleConfirm = () => {
         if (!canFinalize) return;
         const rawDigits = customerPhone.replace(/\D/g, '');
-        onConfirm(
-            payments.map(({ method, amount, gateway_id }) => ({
-                method,
-                amount,
-                ...(gateway_id ? { gateway_id } : {}),
-            })),
-            customerName.trim(),
-            rawDigits.length >= 10 ? rawDigits : null
-        );
+        const formattedPayments = payments.map(({ method, amount, gateway_id }) => ({
+            method,
+            amount,
+            ...(gateway_id ? { gateway_id } : {}),
+        }));
+        const phone = rawDigits.length >= 10 ? rawDigits : null;
+        const discountCents = Math.round(discountAmount * 100);
+
+        if (discountCents > 0 || printReceipt) {
+            onConfirm(formattedPayments, customerName.trim(), phone, {
+                ...(discountCents > 0 ? { discount_cents: discountCents } : {}),
+                ...(printReceipt ? { print_receipt: true } : {}),
+            });
+            return;
+        }
+
+        onConfirm(formattedPayments, customerName.trim(), phone);
     };
 
     return (
@@ -762,6 +810,34 @@ export default function PaymentModal({ isOpen, onClose, onConfirm, total }) {
 
                 {/* Footer — Summary + Confirm */}
                 <div className="p-5 border-t border-border-subtle bg-[#111118] space-y-4">
+                    <DiscountSection
+                        discountUnlocked={discountUnlocked}
+                        discountAmount={discountAmount}
+                        discountValue={discountValue}
+                        discountMode={discountMode}
+                        supervisorName={supervisorName}
+                        supervisorId={supervisorId}
+                        setDiscountUnlocked={setDiscountUnlocked}
+                        setSupervisorName={setSupervisorName}
+                        setSupervisorId={setSupervisorId}
+                        applyDiscount={applyDiscount}
+                        resetDiscount={resetDiscount}
+                        formatCurrency={(val) => `R$ ${Number(val || 0).toFixed(2).replace('.', ',')}`}
+                    />
+
+                    <label className="flex items-center justify-between gap-3 px-3.5 py-2.5 rounded-xl bg-black/30 border border-border-subtle cursor-pointer hover:border-sky-500/40 transition-colors">
+                        <span className="flex items-center gap-2 text-xs font-bold text-slate-200">
+                            <span className="material-symbols-outlined text-[18px] text-sky-400">print</span>
+                            Imprimir comprovante no caixa (58mm)
+                        </span>
+                        <input
+                            type="checkbox"
+                            checked={printReceipt}
+                            onChange={(e) => setPrintReceipt(e.target.checked)}
+                            className="size-4 rounded border-white/20 bg-white/5 text-sky-500 focus:ring-sky-500"
+                        />
+                    </label>
+
                     <div className="grid grid-cols-2 gap-3">
                         <div className="bg-black/40 rounded-xl p-3 text-center border border-border-subtle">
                             <span className="text-text-muted text-[10px] uppercase tracking-wider font-bold block mb-1">{t('pos.payment.remaining_amount')}</span>

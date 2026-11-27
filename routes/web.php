@@ -135,7 +135,11 @@ Route::middleware(['auth'])->group(function () {
             ->middleware('throttle:10,1')
             ->name('orders.items.destroy-with-pin');
         Route::post('/orders/{order}/pay', [OrderController::class, 'receivePayment'])
+            ->middleware('throttle:15,1')
             ->name('orders.receive-payment');
+        Route::post('/orders/{order}/print-bill', [OrderController::class, 'printBill'])
+            ->middleware('throttle:15,1')
+            ->name('orders.print-bill');
         Route::get('/floor', [FloorController::class, 'index']);
         Route::post('/floor/{table}/add-items', [FloorController::class, 'addItems']);
         Route::post('/floor/{table}/clear-comanda', [FloorController::class, 'clearComanda'])
