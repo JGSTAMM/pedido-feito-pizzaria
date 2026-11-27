@@ -240,7 +240,8 @@ class OrderController extends Controller
         if ($discountCents > 0) {
             $approvedSupervisorId = $this->cancelOrDeleteOrderAction->resolveDiscountApprovalSupervisorId(
                 $request,
-                $validated['discount_supervisor_pin'] ?? null
+                $validated['discount_supervisor_pin'] ?? null,
+                false
             );
 
             if (empty($approvedSupervisorId)) {
@@ -344,6 +345,10 @@ class OrderController extends Controller
                     }
                 });
             });
+
+            if ($discountCents > 0 && $request->hasSession()) {
+                $request->session()->forget('floor_discount_approval');
+            }
 
             $message = 'Pagamento registrado com sucesso!';
 

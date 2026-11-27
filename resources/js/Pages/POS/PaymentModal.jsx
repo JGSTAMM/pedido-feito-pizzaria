@@ -47,7 +47,7 @@ export default function PaymentModal({ isOpen, onClose, onConfirm, total }) {
     const [inputValue, setInputValue] = useState('');
     const [printReceipt, setPrintReceipt] = useState(false);
     const [discountUnlocked, setDiscountUnlocked] = useState(false);
-    const [discountMode, setDiscountMode] = useState('fixed');
+    const [discountMode, setDiscountMode] = useState('absolute');
     const [discountValue, setDiscountValue] = useState('');
     const [discountAmount, setDiscountAmount] = useState(0);
     const [supervisorName, setSupervisorName] = useState('');
@@ -133,7 +133,7 @@ export default function PaymentModal({ isOpen, onClose, onConfirm, total }) {
             setCustomerPhone('');
             setPrintReceipt(false);
             setDiscountUnlocked(false);
-            setDiscountMode('fixed');
+            setDiscountMode('absolute');
             setDiscountValue('');
             setDiscountAmount(0);
             setSupervisorName('');
@@ -281,23 +281,41 @@ export default function PaymentModal({ isOpen, onClose, onConfirm, total }) {
     const isPixViewActive = Boolean(generatingPix || pixQrCode || pixError || pixApproved);
     const canFinalize = !isPixViewActive && totalPaid >= (payableTotal - 0.01) && (payableTotal <= 0.01 || payments.length > 0) && customerName.trim().length > 0;
 
-    const applyDiscount = (rawVal, mode = discountMode) => {
-        setDiscountValue(rawVal);
-        setDiscountMode(mode);
-        const numeric = parseFloat(String(rawVal || '').replace(',', '.'));
+    const applyDiscount = (rawVal, mode = 'absolute', nextSupervisorName, nextSupervisorId) => {
+        const resolvedMode = mode === 'percent' ? 'percent' : 'absolute';
+        setDiscountUnlocked(true);
+        setDiscountMode(resolvedMode);
+        if (nextSupervisorName !== undefined && nextSupervisorName !== null) {
+            setSupervisorName(nextSupervisorName);
+        }
+        if (nextSupervisorId !== undefined && nextSupervisorId !== null) {
+            setSupervisorId(nextSupervisorId);
+        }
+
+        const numeric = parseFloat(String(rawVal ?? '').replace(',', '.'));
         if (isNaN(numeric) || numeric <= 0) {
+            setDiscountValue('');
             setDiscountAmount(0);
             return;
         }
-        const computed = mode === 'percent'
+
+        const computed = resolvedMode === 'percent'
             ? (baseTotal * Math.min(100, numeric)) / 100
             : Math.min(baseTotal, numeric);
-        setDiscountAmount(Number(computed.toFixed(2)));
+        const nextDiscount = Number(computed.toFixed(2));
+        const nextTotal = Math.max(0, Number((baseTotal - nextDiscount).toFixed(2)));
+
+        setDiscountValue(numeric);
+        setDiscountAmount(nextDiscount);
+
+        if (payments.length === 1 && payments[0].method !== 'dinheiro' && payments[0].method !== 'pix' && Math.abs(Number(payments[0].amount) - payableTotal) < 0.01) {
+            setPayments(nextTotal > 0 ? [{ ...payments[0], amount: nextTotal }] : []);
+        }
     };
 
     const resetDiscount = () => {
         setDiscountUnlocked(false);
-        setDiscountMode('fixed');
+        setDiscountMode('absolute');
         setDiscountValue('');
         setDiscountAmount(0);
         setSupervisorName('');
@@ -817,9 +835,6 @@ export default function PaymentModal({ isOpen, onClose, onConfirm, total }) {
                         discountMode={discountMode}
                         supervisorName={supervisorName}
                         supervisorId={supervisorId}
-                        setDiscountUnlocked={setDiscountUnlocked}
-                        setSupervisorName={setSupervisorName}
-                        setSupervisorId={setSupervisorId}
                         applyDiscount={applyDiscount}
                         resetDiscount={resetDiscount}
                         formatCurrency={(val) => `R$ ${Number(val || 0).toFixed(2).replace('.', ',')}`}

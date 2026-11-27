@@ -184,7 +184,8 @@ class PosController extends Controller
         if ($discountCents > 0) {
             $approvedSupervisorId = $this->cancelOrDeleteOrderAction->resolveDiscountApprovalSupervisorId(
                 $request,
-                $validated['discount_supervisor_pin'] ?? null
+                $validated['discount_supervisor_pin'] ?? null,
+                false
             );
 
             if (empty($approvedSupervisorId)) {
@@ -198,6 +199,9 @@ class PosController extends Controller
 
         try {
             $order = $this->createCounterOrderAction->execute($validated, $request->user(), true);
+            if ($discountCents > 0 && $request->hasSession()) {
+                $request->session()->forget('floor_discount_approval');
+            }
             $netTotal = max(0.0, round((float) $order->total_amount - (($order->discount_amount ?? 0) / 100), 2));
 
             return redirect()->back()->with('success', "Pedido #{$order->short_code} finalizado com sucesso! Total: R$ ".number_format($netTotal, 2, ',', '.'));

@@ -54,7 +54,7 @@ export default function SupervisorPinModal({ isOpen, onClose, onUnlock }) {
     };
 
     return (
-        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[10100] flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-[#0D0D12]/60 backdrop-blur-md" onClick={handleClose} />
             <div className="relative w-full max-w-md bg-[#12121A] border border-white/10 rounded-[28px] shadow-2xl p-6 sm:p-8 flex flex-col items-center animate-scale-in">
                 <div className="size-14 rounded-full bg-orange-500/10 border border-orange-500/20 flex items-center justify-center mb-4">

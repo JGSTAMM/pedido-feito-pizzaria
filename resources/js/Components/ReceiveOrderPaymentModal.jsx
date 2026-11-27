@@ -20,7 +20,7 @@ export default function ReceiveOrderPaymentModal({ isOpen, onClose, order, onSuc
     const [printing, setPrinting] = useState(false);
     const [printMessage, setPrintMessage] = useState('');
     const [discountUnlocked, setDiscountUnlocked] = useState(false);
-    const [discountMode, setDiscountMode] = useState('fixed');
+    const [discountMode, setDiscountMode] = useState('absolute');
     const [discountValue, setDiscountValue] = useState('');
     const [discountAmount, setDiscountAmount] = useState(0);
     const [supervisorName, setSupervisorName] = useState('');
@@ -44,7 +44,7 @@ export default function ReceiveOrderPaymentModal({ isOpen, onClose, order, onSuc
             setPrinting(false);
             setPrintMessage('');
             setDiscountUnlocked(false);
-            setDiscountMode('fixed');
+            setDiscountMode('absolute');
             setDiscountValue('');
             setDiscountAmount(0);
             setSupervisorName('');
@@ -65,23 +65,41 @@ export default function ReceiveOrderPaymentModal({ isOpen, onClose, order, onSuc
 
     const formatBRL = (val) => `R$ ${Number(val || 0).toFixed(2).replace('.', ',')}`;
 
-    const applyDiscount = (rawVal, mode = discountMode) => {
-        setDiscountValue(rawVal);
-        setDiscountMode(mode);
-        const numeric = parseFloat(String(rawVal || '').replace(',', '.'));
+    const applyDiscount = (rawVal, mode = 'absolute', nextSupervisorName, nextSupervisorId) => {
+        const resolvedMode = mode === 'percent' ? 'percent' : 'absolute';
+        setDiscountUnlocked(true);
+        setDiscountMode(resolvedMode);
+        if (nextSupervisorName !== undefined && nextSupervisorName !== null) {
+            setSupervisorName(nextSupervisorName);
+        }
+        if (nextSupervisorId !== undefined && nextSupervisorId !== null) {
+            setSupervisorId(nextSupervisorId);
+        }
+
+        const numeric = parseFloat(String(rawVal ?? '').replace(',', '.'));
         if (isNaN(numeric) || numeric <= 0) {
+            setDiscountValue('');
             setDiscountAmount(0);
             return;
         }
-        const computed = mode === 'percent'
+
+        const computed = resolvedMode === 'percent'
             ? (baseTotal * Math.min(100, numeric)) / 100
             : Math.min(baseTotal, numeric);
-        setDiscountAmount(Number(computed.toFixed(2)));
+        const nextDiscount = Number(computed.toFixed(2));
+        const nextTotal = Math.max(0, Number((baseTotal - nextDiscount).toFixed(2)));
+
+        setDiscountValue(numeric);
+        setDiscountAmount(nextDiscount);
+
+        if (payments.length === 1 && payments[0].method !== 'dinheiro' && Math.abs(Number(payments[0].amount) - total) < 0.01) {
+            setPayments(nextTotal > 0 ? [{ ...payments[0], amount: nextTotal }] : []);
+        }
     };
 
     const resetDiscount = () => {
         setDiscountUnlocked(false);
-        setDiscountMode('fixed');
+        setDiscountMode('absolute');
         setDiscountValue('');
         setDiscountAmount(0);
         setSupervisorName('');
@@ -197,6 +215,11 @@ export default function ReceiveOrderPaymentModal({ isOpen, onClose, order, onSuc
                         <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-3 text-center">
                             <span className="text-[10px] font-black text-emerald-400 uppercase tracking-wider block">Total</span>
                             <span className="text-lg font-black text-white font-mono">{formatBRL(total)}</span>
+                            {discountAmount > 0 && (
+                                <span className="block text-[10px] text-orange-300 font-semibold line-through opacity-80">
+                                    {formatBRL(baseTotal)}
+                                </span>
+                            )}
                         </div>
                         <div className="bg-orange-500/10 border border-orange-500/20 rounded-2xl p-3 text-center">
                             <span className="text-[10px] font-black text-orange-400 uppercase tracking-wider block">Restante</span>
@@ -207,6 +230,18 @@ export default function ReceiveOrderPaymentModal({ isOpen, onClose, order, onSuc
                             <span className="text-lg font-black text-white font-mono">{formatBRL(change)}</span>
                         </div>
                     </div>
+
+                    <DiscountSection
+                        discountUnlocked={discountUnlocked}
+                        discountAmount={discountAmount}
+                        discountValue={discountValue}
+                        discountMode={discountMode}
+                        supervisorName={supervisorName}
+                        supervisorId={supervisorId}
+                        applyDiscount={applyDiscount}
+                        resetDiscount={resetDiscount}
+                        formatCurrency={formatBRL}
+                    />
 
                     <div>
                         <p className="text-[10px] font-black text-text-muted uppercase tracking-widest mb-2">
@@ -318,21 +353,6 @@ export default function ReceiveOrderPaymentModal({ isOpen, onClose, order, onSuc
                             {error}
                         </p>
                     )}
-
-                    <DiscountSection
-                        discountUnlocked={discountUnlocked}
-                        discountAmount={discountAmount}
-                        discountValue={discountValue}
-                        discountMode={discountMode}
-                        supervisorName={supervisorName}
-                        supervisorId={supervisorId}
-                        setDiscountUnlocked={setDiscountUnlocked}
-                        setSupervisorName={setSupervisorName}
-                        setSupervisorId={setSupervisorId}
-                        applyDiscount={applyDiscount}
-                        resetDiscount={resetDiscount}
-                        formatCurrency={formatBRL}
-                    />
                 </div>
 
                 <div className="p-5 sm:p-6 border-t border-white/5 bg-black/25 flex flex-wrap gap-2.5">

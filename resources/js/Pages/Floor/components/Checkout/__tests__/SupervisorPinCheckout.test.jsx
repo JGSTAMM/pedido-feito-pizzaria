@@ -4,6 +4,7 @@ import SupervisorPinModal from '../SupervisorPinModal';
 import DiscountSection from '../DiscountSection';
 import { useCheckoutMath } from '../../../hooks/useCheckoutMath';
 import TabSeguranca from '../../../../Settings/Components/TabSeguranca';
+import ReceiveOrderPaymentModal from '@/Components/ReceiveOrderPaymentModal';
 
 const mockPost = vi.fn();
 const mockDelete = vi.fn();
@@ -22,6 +23,7 @@ vi.mock('axios');
 vi.mock('@inertiajs/react', () => ({
     router: {
         delete: (...args) => mockDelete(...args),
+        reload: vi.fn(),
     },
     useForm: () => ({
         get data() {
@@ -198,5 +200,54 @@ describe('Supervisor PIN Checkout & Settings', () => {
         expect(mockPost).toHaveBeenCalledWith('/settings/supervisor-pin', expect.objectContaining({
             preserveScroll: true,
         }));
+    });
+
+    it('unlocks discount section in ReceiveOrderPaymentModal after supervisor PIN validation and submits net payment', async () => {
+        axios.post
+            .mockResolvedValueOnce({
+                data: { valid: true, supervisor_name: 'Admin', supervisor_id: 'sup-1' },
+            })
+            .mockResolvedValueOnce({
+                data: { success: true, message: 'Pagamento registrado com sucesso!' },
+            });
+
+        render(
+            <ReceiveOrderPaymentModal
+                isOpen={true}
+                order={{
+                    id: 'ord-1',
+                    short_code: 'LOXEE',
+                    customer_name: 'Ana major',
+                    total_amount: 120,
+                }}
+                onClose={vi.fn()}
+                onSuccess={vi.fn()}
+            />
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: /floor\.drawer\.checkout\.unlock_discount/i }));
+
+        const pinInput = screen.getByPlaceholderText('****');
+        fireEvent.change(pinInput, { target: { value: '4321' } });
+        fireEvent.click(screen.getByRole('button', { name: /floor\.drawer\.checkout\.unlock$/i }));
+
+        await waitFor(() => {
+            expect(screen.getByPlaceholderText('0')).toBeInTheDocument();
+        });
+
+        fireEvent.change(screen.getByPlaceholderText('0'), { target: { value: '20' } });
+        fireEvent.click(screen.getByRole('button', { name: 'floor.drawer.checkout.apply' }));
+
+        expect(screen.getAllByText('R$ 100,00').length).toBeGreaterThan(0);
+
+        fireEvent.click(screen.getAllByRole('button', { name: /Débito/i })[0]);
+        fireEvent.click(screen.getByRole('button', { name: /Confirmar Pagamento/i }));
+
+        await waitFor(() => {
+            expect(axios.post).toHaveBeenNthCalledWith(2, '/orders/ord-1/pay', {
+                payments: [{ method: 'debito', amount: 100 }],
+                discount_cents: 2000,
+            });
+        });
     });
 });

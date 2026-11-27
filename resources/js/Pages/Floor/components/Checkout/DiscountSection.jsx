@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import useI18n from '@/hooks/useI18n';
 import SupervisorPinModal from './SupervisorPinModal';
 import CustomNumberInput from '@/Components/CustomNumberInput';
@@ -21,6 +21,13 @@ export default function DiscountSection({
     const [localVal, setLocalVal] = useState(discountValue || '');
     const [localMode, setLocalMode] = useState(discountMode || 'absolute');
 
+    useEffect(() => {
+        if (!discountUnlocked) {
+            setLocalVal('');
+            setLocalMode('absolute');
+        }
+    }, [discountUnlocked]);
+
     const handleApply = () => {
         if (!localVal || parseFloat(localVal) <= 0) return;
         applyDiscount(parseFloat(localVal), localMode, supervisorName, supervisorId); 
@@ -38,7 +45,7 @@ export default function DiscountSection({
                         <span className="text-[9px] uppercase font-bold text-emerald-400 tracking-wider bg-emerald-500/10 px-2 py-0.5 rounded-full">
                             {t('floor.drawer.checkout.unlocked_by')} {supervisorName}
                         </span>
-                        <button onClick={resetDiscount} className="text-text-muted hover:text-red-400 transition-colors">
+                        <button type="button" onClick={resetDiscount} className="text-text-muted hover:text-red-400 transition-colors">
                             <span className="material-symbols-outlined text-[16px]">lock_reset</span>
                         </button>
                     </div>
@@ -47,6 +54,7 @@ export default function DiscountSection({
 
             {!discountUnlocked ? (
                 <button 
+                    type="button"
                     onClick={() => setShowPinModal(true)}
                     className="w-full py-3 px-4 bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/20 rounded-xl flex items-center justify-center gap-2 text-orange-400 font-bold transition-all active:scale-95"
                 >
@@ -58,12 +66,14 @@ export default function DiscountSection({
                     <div className="flex gap-2">
                         <div className="flex-1 flex bg-black/20 rounded-xl p-1 border border-white/5">
                             <button 
+                                type="button"
                                 onClick={() => setLocalMode('absolute')}
                                 className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${localMode === 'absolute' ? 'bg-white/10 text-white shadow' : 'text-text-muted hover:text-white'}`}
                             >
                                 R$
                             </button>
                             <button 
+                                type="button"
                                 onClick={() => setLocalMode('percent')}
                                 className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${localMode === 'percent' ? 'bg-white/10 text-white shadow' : 'text-text-muted hover:text-white'}`}
                             >
@@ -74,6 +84,12 @@ export default function DiscountSection({
                             <CustomNumberInput
                                 value={localVal}
                                 onChange={setLocalVal}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        e.preventDefault();
+                                        handleApply();
+                                    }
+                                }}
                                 prefix={localMode === 'absolute' ? 'R$' : ''}
                                 suffix={localMode === 'percent' ? '%' : ''}
                                 step={localMode === 'percent' ? 1 : 0.01}
@@ -83,6 +99,7 @@ export default function DiscountSection({
                             />
                         </div>
                         <button
+                            type="button"
                             onClick={handleApply}
                             className="px-4 bg-orange-500 hover:bg-orange-400 text-black font-black rounded-xl transition-all active:scale-95"
                         >
