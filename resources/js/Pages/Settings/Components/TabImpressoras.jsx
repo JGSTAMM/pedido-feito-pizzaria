@@ -264,17 +264,30 @@ export default function TabImpressoras({ printers = [], printAgent = {} }) {
                             </div>
 
                             {detectedPrinters.length > 0 ? (
-                                <div className="flex flex-wrap gap-1.5">
+                                <div className="flex flex-wrap gap-2">
                                     {detectedPrinters.map((prn, idx) => (
-                                        <button
+                                        <div
                                             key={idx}
-                                            type="button"
-                                            title="Clique para usar na Cozinha"
-                                            onClick={() => agentForm.setData('kitchen_printer', prn)}
-                                            className="bg-white/10 hover:bg-emerald-500/20 border border-white/10 hover:border-emerald-500/40 px-2.5 py-1 rounded-lg text-xs font-mono text-emerald-300 transition-colors"
+                                            className="inline-flex items-center gap-1.5 bg-white/5 border border-white/10 px-2.5 py-1 rounded-lg text-xs font-mono text-emerald-300"
                                         >
-                                            {prn}
-                                        </button>
+                                            <span>{prn}</span>
+                                            <button
+                                                type="button"
+                                                title="Definir como Impressora da Cozinha"
+                                                onClick={() => agentForm.setData('kitchen_printer', prn)}
+                                                className="px-1.5 py-0.5 rounded bg-orange-500/20 hover:bg-orange-500/35 text-orange-300 text-[10px] font-sans font-bold transition-colors"
+                                            >
+                                                Cozinha
+                                            </button>
+                                            <button
+                                                type="button"
+                                                title="Definir como Impressora do Caixa"
+                                                onClick={() => agentForm.setData('cashier_printer', prn)}
+                                                className="px-1.5 py-0.5 rounded bg-blue-500/20 hover:bg-blue-500/35 text-blue-300 text-[10px] font-sans font-bold transition-colors"
+                                            >
+                                                Caixa
+                                            </button>
+                                        </div>
                                     ))}
                                 </div>
                             ) : (
@@ -343,7 +356,7 @@ export default function TabImpressoras({ printers = [], printAgent = {} }) {
                     <div className="flex flex-wrap items-center justify-between gap-2">
                         <div>
                             <h4 className="text-sm font-black text-white">Mapeamento das Impressoras no config.json</h4>
-                            <p className="text-xs text-text-muted">Ao salvar aqui, o próximo download do .zip ou config.json já sai configurado com estes nomes.</p>
+                            <p className="text-xs text-text-muted">Ao salvar aqui, o agente conectado sincroniza automaticamente em poucos segundos (e o próximo download do .zip ou config.json também já sai atualizado).</p>
                         </div>
                         <button
                             type="submit"

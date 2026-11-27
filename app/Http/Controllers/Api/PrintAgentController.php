@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Application\Printing\PrintAgentPackageBuilder;
 use App\Application\Printing\PrintQueueService;
 use App\Http\Controllers\Controller;
+use App\Models\Printer;
 use App\Models\PrintJob;
+use App\Services\PrintService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -12,7 +15,8 @@ use Illuminate\Support\Facades\DB;
 class PrintAgentController extends Controller
 {
     public function __construct(
-        private readonly PrintQueueService $printQueueService
+        private readonly PrintQueueService $printQueueService,
+        private readonly PrintAgentPackageBuilder $printAgentPackageBuilder,
     ) {}
 
     private function authenticateAgent(Request $request): bool
@@ -66,8 +70,20 @@ class PrintAgentController extends Controller
             return $pendingJobs;
         });
 
+        $agentConfig = $this->printAgentPackageBuilder->getConfig();
+        $printerIps = [];
+        foreach (Printer::whereNotNull('ip_address')->get(['name', 'ip_address']) as $printer) {
+            $name = strtolower(trim((string) $printer->name));
+            $ip = trim((string) $printer->ip_address);
+            if ($name !== '' && $ip !== '' && PrintService::isAllowedPrinterIp($ip)) {
+                $printerIps[$name] = $ip;
+            }
+        }
+
         return response()->json([
             'jobs' => $jobs,
+            'config' => $agentConfig,
+            'printer_ips' => (object) $printerIps,
             'timestamp' => now()->timestamp,
         ]);
     }

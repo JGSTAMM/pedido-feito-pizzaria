@@ -250,25 +250,135 @@ function printViaTcp(ip, port, buffer) {
     });
 }
 
+function isAllowedLanIp(ip) {
+    const clean = String(ip || '').trim();
+    if (!net.isIPv4(clean)) {
+        return false;
+    }
+    const octets = clean.split('.').map(Number);
+    if (octets.length !== 4 || octets.some((o) => Number.isNaN(o) || o < 0 || o > 255)) {
+        return false;
+    }
+    const [a, b] = octets;
+    return a === 10
+        || (a === 192 && b === 168)
+        || (a === 172 && b >= 16 && b <= 31);
+}
+
+function resolveInstalledPrinterName(configuredName, installedPrinters = []) {
+    const clean = String(configuredName || '').trim();
+    if (!clean) {
+        return '';
+    }
+    if (Array.isArray(installedPrinters) && installedPrinters.length > 0) {
+        const exact = installedPrinters.find((p) => p === clean);
+        if (exact) return exact;
+        const lower = clean.toLowerCase();
+        const insensitive = installedPrinters.find((p) => String(p).toLowerCase() === lower);
+        if (insensitive) return insensitive;
+    }
+    return clean;
+}
+
+function renderTicketBuffer(job, paperWidth) {
+    if (job.type === 'kitchen') {
+        return formatKitchenTicket(job.payload, paperWidth);
+    }
+    if (job.type === 'bill') {
+        return formatBillTicket(job.payload, paperWidth);
+    }
+    return formatTestTicket(job.payload, paperWidth);
+}
+
+function syncRemoteConfig(config, remoteConfig, remotePrinterIps) {
+    if (remotePrinterIps && typeof remotePrinterIps === 'object' && !Array.isArray(remotePrinterIps)) {
+        config._printer_ips = remotePrinterIps;
+    }
+
+    if (!remoteConfig || typeof remoteConfig !== 'object' || Array.isArray(remoteConfig)) {
+        return;
+    }
+
+    const syncKeys = [
+        'mode',
+        'kitchen_printer',
+        'kitchen_paper_width',
+        'cashier_printer',
+        'cashier_paper_width',
+        'default_printer',
+        'fallback_printer',
+        'tcp_ip',
+        'tcp_port',
+        'poll_interval_ms',
+    ];
+
+    let changed = false;
+    const next = {};
+
+    for (const key of syncKeys) {
+        if (!(key in remoteConfig)) continue;
+        let val = remoteConfig[key];
+
+        if (key === 'mode') {
+            val = val === 'tcp' ? 'tcp' : 'auto';
+        } else if (key === 'kitchen_paper_width' || key === 'cashier_paper_width') {
+            val = val === '80mm' ? '80mm' : '58mm';
+        } else if (key === 'tcp_port') {
+            const port = Number.parseInt(String(val || 9100), 10);
+            val = Number.isFinite(port) && port >= 1 && port <= 65535 ? port : 9100;
+        } else if (key === 'poll_interval_ms') {
+            const ms = Number.parseInt(String(val || 1500), 10);
+            val = Number.isFinite(ms) && ms >= 500 && ms <= 10000 ? ms : 1500;
+        } else {
+            val = String(val ?? '').trim().slice(0, 128);
+        }
+
+        next[key] = val;
+        if (config[key] !== val) {
+            changed = true;
+        }
+    }
+
+    if (!changed) {
+        return;
+    }
+
+    Object.assign(config, next);
+
+    try {
+        const persisted = {
+            server_url: config.server_url,
+            token: config.token,
+            poll_interval_ms: config.poll_interval_ms,
+            mode: config.mode,
+            default_printer: config.default_printer,
+            kitchen_printer: config.kitchen_printer,
+            kitchen_paper_width: config.kitchen_paper_width,
+            cashier_printer: config.cashier_printer,
+            cashier_paper_width: config.cashier_paper_width,
+            fallback_printer: config.fallback_printer,
+            tcp_ip: config.tcp_ip,
+            tcp_port: config.tcp_port,
+        };
+        fs.writeFileSync(CONFIG_PATH, `${JSON.stringify(persisted, null, 2)}\n`, { mode: 0o600 });
+        log(`Configuração sincronizada com o servidor — Cozinha: [${config.kitchen_printer}] (${config.kitchen_paper_width}) | Caixa: [${config.cashier_printer}] (${config.cashier_paper_width})`, 'INFO');
+    } catch (err) {
+        log(`Aviso: Falha ao salvar config.json sincronizado: ${err.message}`, 'WARN');
+    }
+}
+
 async function dispatchPrint(job, config, installedPrinters) {
     const isKitchen = job.target === 'kitchen';
     const paperWidth = (isKitchen ? config.kitchen_paper_width : config.cashier_paper_width) || config.paper_width || '58mm';
+    const buffer = renderTicketBuffer(job, paperWidth);
 
-    let buffer;
-    if (job.type === 'kitchen') {
-        buffer = formatKitchenTicket(job.payload, paperWidth);
-    } else if (job.type === 'bill') {
-        buffer = formatBillTicket(job.payload, paperWidth);
-    } else {
-        buffer = formatTestTicket(job.payload, paperWidth);
-    }
+    const rawPrimary = (isKitchen ? config.kitchen_printer : config.cashier_printer)
+        || config.default_printer
+        || installedPrinters[0]
+        || 'POS-58';
+    const primaryPrinter = resolveInstalledPrinterName(rawPrimary, installedPrinters);
 
-    let primaryPrinter = isKitchen ? config.kitchen_printer : config.cashier_printer;
-    if (!primaryPrinter) {
-        primaryPrinter = config.default_printer || installedPrinters[0] || 'POS-58';
-    }
-
-    const fallbackPrinter = config.fallback_printer;
+    const fallbackPrinter = resolveInstalledPrinterName(config.fallback_printer, installedPrinters);
     const mode = String(config.mode || 'auto').toLowerCase();
 
     let success = false;
@@ -281,18 +391,41 @@ async function dispatchPrint(job, config, installedPrinters) {
             log(`Imprimindo Job #${job.id} via TCP (${usedPrinter})...`);
             await printViaTcp(config.tcp_ip, config.tcp_port || 9100, buffer);
         } else {
-            log(`Imprimindo Job #${job.id} (${job.type}) em [${primaryPrinter}] (${paperWidth}, ${process.platform})...`);
-            await printViaSystemQueue(primaryPrinter, buffer);
+            log(`Imprimindo Job #${job.id} (${job.type}/${job.target || 'default'}) em [${primaryPrinter}] (${paperWidth}, ${process.platform})...`);
+            try {
+                await printViaSystemQueue(primaryPrinter, buffer);
+            } catch (queueErr) {
+                const directIp = config._printer_ips?.[primaryPrinter.toLowerCase()]
+                    || config._printer_ips?.[String(rawPrimary || '').trim().toLowerCase()];
+                if (directIp && isAllowedLanIp(directIp)) {
+                    log(`Fila local [${primaryPrinter}] falhou (${queueErr.message}); tentando TCP direto (${directIp}:9100)...`, 'WARN');
+                    await printViaTcp(directIp, 9100, buffer);
+                } else {
+                    throw queueErr;
+                }
+            }
         }
         success = true;
     } catch (err) {
         lastError = err.message;
         log(`Falha na impressora principal [${usedPrinter}]: ${err.message}`, 'WARN');
 
-        if (fallbackPrinter && fallbackPrinter !== primaryPrinter) {
+        if (fallbackPrinter && fallbackPrinter.toLowerCase() !== primaryPrinter.toLowerCase()) {
             try {
-                log(`Tentando impressora de contingência [${fallbackPrinter}]...`, 'INFO');
-                await printViaSystemQueue(fallbackPrinter, buffer);
+                const resolvedCashier = resolveInstalledPrinterName(config.cashier_printer, installedPrinters);
+                const resolvedKitchen = resolveInstalledPrinterName(config.kitchen_printer, installedPrinters);
+                let fallbackWidth = paperWidth;
+                if (resolvedCashier && fallbackPrinter.toLowerCase() === resolvedCashier.toLowerCase()) {
+                    fallbackWidth = config.cashier_paper_width || '58mm';
+                } else if (resolvedKitchen && fallbackPrinter.toLowerCase() === resolvedKitchen.toLowerCase()) {
+                    fallbackWidth = config.kitchen_paper_width || '80mm';
+                }
+                const fallbackBuffer = fallbackWidth === paperWidth
+                    ? buffer
+                    : renderTicketBuffer(job, fallbackWidth);
+
+                log(`Tentando impressora de contingência [${fallbackPrinter}] (${fallbackWidth})...`, 'INFO');
+                await printViaSystemQueue(fallbackPrinter, fallbackBuffer);
                 success = true;
                 usedPrinter = fallbackPrinter;
                 lastError = null;
@@ -316,11 +449,16 @@ async function pollOnce(config, installedPrinters) {
         Accept: 'application/json',
     };
 
+    const activeKitchen = resolveInstalledPrinterName(
+        config.kitchen_printer || config.default_printer || installedPrinters[0] || 'POS-58',
+        installedPrinters
+    );
+
     const body = JSON.stringify({
-        version: '2.1.0',
+        version: '2.2.0',
         platform: process.platform,
         printers: installedPrinters,
-        active_printer: config.kitchen_printer || config.default_printer || installedPrinters[0] || 'POS-58',
+        active_printer: activeKitchen,
     });
 
     const response = await fetch(pollUrl, {
@@ -342,6 +480,7 @@ async function pollOnce(config, installedPrinters) {
     }
 
     const data = await response.json();
+    syncRemoteConfig(config, data.config, data.printer_ips);
     const jobs = Array.isArray(data.jobs) ? data.jobs : [];
 
     for (const job of jobs) {

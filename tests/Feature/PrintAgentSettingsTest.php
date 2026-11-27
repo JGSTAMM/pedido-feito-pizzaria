@@ -219,4 +219,55 @@ class PrintAgentSettingsTest extends TestCase
         $this->actingAs($admin)->post('/settings/printers/clear-queue')->assertRedirect();
         $this->assertDatabaseCount('print_jobs', 0);
     }
+
+    public function test_poll_returns_live_agent_config_and_rfc1918_printer_ips_without_leaking_token(): void
+    {
+        $admin = $this->createUser('admin');
+        $token = app(PrintQueueService::class)->getOrCreateAgentToken();
+
+        Printer::create([
+            'name' => 'POS-80',
+            'type' => 'production',
+            'target' => 'kitchen',
+            'ip_address' => '192.168.15.73',
+            'is_online' => true,
+        ]);
+
+        Printer::create([
+            'name' => 'POS-58',
+            'type' => 'receipt',
+            'target' => 'cash_register',
+            'is_online' => true,
+        ]);
+
+        $this->actingAs($admin)
+            ->post('/settings/printers/agent-config', [
+                'mode' => 'auto',
+                'kitchen_printer' => 'POS-80',
+                'kitchen_paper_width' => '80mm',
+                'cashier_printer' => 'POS-58',
+                'cashier_paper_width' => '58mm',
+                'default_printer' => 'POS-80',
+                'fallback_printer' => 'POS-58',
+            ])
+            ->assertRedirect();
+
+        $pollResponse = $this->withHeader('Authorization', "Bearer {$token}")
+            ->postJson('/api/print-agent/poll', [
+                'version' => '2.2.0',
+                'platform' => 'win32',
+                'printers' => ['POS-80', 'POS-58'],
+                'active_printer' => 'POS-80',
+            ]);
+
+        $pollResponse->assertOk()
+            ->assertJsonPath('config.mode', 'auto')
+            ->assertJsonPath('config.kitchen_printer', 'POS-80')
+            ->assertJsonPath('config.kitchen_paper_width', '80mm')
+            ->assertJsonPath('config.cashier_printer', 'POS-58')
+            ->assertJsonPath('config.cashier_paper_width', '58mm')
+            ->assertJsonPath('printer_ips.pos-80', '192.168.15.73')
+            ->assertJsonMissingPath('config.token')
+            ->assertJsonMissingPath('config.server_url');
+    }
 }
